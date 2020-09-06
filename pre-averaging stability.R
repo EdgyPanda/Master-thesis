@@ -70,27 +70,54 @@ library(RColorBrewer)
 
 #note to self, scale colour manual should be on the last graph together with the theme. 
 
+#for TLT
 p1 <- ggplot() + 
 geom_line( aes(x = theta, y= theta, color="#a6cee3"), lwd = 1.2) +
 geom_line( aes(x = theta, y= theta, color='#1f78b4'), lwd = 1.2) + 
 geom_line( aes(x = theta, y= theta, color='#b2df8a'), lwd = 1.2) + 
 geom_line( aes(x = theta, y= theta, color='#33a02c'), lwd = 1.2) +
+theme(legend.position = "none", plot.title = element_text(hjust = 0.5, face = "bold"),legend.title = element_blank(),  axis.title=element_text(size=12)) + ylim(0, 4) +
+labs(title = "TLT",
+       x = "Theta",
+       y = "IV estimates",
+       colour = "Estimators") 
+
+
+#for SPY
+p2 <- ggplot() + 
+geom_line( aes(x = theta, y= theta, color="#a6cee3"), lwd = 1.2) +
+geom_line( aes(x = theta, y= theta, color='#1f78b4'), lwd = 1.2) + 
+geom_line( aes(x = theta, y= theta, color='#b2df8a'), lwd = 1.2) + 
+geom_line( aes(x = theta, y= theta, color='#33a02c'), lwd = 1.2) +
+theme(legend.position = "none", plot.title = element_text(hjust = 0.5, face = "bold"),legend.title = element_blank(),  axis.title=element_text(size=12)) + ylim(0, 4) +
+labs(title = "SPY",
+       x = "Theta",
+       y = "IV estimates",
+       colour = "Estimators") 
+
+#for Correlation
+p3 <- ggplot() + 
+geom_line( aes(x = theta, y= theta, color="#a6cee3"), lwd = 1.2) +
+geom_line( aes(x = theta, y= theta, color='#1f78b4'), lwd = 1.2) + 
+geom_line( aes(x = theta, y= theta, color='#b2df8a'), lwd = 1.2) + 
+geom_line( aes(x = theta, y= theta, color='#33a02c'), lwd = 1.2) +
 scale_color_manual(values = c('#a6cee3' = '#a6cee3', '#1f78b4' = '#1f78b4', '#b2df8a'='#b2df8a', '#33a02c'='#33a02c'),
-	labels = unname(TeX(c("$MRC_{t}^{1 sec}", "PBPCov_{t}^{1 sec}", "$MRC_{t}^{5 sec}", "PBPCov_{t}^{5 sec}"))))
-
-
-theme(legend.position = "none", plot.title = element_text(hjust = 0.5, face = "bold"),legend.title = element_blank(),  axis.title=element_text(size=12)) + ylim(0, 4) +
-labs(title = "TLT",
+	labels = unname(TeX(c("$MRC_{t}^{1 sec}", "PBPCov_{t}^{1 sec}", "$MRC_{t}^{5 sec}", "PBPCov_{t}^{5 sec}")))) +
+theme_grey() +
+theme(legend.position = c(0.70, 0.23), legend.background = element_rect(fill="lightblue", size=0.5, linetype="solid"), 
+	plot.title = element_text(hjust = 0.5, face = "bold"),  axis.title=element_text(size=12)) +
+labs(title = "TLT & SPY",
        x = "Theta",
-       y = "IV estimates",
+       y = "Correlation estimates",
        colour = "Estimators") 
 
-scale_color_brewer(palette = "Set2") + 
-theme(legend.position = "none", plot.title = element_text(hjust = 0.5, face = "bold"),legend.title = element_blank(),  axis.title=element_text(size=12)) + ylim(0, 4) +
-labs(title = "TLT",
-       x = "Theta",
-       y = "IV estimates",
-       colour = "Estimators") 
+library(gridExtra)
+
+grid.arrange(p1,p2,p3, ncol= 3)
+
+
+
+
 
 
 #BELOW CONTAINS CODE FROM LAST YEAR
