@@ -5,12 +5,8 @@
 #
 #
 #
-
-setwd("C:/Users/emil7/Dropbox/Uni - Mathematics and Economics/ATP topic course/Rcode")
-
 library(dataCleanFunc)
 library(highfrequency)
-
 setwd("C:/Users/emil7/Dropbox/Uni - Mathematics and Economics/Speciale - Master Thesis/Data cleaned/TLT/Merged files")
 
 #TLT until 20120515 (due to corrupt file)
@@ -66,7 +62,6 @@ t1 <- c(timeseriesTLT1, timeseriesTLT2)
 
 dataTLT <- c(t1, timeseriesTLT3)
 
-
-save(dataTLT, file = "dataTLT.Rdata")
+saveRDS(dataTLT, "dataTLT.rds")
 
 #-------------------------------SPY-----------------------------------------------

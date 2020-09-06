@@ -4,17 +4,93 @@
 #
 #
 #
-source("C:/Users/emil7/Dropbox/Uni - Mathematics and Economics/ATP topic course/R code (cleaned version)/projectfunctions.R")
+source("Previous functions/projectfunctions.R")
 
 
+library(xts)
+library(highfrequency)
+
+dataTLT <- readRDS("dataTLT.rds")
+
+#log returns
+dataTLT <- lapply(dataTLT, function(x) diff(log(x))[-1])
+
+theta <- seq(0.1,2,0.1)
+
+TLT_1sec <- list()
+TLT_5sec <- list()
+
+for(i in 1:length(dataTLT)){
+
+	TLT_1sec[[i]] <- aggregatets(dataTLT[[i]], on="seconds",k=1)
+	TLT_5sec[[i]] <- aggregatets(dataTLT[[i]], on="seconds",k=5)
+
+}
+
+#Testing for all days requires too much time, therefore testing for 10 different days, for each year.
+
+MRC_1sec_TLT <- matrix(0L, ncol = 100, nrow = length(theta))
+MRC_5sec_TLT <- matrix(0L, ncol = 100, nrow = length(theta))
+BPMRC_1sec_TLT <- matrix(0L, ncol = 100, nrow = length(theta))
+BPMRC_5sec_TLT <- matrix(0L, ncol = 100, nrow = length(theta))
+
+#Constructing the sequence of 10 different days in each year (each year varies with trading days). 
+set.seed(1)
+iT <- c(sample(1:250, 10), sample(251:500,10), sample(505:754,10), sample(755:1006,10),
+	sample(1007:1258,10), sample(1259:1510,10), sample(1511:1762,10), sample(1763:2013,10), 
+	sample(2014:2264,10), sample(2265:2516,10))
+
+#We are testing for stability in theta. Therefore days are independent and does not matter. 
+tic("Normal forloop 100 days")
+for(i in 1:100){
+	for(j in 1:length(theta)){
+		MRC_1sec_TLT[j,i] <- preavCov(TLT_1sec[[iT[i]]], T, T, F, theta = theta[j])
+		MRC_5sec_TLT[j,i] <- preavCov(TLT_5sec[[iT[i]]], T, T, F, theta = theta[j])
+	    BPMRC_1sec_TLT[j,i] <- preavBPCOV(TLT_1sec[[iT[i]]], TRUE, FALSE, TRUE, theta = theta[j])
+	    BPMRC_5sec_TLT[j,i] <- preavBPCOV(TLT_5sec[[iT[i]]], TRUE, FALSE, TRUE, theta = theta[j])
+	    print(sprintf("Theta iteration %s, for the current day %s", j,iT[i]))
+
+	}
+}
+toc()
+
+MRC_1sec_TLT_mean <- rowMeans(MRC_1sec_TLT)
+MRC_5sec_TLT_mean <- rowMeans(MRC_5sec_TLT)
+BPMRC_1sec_TLT_mean <- rowMeans(BPMRC_1sec_TLT)
+BPMRC_5sec_TLT_mean <- rowMeans(BPMRC_5sec_TLT)
 
 
+library(ggplot2)
+library(latex2exp)
+library(ggthemes)
+library(RColorBrewer)
 
 
+#HEX CODE FOR CORRELATIONS: #fb9a99, #e31a1c. 
+
+#note to self, scale colour manual should be on the last graph together with the theme. 
+
+p1 <- ggplot() + 
+geom_line( aes(x = theta, y= theta, color="#a6cee3"), lwd = 1.2) +
+geom_line( aes(x = theta, y= theta, color='#1f78b4'), lwd = 1.2) + 
+geom_line( aes(x = theta, y= theta, color='#b2df8a'), lwd = 1.2) + 
+geom_line( aes(x = theta, y= theta, color='#33a02c'), lwd = 1.2) +
+scale_color_manual(values = c('#a6cee3' = '#a6cee3', '#1f78b4' = '#1f78b4', '#b2df8a'='#b2df8a', '#33a02c'='#33a02c'),
+	labels = unname(TeX(c("$MRC_{t}^{1 sec}", "PBPCov_{t}^{1 sec}", "$MRC_{t}^{5 sec}", "PBPCov_{t}^{5 sec}"))))
 
 
+theme(legend.position = "none", plot.title = element_text(hjust = 0.5, face = "bold"),legend.title = element_blank(),  axis.title=element_text(size=12)) + ylim(0, 4) +
+labs(title = "TLT",
+       x = "Theta",
+       y = "IV estimates",
+       colour = "Estimators") 
 
-
+scale_color_brewer(palette = "Set2") + 
+theme(legend.position = "none", plot.title = element_text(hjust = 0.5, face = "bold"),legend.title = element_blank(),  axis.title=element_text(size=12)) + ylim(0, 4) +
+labs(title = "TLT",
+       x = "Theta",
+       y = "IV estimates",
+       colour = "Estimators") 
 
 
 #BELOW CONTAINS CODE FROM LAST YEAR
