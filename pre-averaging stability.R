@@ -14,11 +14,6 @@ library(matlib)
 dataTLT <- readRDS("dataTLT.rds")
 dataSPY <- readRDS("dataSPY.rds")
 
-
-#log returns
-dataTLT <- lapply(dataTLT, function(x) diff(log(x))[-1])
-dataSPY <- lapply(dataSPY, function(x) diff(log(x))[-1])
-
 theta <- seq(0.1,2,0.1)
 
 TLT_1sec <- list()
@@ -29,11 +24,11 @@ SPY_5sec <- list()
 
 for(i in 1:length(dataTLT)){
 
-	TLT_1sec[[i]] <- aggregatets(dataTLT[[i]], on="seconds",k=1)
-	TLT_5sec[[i]] <- aggregatets(dataTLT[[i]], on="seconds",k=5)
+	TLT_1sec[[i]] <- diff(log(aggregatets(dataTLT[[i]], on="seconds",k=1)))[-1]
+	TLT_5sec[[i]] <- diff(log(aggregatets(dataTLT[[i]], on="seconds",k=5)))[-1]
 
-	SPY_1sec[[i]] <- aggregatets(dataSPY[[i]], on="seconds", k=1)
-    SPY_5sec[[i]] <- aggregatets(dataSPY[[i]], on="seconds", k=1)
+	SPY_1sec[[i]] <- diff(log(aggregatets(dataSPY[[i]], on="seconds", k=1)))[-1]
+    SPY_5sec[[i]] <- diff(log(aggregatets(dataSPY[[i]], on="seconds", k=1)))[-1]
 }
 
 Merged_1sec <- list()
@@ -167,7 +162,7 @@ for(i in 1:100){
 
 library(stats)
 library(matlib)
-preavCov(Merged_5sec[[iT[1]]], T, T, F, theta = 0.1)
+preavCov(TLT_1sec[[1]], T, T, F, theta = 0.1)
 preavCov(diff(log(tt))[-1], T, T, F, theta = 0.8)*1e5
 preavCov(tt3, T, T, F, theta = 0.8)
 
