@@ -10,7 +10,7 @@ dataSPY <- readRDS("dataSPY.rds")
 
 
 
-#Calculating average time in seconds between each trade:
+#-------------------------------Calculating average time in seconds between each trade:
 timeobjectsTLT <- list()
 timeobjectsSPY <- list()
 
@@ -188,3 +188,100 @@ outliersTLTtotal
 
 #Raw trades/quotes is the total number of data available from these exchanges during the
 #trading session, while  #trades/quotes is the total sample remaining after filtering the data
+
+
+allcleanedTLT <- rowSums(SummarystatsTLT[,c(1:4,8,10,12)])
+allcleanedSPY <- rowSums(SummarystatsSPY[,c(1:4,8,10,12)])
+
+datalengthTLT <- numeric()
+datalengthSPY <- numeric()
+
+for(i in 1:length(dataTLT)){
+
+	datalengthTLT[i] <- length(dataTLT[[i]])
+	datalengthSPY[i] <- length(dataSPY[[i]])
+
+}
+
+
+#missing the last days due to error in data. 
+rawtradesTLT <- allcleanedTLT + datalengthTLT[1:2515]
+rawtradesSPY <- allcleanedSPY + datalengthSPY[1:2513]
+
+#The average amount of raw trades for each day during the trading session.
+mean(rawtradesTLT)
+mean(rawtradesSPY)
+
+
+#------------------------------------Average proportion of non-zero trade returns----------------------------
+#Done by constructing return data from all of the transaction prices without the use of a trade aggregation scheme. 
+#Intuitively, while the proportion might be close to the same proportion for a 1 second CTS scheme, we know that sparse
+#sparse sampling further, will likely increase the proportion. Ie. the non-zero trades also indirectly describes the liquidity of our
+#financial assets. 
+
+
+#YOU COULD DO CTS 1 SEC AND 5 SEC AND SHOW THE INCREASING PROPORTION OF NON-ZERO RETURNS TO GET A BETTER OVERVIEW?
+
+rawreturnsSPY <- list()
+
+rawreturnsTLT <- list()
+
+for (i in 1:length(dataTLT)){
+
+	rawreturnsSPY[[i]] <- diff(log(dataSPY[[i]]))[-1]
+	rawreturnsTLT[[i]] <- diff(log(dataTLT[[i]]))[-1]
+}
+
+
+
+nonzeroSPY <- vector()
+
+nonzeroTLT <- vector()
+
+
+SPYtotal <- numeric()
+TLTtotal <- numeric()
+
+for (i in 1:length(dataTLT)){
+
+nonzeroSPY[i] <- apply(rawreturnsSPY[[i]], 2, function(c)sum(c!=0))
+
+nonzeroTLT[i] <- apply(rawreturnsTLT[[i]], 2, function(c)sum(c!=0))
+
+SPYtotal[i] <- dim(rawreturnsSPY[[i]])[1]
+
+TLTtotal[i] <- dim(rawreturnsTLT[[i]])[1]
+
+}
+
+
+#(daily) average nonzero trade returns.
+
+
+nonzerotrades20102012SPY <- sum(nonzeroSPY[1:504])/(sum(SPYtotal[1:504]))
+nonzerotrades20122014SPY <- sum(nonzeroSPY[505:1006])/(sum(SPYtotal[505:1006]))
+nonzerotrades20142016SPY <- sum(nonzeroSPY[1007:1510])/(sum(SPYtotal[1007:1510]))
+nonzerotrades20162018SPY <- sum(nonzeroSPY[1511:2013])/(sum(SPYtotal[1511:2013]))
+nonzerotrades20182020SPY <- sum(nonzeroSPY[2014:2516])/(sum(SPYtotal[2014:2516]))
+
+nonzerotrades20102012TLT <- sum(nonzeroSPY[1:504])/(sum(SPYtotal[1:504]))
+nonzerotrades20122014TLT <- sum(nonzeroSPY[505:1006])/(sum(SPYtotal[505:1006]))
+nonzerotrades20142016TLT <- sum(nonzeroSPY[1007:1510])/(sum(SPYtotal[1007:1510]))
+nonzerotrades20162018TLT <- sum(nonzeroSPY[1511:2013])/(sum(SPYtotal[1511:2013]))
+nonzerotrades20182020TLT <- sum(nonzeroSPY[2014:2516])/(sum(SPYtotal[2014:2516]))
+
+#As a test, here's 2018: (CORRECT)
+
+nonzerotradeSPY2018 <- sum(nonzeroSPY[2014:2264])/(sum(SPYtotal[2014:2264]))
+nonzerotradeTLT2018 <- sum(nonzeroTLT[2014:2263])/(sum(TLTtotal[2014:2263]))
+
+
+
+#total
+(sum(nonzeroSPY) / sum(SPYtotal))
+
+
+(sum(nonzeroTLT) / sum(TLTtotal))
+
+
+#--------------------------------------------------NOISE ESTIMATOR-----------------------------------
