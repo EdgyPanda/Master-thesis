@@ -28,7 +28,7 @@ for(i in 1:length(dataTLT)){
 	TLT_5sec[[i]] <- diff(log(aggregatets(dataTLT[[i]], on="seconds",k=5)))[-1]
 
 	SPY_1sec[[i]] <- diff(log(aggregatets(dataSPY[[i]], on="seconds", k=1)))[-1]
-    SPY_5sec[[i]] <- diff(log(aggregatets(dataSPY[[i]], on="seconds", k=1)))[-1]
+    SPY_5sec[[i]] <- diff(log(aggregatets(dataSPY[[i]], on="seconds", k=5)))[-1]
 }
 
 Merged_1sec <- list()
@@ -62,11 +62,16 @@ BPMRC_1sec_COR <- matrix(0L, ncol = 100, nrow = length(theta))
 BPMRC_5sec_COR <- matrix(0L, ncol = 100, nrow = length(theta))
 
 
-#Constructing the sequence of 10 different days in each year (each year varies with trading days). 
+#Constructing a sequence of 10 day intervals in each year (each year varies with trading days). 
 set.seed(1)
-iT <- c(sample(1:250, 10), sample(251:500,10), sample(505:754,10), sample(755:1006,10),
-	sample(1007:1258,10), sample(1259:1510,10), sample(1511:1762,10), sample(1763:2013,10), 
-	sample(2014:2264,10), sample(2265:2516,10))
+iT <- c(sample(1:250, 1), sample(251:500,1), sample(505:754,1), sample(755:1006,1),
+	sample(1007:1258,1), sample(1259:1510,1), sample(1511:1762,1), sample(1763:2013,1), 
+	sample(2014:2264,1), sample(2265:2516,1))
+
+iT <- c(seq(iT[1],iT[1]+9),seq(iT[2],iT[2]+9),seq(iT[3],iT[3]+9),seq(iT[4],iT[4]+9),
+	seq(iT[5],iT[5]+9),seq(iT[6],iT[6]+9),seq(iT[7],iT[7]+9),seq(iT[8],iT[8]+9),
+	seq(iT[9],iT[9]+9),seq(iT[10],iT[10]+9))
+
 
 #We are testing for stability in theta. Therefore days are independent and does not matter. 
 
@@ -84,7 +89,7 @@ BPMRC_5sec <- list()
 library(tictoc)
 #Do not run, takes approx 7 hours and 30 mins. 
 tic()
-for(i in 3:100){
+for(i in 1:100){
 	for(j in 1:length(theta)){
 		temp1[,,j] <- preavCov(Merged_1sec[[iT[i]]], T, T, F, theta = theta[j])
 		temp2[,,j] <- preavCov(Merged_5sec[[iT[i]]], T, T, F, theta = theta[j])
@@ -102,10 +107,16 @@ for(i in 3:100){
 toc()
 
 
-saveRDS(MRC_1sec, "MRC_1sec.rds")
-saveRDS(MRC_5sec, "MRC_5sec.rds")
-saveRDS(BPMRC_1sec, "BPMRC_1sec.rds")
-saveRDS(BPMRC_5sec, "BPMRC_5sec.rds")
+
+
+saveRDS(MRC_1sec, "MRC_1sec_100days2015.rds")
+saveRDS(MRC_5sec, "MRC_5sec_100days2015.rds")
+saveRDS(BPMRC_1sec, "BPMRC_1sec_100days2015.rds")
+saveRDS(BPMRC_5sec, "BPMRC_5sec_100days2015.rds")
+#saveRDS(MRC_1sec, "MRC_1sec.rds")
+#saveRDS(MRC_5sec, "MRC_5sec.rds")
+#saveRDS(BPMRC_1sec, "BPMRC_1sec.rds")
+#saveRDS(BPMRC_5sec, "BPMRC_5sec.rds")
 
 
 MRC_1sec_TLT_IV <- matrix(0L, ncol = 100, nrow = length(theta))
@@ -162,22 +173,9 @@ for(i in 1:100){
 
 library(stats)
 library(matlib)
-preavCov(TLT_1sec[[1]], T, T, F, theta = 0.1)
-preavCov(diff(log(tt))[-1], T, T, F, theta = 0.8)*1e5
-preavCov(tt3, T, T, F, theta = 0.8)
 
 
-tt3 <- aggregatets(tt2, on = "seconds", k=1)
-
-tt2 <- diff(log(tt[[1]]))[-1]
-
-tt <- readRDS("dataTLT.rds")
-
-tt <- aggregatets(tt[[iT[1]]], on = "seconds", k=1)
-
-MRC(tt)*1e5
-
-MRC_1sec_TLT_mean <- rowMeans(MRC_1sec_TLT_IV)*1e4
+MRC_1sec_TLT_mean <- rowMeans(MRC_1sec_TLT_IV)*1e5
 MRC_5sec_TLT_mean <- rowMeans(MRC_5sec_TLT_IV)*1e5
 BPMRC_1sec_TLT_mean <- rowMeans(BPMRC_1sec_TLT_IV)*1e5
 BPMRC_5sec_TLT_mean <- rowMeans(BPMRC_5sec_TLT_IV)*1e5
@@ -206,29 +204,33 @@ library(RColorBrewer)
 #for TLT
 p1 <- ggplot() + 
 geom_line( aes(x = theta, y= c(MRC_1sec_TLT_mean), color="#a6cee3"), lwd = 1.2) +
-geom_line( aes(x = theta, y= c(MRC_5sec_TLT_mean), color='#1f78b4'), lwd = 1.2) + 
-geom_line( aes(x = theta, y= c(BPMRC_1sec_TLT_mean), color='#b2df8a'), lwd = 1.2) + 
-geom_line( aes(x = theta, y= c(BPMRC_5sec_TLT_mean), color='#33a02c'), lwd = 1.2) +
+geom_line( aes(x = theta, y= c(MRC_5sec_TLT_mean), color="#1f78b4"), lwd = 1.2) + 
+geom_line( aes(x = theta, y= c(BPMRC_1sec_TLT_mean), color="#b2df8a"), lwd = 1.2) + 
+geom_line( aes(x = theta, y= c(BPMRC_5sec_TLT_mean), color="#33a02c"), lwd = 1.2) +
 theme(legend.position = "none", plot.title = element_text(hjust = 0.5, face = "bold"),
 	legend.title = element_blank(),  axis.title=element_text(size=12)) +
 labs(title = "TLT",
        x = "Theta",
        y = "IV estimates",
-       colour = "Estimators") 
+       colour = "Estimators") + ylim(0,5) +
+scale_color_manual(values = c('#a6cee3' = '#a6cee3', '#1f78b4' = '#1f78b4', '#b2df8a'='#b2df8a', '#33a02c'='#33a02c'),
+	labels = unname(TeX(c("$MRC_{t}^{1 sec}",  "$MRC_{t}^{5 sec}", "PBPCov_{t}^{1 sec}", "PBPCov_{t}^{5 sec}"))))
 
 
 #for SPY
 p2 <- ggplot() + 
 geom_line( aes(x = theta, y= c(MRC_1sec_SPY_mean), color="#a6cee3"), lwd = 1.2) +
-geom_line( aes(x = theta, y= c(MRC_5sec_SPY_mean), color='#1f78b4'), lwd = 1.2) + 
-geom_line( aes(x = theta, y= c(BPMRC_1sec_SPY_mean), color='#b2df8a'), lwd = 1.2) + 
-geom_line( aes(x = theta, y= c(BPMRC_5sec_SPY_mean), color='#33a02c'), lwd = 1.2) +
+geom_line( aes(x = theta, y= c(MRC_5sec_SPY_mean), color="#1f78b4"), lwd = 1.2) + 
+geom_line( aes(x = theta, y= c(BPMRC_1sec_SPY_mean), color="#b2df8a"), lwd = 1.2) + 
+geom_line( aes(x = theta, y= c(BPMRC_5sec_SPY_mean), color="#33a02c"), lwd = 1.2) +
 theme(legend.position = "none", plot.title = element_text(hjust = 0.5, face = "bold"),
 	legend.title = element_blank(),  axis.title=element_text(size=12)) +
 labs(title = "SPY",
        x = "Theta",
        y = "IV estimates",
-       colour = "Estimators") 
+       colour = "Estimators") +ylim(0,8) +
+scale_color_manual(values = c('#a6cee3' = '#a6cee3', '#1f78b4' = '#1f78b4', '#b2df8a'='#b2df8a', '#33a02c'='#33a02c'),
+	labels = unname(TeX(c("$MRC_{t}^{1 sec}",  "$MRC_{t}^{5 sec}", "PBPCov_{t}^{1 sec}", "PBPCov_{t}^{5 sec}"))))
 
 #for Correlation
 p3 <- ggplot() + 
@@ -237,7 +239,7 @@ geom_line( aes(x = theta, y= c(MRC_5sec_COR_mean), color='#1f78b4'), lwd = 1.2) 
 geom_line( aes(x = theta, y= c(BPMRC_1sec_COR_mean), color='#b2df8a'), lwd = 1.2) + 
 geom_line( aes(x = theta, y= c(BPMRC_5sec_COR_mean), color='#33a02c'), lwd = 1.2) +
 scale_color_manual(values = c('#a6cee3' = '#a6cee3', '#1f78b4' = '#1f78b4', '#b2df8a'='#b2df8a', '#33a02c'='#33a02c'),
-	labels = unname(TeX(c("$MRC_{t}^{1 sec}", "PBPCov_{t}^{1 sec}", "$MRC_{t}^{5 sec}", "PBPCov_{t}^{5 sec}")))) +
+	labels = unname(TeX(c("$MRC_{t}^{1 sec}", "$MRC_{t}^{5 sec}", "PBPCov_{t}^{1 sec}", "PBPCov_{t}^{5 sec}")))) +
 theme_grey() +
 theme(legend.position = c(0.70, 0.23), legend.background = element_rect(fill="lightblue", size=0.5,
  linetype="solid"), 
@@ -390,11 +392,12 @@ library(RColorBrewer)
 nb.cols <- 18
 mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(nb.cols)
 
-sumdataTLT <- data.frame(cbind(theta, 1e5*estmeanTLT, 1e5*estmeanBPTLT, 1e5*fivesecmeanTLT, 1e5*fivesecmeanBPTLT, 1e5*meanestimate_rt_TLTsigma, 1e5*meanestimate_rt_BPTLTsigma))
+sumdataTLT <- data.frame(cbind(theta, MRC_1sec_TLT_mean, BPMRC_1sec_TLT_mean, MRC_5sec_TLT_mean,
+ BPMRC_5sec_TLT_mean)) #1e5*meanestimate_rt_TLTsigma, 1e5*meanestimate_rt_BPTLTsigma))
 colnames(sumdataTLT) <- c("Theta", "RCOVpa_1sec_TLT", "BCOVpa_1sec_TLT", "RCOVpa_5sec_TLT", "BCOVpa_5sec_TLT", "RCOV_rt_TLT", "BCOV_rt_TLT")
 
 
-sumdataSPY <- data.frame(cbind(theta, 1e5*estmeanSPY, 1e5*estmeanBPSPY, 1e5*fivesecmeanSPY, 1e5*fivesecmeanBPSPY, 1e5*meanestimate_rt_SPYsigma, 1e5*meanestimate_rt_BPSPYsigma))
+sumdataSPY <- data.frame(cbind(theta, MRC_1sec_SPY_mean, BPMRC_1sec_SPY_mean , MRC_5sec_SPY_mean, BPMRC_5sec_SPY_mean)) # 1e5*meanestimate_rt_SPYsigma, 1e5*meanestimate_rt_BPSPYsigma))
 colnames(sumdataSPY) <- c("Theta", "RVpa_1sec_SPY", "BVpa_1sec_SPY", "RVpa_5sec_SPY", "BVpa_5sec_SPY", "RCOV_rt_SPY", "BCOV_rt_SPY")
 
 sumdatarho <- data.frame(cbind(theta, estimate1secmean, estimate1secBPmean, estimates5secmean, estimates5secBPmean,meanestimate_rt_rho , meanestimate_rt_BPrho))
@@ -402,12 +405,12 @@ colnames(sumdatarho) <- c("Theta", "RCOVpa_1sec", "BCOVpa_1sec", "RCOVpa_5sec", 
 
 
 p1 <- ggplot() + 
-geom_line(data = sumdataTLT, aes(x = sumdataTLT[,1], y=sumdataTLT[,2], color='RCovpa_1sec_TLT'), lwd = 1.2) + 
-geom_line(data = sumdataTLT, aes(x = sumdataTLT[,1], y=sumdataTLT[,3], color='BPCovpa_1sec_TLT'), lwd = 1.2) + 
-geom_line(data = sumdataTLT, aes(x = sumdataTLT[,1], y=sumdataTLT[,4], color='RCovpa_5sec_TLT'), lwd = 1.2) + 
-geom_line(data = sumdataTLT, aes(x = sumdataTLT[,1], y=sumdataTLT[,5], color='BCovpa_5sec_TLT'), lwd = 1.2) +
+geom_line(data = sumdataTLT, aes(x = sumdataTLT[,1], y=c(sumdataTLT[,2]), color='RCovpa_1sec_TLT'), lwd = 1.2) + 
+geom_line(data = sumdataTLT, aes(x = sumdataTLT[,1], y=c(sumdataTLT[,3]), color='BPCovpa_1sec_TLT'), lwd = 1.2) + 
+geom_line(data = sumdataTLT, aes(x = sumdataTLT[,1], y=c(sumdataTLT[,4]), color='RCovpa_5sec_TLT'), lwd = 1.2) + 
+geom_line(data = sumdataTLT, aes(x = sumdataTLT[,1], y=c(sumdataTLT[,5]), color='BCovpa_5sec_TLT'), lwd = 1.2) +
 scale_color_brewer(palette = "Set2") + 
-theme(legend.position = "none", plot.title = element_text(hjust = 0.5, face = "bold"),legend.title = element_blank(),  axis.title=element_text(size=12)) + ylim(0, 4) +
+theme( plot.title = element_text(hjust = 0.5, face = "bold"),legend.title = element_blank(),  axis.title=element_text(size=12)) + ylim(0, 4) +
 labs(title = "TLT",
        x = "Theta",
        y = "IV estimates",
@@ -418,12 +421,14 @@ geom_line(data = sumdataSPY, aes(x = sumdataSPY[,1], y=sumdataSPY[,2], color='RC
 geom_line(data = sumdataSPY, aes(x = sumdataSPY[,1], y=sumdataSPY[,3], color='BPCovpa_1sec_SPY'), lwd = 1.2) + 
 geom_line(data = sumdataSPY, aes(x = sumdataSPY[,1], y=sumdataSPY[,4], color='RCovpa_5sec_SPY'), lwd = 1.2) + 
 geom_line(data = sumdataSPY, aes(x = sumdataSPY[,1], y=sumdataSPY[,5], color='BPCovpa_5sec_SPY'), lwd = 1.2) +
-theme(legend.title = element_blank(),legend.position = "none",  plot.title = element_text(hjust = 0.5, face = "bold") ,  axis.title=element_text(size=12)) + ylim(4, 13) + 
+theme(legend.title = element_blank(),  plot.title = element_text(hjust = 0.5, face = "bold"),
+  axis.title=element_text(size=12)) + ylim(0, 13) + 
 scale_color_brewer(palette = "Set2") + 
 labs(title = "SPY",
        x = "Theta",
        y = "IV estimates",
        colour = "Estimators") 
+
 
 
 p3 <- ggplot(data = sumdatarho) + 
