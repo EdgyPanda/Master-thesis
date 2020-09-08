@@ -1,0 +1,2517 @@
+# CSV-File created with merge-csv.com
+# -----------------------------------------------------------
+
+Exchange tickers,,
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,D,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+Z,T  Q,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,D,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,D,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,D,P
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,W  Y  J  K
+T  Q,Z,P
+T  Q,Z,W  Y  J  K
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,W  Y  J  K
+T  Q,Z,W  Y  J  K
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,D
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,W  Y  J  K
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,D
+T  Q,Z,D
+Z,T  Q,D
+Z,T  Q,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+Z,T  Q,P
+T  Q,Z,D
+Z,T  Q,D
+D,Z,T  Q
+T  Q,Z,D
+T  Q,D,Z
+T  Q,Z,P
+T  Q,Z,D
+T  Q,D,Z
+T  Q,D,Z
+T  Q,Z,D
+T  Q,Z,D
+T  Q,Z,P
+T  Q,D,Z
+T  Q,Z,P
+T  Q,D,P
+T  Q,D,Z
+T  Q,Z,P
+T  Q,D,Z
+T  Q,Z,D
+T  Q,D,P
+T  Q,D,Z
+D,T  Q,Z
+D,T  Q,Z
+T  Q,Z,P
+P,D,Z
+D,T  Q,Z
+T  Q,Z,D
+T  Q,Z,D
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,P
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,Z,D
+T  Q,D,Z
+T  Q,Z,D
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,P
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,P
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,Z,D
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,Z
+T  Q,D,P
+D,T  Q,Z
+T  Q,D,Z
+T  Q,Z,D
+T  Q,D,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,D,P
+T  Q,D,P
+T  Q,P,Z
+T  Q,P,D
+T  Q,D,Z
+T  Q,D,P
+T  Q,D,P
+T  Q,D,P
+D,T  Q,P
+T  Q,D,P
+D,T  Q,P
+D,T  Q,P
+D,T  Q,P
+T  Q,D,Z
+T  Q,Z,D
+T  Q,D,P
+T  Q,D,P
+T  Q,P,Z
+T  Q,D,P
+T  Q,D,P
+T  Q,D,Z
+T  Q,D,P
+T  Q,D,P
+T  Q,D,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,D,W  Y  J  K
+T  Q,D,W  Y  J  K
+T  Q,D,W  Y  J  K
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,P,Z
+T  Q,D,P
+T  Q,D,P
+T  Q,D,P
+T  Q,D,P
+T  Q,D,P
+T  Q,D,P
+T  Q,D,P
+T  Q,D,P
+T  Q,D,P
+T  Q,D,W  Y  J  K
+T  Q,D,W  Y  J  K
+T  Q,P,D
+T  Q,P,D
+T  Q,D,P
+T  Q,D,P
+T  Q,P,D
+T  Q,P,D
+T  Q,D,P
+T  Q,D,Z
+T  Q,D,P
+T  Q,Z,P
+T  Q,D,P
+T  Q,D,P
+T  Q,P,D
+T  Q,D,P
+T  Q,W  Y  J  K,P
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,W  Y  J  K
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,Z
+T  Q,D,P
+T  Q,D,P
+T  Q,P,Z
+T  Q,D,P
+T  Q,P,Z
+T  Q,P,D
+T  Q,D,P
+T  Q,P,D
+T  Q,P,D
+T  Q,P,D
+T  Q,P,D
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,D
+T  Q,P,D
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,D,P
+T  Q,D,P
+T  Q,P,W  Y  J  K
+T  Q,Z,P
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,D
+P,T  Q,Z
+T  Q,P,D
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+P,T  Q,W  Y  J  K
+P,T  Q,D
+D,P,T  Q
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,Z
+P,T  Q,Z
+T  Q,P,D
+T  Q,P,D
+P,T  Q,Z
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,D
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+Z,T  Q,P
+Z,T  Q,P
+P,Z,T  Q
+T  Q,Z,P
+Z,P,T  Q
+Z,T  Q,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,D
+T  Q,D,P
+T  Q,P,Z
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,Z
+T  Q,P,Z
+P,T  Q,Z
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,Z,P
+T  Q,P,Z
+T  Q,P,Z
+P,T  Q,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+P,T  Q,D
+T  Q,P,D
+T  Q,P,D
+T  Q,D,W  Y  J  K
+D,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,D
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,Z
+T  Q,Z,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,D
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,D
+T  Q,P,D
+T  Q,P,D
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,W  Y  J  K,D
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+T  Q,P,D
+P,T  Q,D
+P,T  Q,W  Y  J  K
+P,T  Q,D
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+W  Y  J  K,P,T  Q
+T  Q,P,W  Y  J  K
+P,T  Q,D
+P,T  Q,D
+P,T  Q,D
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,B
+P,T  Q,W  Y  J  K
+P,T  Q,D
+P,T  Q,B
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,D
+T  Q,D,P
+T  Q,P,D
+T  Q,P,D
+T  Q,P,D
+T  Q,B,P
+T  Q,B,P
+P,T  Q,B
+P,D,T  Q
+P,T  Q,D
+T  Q,B,P
+P,T  Q,B
+T  Q,P,D
+P,B,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,D
+W  Y  J  K,T  Q,P
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,D
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,D
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,D
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,T  Q,W  Y  J  K
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,T  Q,B
+W  Y  J  K,T  Q,P
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+T  Q,P,W  Y  J  K
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,T  Q,Z
+P,T  Q,Z
+P,D,W  Y  J  K
+P,T  Q,Z
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,D,T  Q
+P,T  Q,D
+P,T  Q,D
+D,P,T  Q
+P,T  Q,D
+P,D,W  Y  J  K
+P,D,T  Q
+T  Q,P,D
+P,D,T  Q
+P,D,W  Y  J  K
+P,T  Q,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,D
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,Z,T  Q
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,Z
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,Z
+T  Q,P,D
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+P,D,W  Y  J  K
+P,D,W  Y  J  K
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+W  Y  J  K,P,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,D
+P,D,W  Y  J  K
+W  Y  J  K,P,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,D
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,D
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,D
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,D
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,D
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,D
+P,T  Q,D
+P,T  Q,W  Y  J  K
+P,D,T  Q
+P,T  Q,D
+P,T  Q,D
+P,T  Q,D
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,D
+P,T  Q,D
+P,T  Q,D
+P,T  Q,D
+P,T  Q,D
+P,T  Q,W  Y  J  K
+P,T  Q,D
+P,D,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+T  Q,W  Y  J  K,P
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,D,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+P,T  Q,W  Y  J  K
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+W  Y  J  K,P,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+W  Y  J  K,P,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,D
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,D
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+W  Y  J  K,P,D
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,D
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,Z
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,D,W  Y  J  K
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,D,W  Y  J  K
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,D,W  Y  J  K
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,D,W  Y  J  K
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,D,W  Y  J  K
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,D,W  Y  J  K
+P,W  Y  J  K,Z
+P,Z,W  Y  J  K
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,D,W  Y  J  K
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,D,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,Z
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+W  Y  J  K,P,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,Z
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,D
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,Z
+P,W  Y  J  K,Z
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,D,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,Z,W  Y  J  K
+P,W  Y  J  K,Z
+P,Z,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,T  Q,D
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+W  Y  J  K,P,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,Z,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,T  Q,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+Z,P,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,Z,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,D
+Z,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,Z,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,Z
+P,W  Y  J  K,T  Q
+P,T  Q,Z
+P,W  Y  J  K,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,T  Q,D
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,Z,T  Q
+P,Z,T  Q
+P,T  Q,D
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,Z
+P,T  Q,W  Y  J  K
+P,Z,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+T  Q,P,Z
+P,T  Q,Z
+P,T  Q,Z
+T  Q,P,Z
+T  Q,P,Z
+P,T  Q,W  Y  J  K
+T  Q,P,D
+P,T  Q,D
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,D
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,Z
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,Z,P
+T  Q,P,Z
+T  Q,W  Y  J  K,Z
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,Z
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,Z
+T  Q,Z,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,D
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,Z
+T  Q,W  Y  J  K,D
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,D,W  Y  J  K
+T  Q,W  Y  J  K,D
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,Z
+T  Q,W  Y  J  K,Z
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,Z
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,D,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,Z
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,Z
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,P,W  Y  J  K
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+W  Y  J  K,T  Q,P
+W  Y  J  K,P,T  Q
+W  Y  J  K,P,T  Q
+W  Y  J  K,T  Q,P
+P,T  Q,W  Y  J  K
+P,T  Q,W  Y  J  K
+P,W  Y  J  K,T  Q
+T  Q,W  Y  J  K,P
+W  Y  J  K,T  Q,P
+T  Q,P,W  Y  J  K
+P,W  Y  J  K,T  Q
+T  Q,P,W  Y  J  K
+P,T  Q,W  Y  J  K
+T  Q,W  Y  J  K,P
+T  Q,W  Y  J  K,P
+W  Y  J  K,T  Q,P
+T  Q,P,W  Y  J  K
+W  Y  J  K,T  Q,P
+W  Y  J  K,P,T  Q
+P,W  Y  J  K,T  Q
+P,T  Q,W  Y  J  K
+W  Y  J  K,P,T  Q
+W  Y  J  K,T  Q,P
+W  Y  J  K,D,P
+W  Y  J  K,P,T  Q
+W  Y  J  K,T  Q,P
+W  Y  J  K,T  Q,D
+W  Y  J  K,D,P
+D,W  Y  J  K,T  Q
+W  Y  J  K,T  Q,P
+T  Q,W  Y  J  K,P
+W  Y  J  K,T  Q,P

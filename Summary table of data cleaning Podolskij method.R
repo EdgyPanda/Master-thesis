@@ -101,3 +101,90 @@ meantimeSPYTOTAL <- mean(meantimeSPY)
 
 meantimeTLTTOTAL
 meantimeSPYTOTAL
+
+
+
+#---------------------------------------Average number of trades-------------------
+
+rawtradesTLT <- numeric()
+rawtradesSPY <- numeric()
+
+for(i in 1:length(dataTLT)){
+
+
+	rawtradesTLT[i] <- length(dataTLT[[i]])
+	rawtradesSPY[i] <- length(dataSPY[[i]])
+
+}
+
+rawtradesTLT20102012 <- mean(rawtradesTLT[1:504])
+rawtradesTLT20122014 <- mean(rawtradesTLT[505:1006])
+rawtradesTLT20142016 <- mean(rawtradesTLT[1007:1510])
+rawtradesTLT20162018 <- mean(rawtradesTLT[1511:2013])
+rawtradesTLT20182020 <- mean(rawtradesTLT[2014:2516])
+rawtradesTLTtotal <- mean(rawtradesTLT)
+
+rawtradesTLT20102012
+rawtradesTLT20122014
+rawtradesTLT20142016 
+rawtradesTLT20162018 
+rawtradesTLT20182020 
+rawtradesTLTtotal
+
+rawtradesSPY20102012 <- mean(rawtradesSPY[1:504])
+rawtradesSPY20122014 <- mean(rawtradesSPY[505:1006])
+rawtradesSPY20142016 <- mean(rawtradesSPY[1007:1510])
+rawtradesSPY20162018 <- mean(rawtradesSPY[1511:2013])
+rawtradesSPY20182020 <- mean(rawtradesSPY[2014:2516])
+rawtradesSPYtotal <- mean(rawtradesSPY)
+
+rawtradesSPY20102012
+rawtradesSPY20122014
+rawtradesSPY20142016 
+rawtradesSPY20162018 
+rawtradesSPY20182020 
+rawtradesSPYtotal
+
+
+#------------------------------Average number of cand.outliers (candidate outliers)----------------------
+#the average number of candidate outliers  as identified by the filtering procedure.
+
+
+SummarystatsTLT <- read.csv("SummaryStatisticsforcleaning_TLT.csv", header = T)
+SummarystatsSPY <- read.csv("SummaryStatisticsforcleaning_SPY.csv", header = T)
+
+
+outliersSPY20102012 <- sum(SummarystatsSPY$T4[1:504])
+outliersSPY20122014 <- sum(SummarystatsSPY$T4[505:1006])
+outliersSPY20142016 <- sum(SummarystatsSPY$T4[1007:1510])
+outliersSPY20162018 <- sum(SummarystatsSPY$T4[1511:2013])
+outliersSPY20182020 <- sum(SummarystatsSPY$T4[2014:2513])
+outliersSPYtotal <- sum(SummarystatsSPY$T4)
+
+
+outliersSPY20102012
+outliersSPY20122014
+outliersSPY20142016
+outliersSPY20162018
+outliersSPY20182020
+outliersSPYtotal
+
+outliersTLT20102012 <- sum(SummarystatsTLT$T4[1:504])
+outliersTLT20122014 <- sum(SummarystatsTLT$T4[505:1006])
+outliersTLT20142016 <- sum(SummarystatsTLT$T4[1007:1510])
+outliersTLT20162018 <- sum(SummarystatsTLT$T4[1511:2013])
+outliersTLT20182020 <- sum(SummarystatsTLT$T4[2014:2515])
+outliersTLTtotal <- sum(SummarystatsTLT$T4)
+
+
+outliersTLT20102012
+outliersTLT20122014
+outliersTLT20142016
+outliersTLT20162018
+outliersTLT20182020
+outliersTLTtotal
+
+#----------------------------------------------------raw trades ---------------------------------------
+
+#Raw trades/quotes is the total number of data available from these exchanges during the
+#trading session, while  #trades/quotes is the total sample remaining after filtering the data

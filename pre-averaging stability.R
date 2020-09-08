@@ -89,7 +89,7 @@ BPMRC_5sec <- list()
 library(tictoc)
 #Do not run, takes approx 7 hours and 30 mins. 
 tic()
-for(i in 2:100){
+for(i in 1:100){
 	for(j in 1:length(theta)){
 		temp1[,,j] <- preavCov(Merged_1sec[[iT[i]]], T, T, F, theta = theta[j])
 		temp2[,,j] <- preavCov(Merged_5sec[[iT[i]]], T, T, F, theta = theta[j])
