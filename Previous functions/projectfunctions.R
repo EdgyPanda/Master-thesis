@@ -272,7 +272,7 @@ preavBPCOV <- function(matrix, preaveraging = FALSE, correlation = FALSE, rescal
 
 			vector <- as.vector(as.numeric(vector))
 
-			var <- (pi/2) * sum( abs( vector[1:(n-1)]) * abs(vector[2:n]) )
+			var <- (pi/2) *(n/(n-1)) * sum( abs( vector[1:(n-1)]) * abs(vector[2:n]) )
 		}
 	
 	return(var)

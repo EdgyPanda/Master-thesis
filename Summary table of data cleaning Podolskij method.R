@@ -214,7 +214,8 @@ mean(rawtradesSPY)
 
 
 #------------------------------------Average proportion of non-zero trade returns----------------------------
-#Done by constructing return data from all of the transaction prices without the use of a trade aggregation scheme. 
+#Done by constructing return data from all of the transaction prices and can be based on TRTS employing
+#all transactions. 
 #Intuitively, while the proportion might be close to the same proportion for a 1 second CTS scheme, we know that sparse
 #sparse sampling further, will likely increase the proportion. Ie. the non-zero trades also indirectly describes the liquidity of our
 #financial assets. 
@@ -285,3 +286,174 @@ nonzerotradeTLT2018 <- sum(nonzeroTLT[2014:2263])/(sum(TLTtotal[2014:2263]))
 
 
 #--------------------------------------------------NOISE ESTIMATOR-----------------------------------
+#This is based on based on TRTS employing all transactions.
+#
+#
+#We use a slightly modified function other than the previous year. Ie, we use a sparse sampled (5-min) bipower variation
+#as the estimator for IV instead of the MLRV proposed in the podolskij hautsch paper. 
+#
+#
+#
+
+source("Previous functions/projectfunctions.R")
+
+TLT_raw <- list()
+
+SPY_raw <- list()
+
+TLT_1min <- list()
+
+SPY_1min <- list()
+
+for(i in 1:length(dataTLT)){
+
+	TLT_raw[[i]] <- diff(log(dataTLT[[i]]))[-1]
+
+    SPY_raw[[i]] <- diff(log(dataSPY[[i]]))[-1]
+
+    TLT_1min[[i]] <- diff(log(aggregatets(dataTLT[[i]], on="minutes",k=1)))[-1]
+
+    SPY_1min[[i]] <- diff(log(aggregatets(dataSPY[[i]], on="minutes", k=1)))[-1]
+}
+
+
+library(highfrequency)
+#only univariate lists 
+noisetosignal2 <- function(list,sparse_data,  names = NULL){
+
+	n <- as.vector(sapply(list, length))
+
+	#IVest <- MLRV(list, names)
+	IVest <- matrix(0L, nrow = length(list), ncol = 1)
+
+	for(i in 1:length(list)){
+
+		IVest[i] <- preavBPCOV(sparse_data[[i]], F, F, F, theta = 1)
+
+	}
+
+	#a bar calculations
+	condition <- as.numeric(vector())
+
+	#sum only takes numeric vectors, therefore saving in list object.
+	ret <- list() 
+	for ( i in 1:length(list)){
+
+		ret[[i]] <- as.vector(list[[i]])
+
+	}
+
+	for (i in 1:length(list)){
+
+	condition[i] <- t(ret[[i]][2:n[i]]) %*% ret[[i]][1:(n[i]-1)]
+
+	}
+
+	abar <- matrix(0L, nrow = length(list), ncol=1)
+
+	for(i in 1:length(list)){
+
+		if(condition[i] < 0){
+
+			abar[i, 1] <-  -1/(n[i]-1) * t(ret[[i]][1:(n[i]-1)]) %*% ret[[i]][2:n[i]]
+		}
+		else{
+
+			abar[i, 1] <-  (1/(2*n[i]) * realCov(ret[[i]]))
+
+		}
+
+	}
+
+	#eps <- abar %*% 1/(IVest %*% 1/n)
+	eps <-  abar / (IVest / n)
+
+
+	return(eps)
+
+}
+
+
+dailynoiseTLT <- noisetosignal2(TLT_raw, TLT_5min)
+dailynoiseTLTMLRV <- noisetosignal(TLT_raw)
+
+noiseTLT20102012 <- mean(dailynoiseTLT[1:504])
+noiseTLT20122014 <- mean(dailynoiseTLT[505:1006])
+noiseTLT20142016 <- mean(dailynoiseTLT[1007:1510])
+noiseTLT20162018 <- mean(dailynoiseTLT[1511:2013])
+noiseTLT20182020 <- mean(dailynoiseTLT[2014:2516])
+
+
+noiseTLT20102012
+noiseTLT20122014 
+noiseTLT20142016
+noiseTLT20162018
+noiseTLT20182020 
+
+#Total
+mean(dailynoiseTLT)
+mean(dailynoiseTLTMLRV)
+
+
+
+
+
+dailynoiseSPY <- noisetosignal2(SPY_raw, SPY_1min)
+dailynoiseSPYMLRV <- noisetosignal(SPY_raw)
+
+#729
+
+noisetosignal2(list(SPY_raw[[729]]), list(SPY_5min[[729]]))
+
+noisetosignal2(list(SPY_raw[[100]]), list(SPY_5min[[100]]))
+
+
+
+noiseSPY20102012 <- mean(dailynoiseSPY[1:504])
+noiseSPY20122014 <- mean(dailynoiseSPY[505:1006])
+noiseSPY20142016 <- mean(dailynoiseSPY[1007:1510])
+noiseSPY20162018 <- mean(dailynoiseSPY[1511:2013])
+noiseSPY20182020 <- mean(dailynoiseSPY[2014:2516])
+
+
+noiseSPY20102012
+noiseSPY20122014 
+noiseSPY20142016
+noiseSPY20162018
+noiseSPY20182020 
+
+mean(dailynoiseSPY)
+mean(dailynoiseSPYMLRV)
+
+
+
+#---------------------------------exhanges--------------------------------------------
+extlt <- read.csv("ExchangeStatistics_TLT.csv")
+
+
+
+length(grep("T  Q", extlt[2399,2]))
+length(grep("W  Y  J  K", extlt[,3]))
+"P"
+"P T"
+"Z T"
+
+countCharOccurrences <- function(char, s) {
+    s2 <- gsub(char,"",s)
+    return (nchar(s) - nchar(s2))
+}
+
+
+
+counterZ <- 0
+counterD <- 0
+counterP <- 0
+for (i in 1:length(ex)){
+
+	counterZ <- counterZ + countCharOccurrences("Z", ex[[i]])
+	counterD <- counterD + countCharOccurrences("D", ex[[i]])
+	counterP <- counterP + countCharOccurrences("P", ex[[i]])
+}
+
+#ratios:
+(counterZ/250)*100
