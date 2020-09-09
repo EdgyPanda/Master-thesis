@@ -429,31 +429,37 @@ mean(dailynoiseSPYMLRV)
 
 #---------------------------------exhanges--------------------------------------------
 extlt <- read.csv("ExchangeStatistics_TLT.csv")
+exspy <- read.csv("ExchangeStatistics_SPY.csv")
+
+#TLT
+
+tqtlt <- length(grep("T  Q", extlt[,1])) + length(grep("T  Q", extlt[,2])) + length(grep("T  Q", extlt[,3]))
+
+wyjktlt <- length(grep("W  Y  J  K", extlt[,1])) + length(grep("W  Y  J  K", extlt[,2])) + length(grep("W  Y  J  K", extlt[,3]))
+
+ptlt <- length(grep("P", extlt[,1])) + length(grep("P", extlt[,2])) + length(grep("P", extlt[,3]))
+
+ztlt <- length(grep("Z", extlt[,1])) + length(grep("Z", extlt[,2])) + length(grep("Z", extlt[,3]))
+
+dtlt <- length(grep("D", extlt[,1])) + length(grep("D", extlt[,2])) + length(grep("D", extlt[,3]))
+
+btlt <- length(grep("B", extlt[,1])) + length(grep("B", extlt[,2])) + length(grep("B", extlt[,3]))
 
 
+c(tqtlt, wyjktlt, ptlt, ztlt, dtlt, btlt)
 
-length(grep("T  Q", extlt[2399,2]))
-length(grep("W  Y  J  K", extlt[,3]))
-"P"
-"P T"
-"Z T"
+#SPY
 
-countCharOccurrences <- function(char, s) {
-    s2 <- gsub(char,"",s)
-    return (nchar(s) - nchar(s2))
-}
+tqspy <- length(grep("T  Q", exspy[,1])) + length(grep("T  Q", exspy[,2])) + length(grep("T  Q", exspy[,3]))
 
+wyjkspy <- length(grep("W  Y  J  K", exspy[,1])) + length(grep("W  Y  J  K", exspy[,2])) + length(grep("W  Y  J  K", exspy[,3]))
 
+pspy <- length(grep("P", exspy[,1])) + length(grep("P", exspy[,2])) + length(grep("P", exspy[,3]))
 
-counterZ <- 0
-counterD <- 0
-counterP <- 0
-for (i in 1:length(ex)){
+zspy <- length(grep("Z", exspy[,1])) + length(grep("Z", exspy[,2])) + length(grep("Z", exspy[,3]))
 
-	counterZ <- counterZ + countCharOccurrences("Z", ex[[i]])
-	counterD <- counterD + countCharOccurrences("D", ex[[i]])
-	counterP <- counterP + countCharOccurrences("P", ex[[i]])
-}
+dspy <- length(grep("D", exspy[,1])) + length(grep("D", exspy[,2])) + length(grep("D", exspy[,3]))
 
-#ratios:
-(counterZ/250)*100
+bspy <- length(grep("B", exspy[,1])) + length(grep("B", exspy[,2])) + length(grep("B", exspy[,3]))
+
+c(tqspy, wyjkspy, pspy, zspy, dspy, bspy)
