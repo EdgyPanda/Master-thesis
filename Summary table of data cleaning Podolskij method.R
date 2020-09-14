@@ -374,7 +374,7 @@ noisetosignal2 <- function(list,sparse_data,  names = NULL){
 }
 
 
-dailynoiseTLT <- noisetosignal2(TLT_raw, TLT_5min)
+dailynoiseTLT <- noisetosignal2(TLT_raw, TLT_1min)
 dailynoiseTLTMLRV <- noisetosignal(TLT_raw)
 
 noiseTLT20102012 <- mean(dailynoiseTLT[1:504])
@@ -433,33 +433,96 @@ exspy <- read.csv("ExchangeStatistics_SPY.csv")
 
 #TLT
 
-tqtlt <- length(grep("T  Q", extlt[,1])) + length(grep("T  Q", extlt[,2])) + length(grep("T  Q", extlt[,3]))
 
-wyjktlt <- length(grep("W  Y  J  K", extlt[,1])) + length(grep("W  Y  J  K", extlt[,2])) + length(grep("W  Y  J  K", extlt[,3]))
+#construct ad-hoc function that gives me the results for 2 year increments. 
 
-ptlt <- length(grep("P", extlt[,1])) + length(grep("P", extlt[,2])) + length(grep("P", extlt[,3]))
+#Years are changing at, 252, 504, 754, 1006, 1258, 1510, 1762, 2013, 2264, 2516(end)
 
-ztlt <- length(grep("Z", extlt[,1])) + length(grep("Z", extlt[,2])) + length(grep("Z", extlt[,3]))
+main.ExchangesTLT <- function(sequence){
 
-dtlt <- length(grep("D", extlt[,1])) + length(grep("D", extlt[,2])) + length(grep("D", extlt[,3]))
+	tqtlt <- length(grep("T  Q", extlt[sequence,1])) + length(grep("T  Q", extlt[sequence,2])) + 
+	length(grep("T  Q", extlt[sequence,3]))
 
-btlt <- length(grep("B", extlt[,1])) + length(grep("B", extlt[,2])) + length(grep("B", extlt[,3]))
+	wyjktlt <- length(grep("W  Y  J  K", extlt[sequence,1])) + length(grep("W  Y  J  K", extlt[sequence,2])) + 
+	length(grep("W  Y  J  K", extlt[sequence,3]))
+
+	ptlt <- length(grep("P", extlt[sequence,1])) + length(grep("P", extlt[sequence,2])) + 
+	length(grep("P", extlt[sequence,3]))
+
+	ztlt <- length(grep("Z", extlt[sequence,1])) + length(grep("Z", extlt[sequence,2])) + 
+	length(grep("Z", extlt[sequence,3]))
+
+	dtlt <- length(grep("D", extlt[sequence,1])) + length(grep("D", extlt[sequence,2])) + 
+	length(grep("D", extlt[sequence,3]))
+
+	btlt <- length(grep("B", extlt[sequence,1])) + length(grep("B", extlt[sequence,2])) + 
+	length(grep("B", extlt[sequence,3]))
+
+	res <- matrix(c(tqtlt, wyjktlt, ptlt, ztlt, dtlt, btlt), ncol = 6, nrow = 1)
+
+	colnames(res) <- c("tqtlt", "wyjktlt", "ptlt", "ztlt", "dtlt", "btlt")
+	return(res)
 
 
-c(tqtlt, wyjktlt, ptlt, ztlt, dtlt, btlt)
+}
+
+main.ExchangesTLT(1:504)
+
+main.ExchangesTLT(505:1006)
+
+main.ExchangesTLT(1007:1510)
+
+main.ExchangesTLT(1511:2013)
+
+main.ExchangesTLT(2014:2516)
+
+#total 
+
+main.ExchangesTLT(1:2516)
+
+
+
 
 #SPY
 
-tqspy <- length(grep("T  Q", exspy[,1])) + length(grep("T  Q", exspy[,2])) + length(grep("T  Q", exspy[,3]))
 
-wyjkspy <- length(grep("W  Y  J  K", exspy[,1])) + length(grep("W  Y  J  K", exspy[,2])) + length(grep("W  Y  J  K", exspy[,3]))
+main.ExchangesSPY <- function(sequence){
 
-pspy <- length(grep("P", exspy[,1])) + length(grep("P", exspy[,2])) + length(grep("P", exspy[,3]))
+	tqspy <- length(grep("T  Q", exspy[sequence,1])) + length(grep("T  Q", exspy[sequence,2])) + 
+	length(grep("T  Q", exspy[sequence,3]))
 
-zspy <- length(grep("Z", exspy[,1])) + length(grep("Z", exspy[,2])) + length(grep("Z", exspy[,3]))
+	wyjkspy <- length(grep("W  Y  J  K", exspy[sequence,1])) + length(grep("W  Y  J  K", exspy[sequence,2])) + 
+	length(grep("W  Y  J  K", exspy[sequence,3]))
 
-dspy <- length(grep("D", exspy[,1])) + length(grep("D", exspy[,2])) + length(grep("D", exspy[,3]))
+	pspy <- length(grep("P", exspy[sequence,1])) + length(grep("P", exspy[sequence,2])) + 
+	length(grep("P", exspy[sequence,3]))
 
-bspy <- length(grep("B", exspy[,1])) + length(grep("B", exspy[,2])) + length(grep("B", exspy[,3]))
+	zspy <- length(grep("Z", exspy[sequence,1])) + length(grep("Z", exspy[sequence,2])) + 
+	length(grep("Z", exspy[sequence,3]))
 
-c(tqspy, wyjkspy, pspy, zspy, dspy, bspy)
+	dspy <- length(grep("D", exspy[sequence,1])) + length(grep("D", exspy[sequence,2])) + 
+	length(grep("D", exspy[sequence,3]))
+
+	bspy <- length(grep("B", exspy[sequence,1])) + length(grep("B", exspy[sequence,2])) + 
+	length(grep("B", exspy[sequence,3]))
+
+	res <- matrix(c(tqspy, wyjkspy, pspy, zspy, dspy, bspy), ncol=6, nrow = 1)
+	colnames(res) <- c("tqspy", "wyjkspy", "pspy", "zspy", "dspy", "bspy")
+
+	return(res)
+
+}
+
+main.ExchangesSPY(1:504)
+
+main.ExchangesSPY(505:1006)
+
+main.ExchangesSPY(1007:1510)
+
+main.ExchangesSPY(1511:2013)
+
+main.ExchangesSPY(2014:2516)
+
+#total 
+
+main.ExchangesSPY(1:2516)
