@@ -286,6 +286,12 @@ nonzeroTLT_5sec <- vector()
 SPYtotal <- numeric()
 TLTtotal <- numeric()
 
+SPYtotal_1sec <- numeric()
+TLTtotal_1sec<- numeric()
+
+SPYtotal_5sec <- numeric()
+TLTtotal_5sec <- numeric()
+
 for (i in 1:length(dataTLT)){
 
 nonzeroSPY[i] <- apply(rawreturnsSPY[[i]], 2, function(c)sum(c!=0))
@@ -306,6 +312,7 @@ TLTtotal[i] <- dim(rawreturnsTLT[[i]])[1]
 TLTtotal_1sec[i] <- dim(TLT_1sec[[i]])[1]
 TLTtotal_5sec[i] <- dim(TLT_5sec[[i]])[1]
 
+print(sprintf("iteration %s", i))
 }
 
 
@@ -363,11 +370,11 @@ nonzerotrades20182020TLT_5sec <- sum(nonzeroTLT_5sec[2014:2516])/(sum(TLTtotal_5
 (sum(nonzeroTLT) / sum(TLTtotal))
 
 
-nonzerotradeSPY2018_1sec <- sum(nonzeroSPY_1sec)/(sum(SPYtotal_1sec))
-nonzerotradeTLT2018_1sec <- sum(nonzeroTLT_1sec)/(sum(TLTtotal_1sec))
+nonzerotradeSPY_1sec <- sum(nonzeroSPY_1sec)/(sum(SPYtotal_1sec))
+nonzerotradeTLT_1sec <- sum(nonzeroTLT_1sec)/(sum(TLTtotal_1sec))
 
-nonzerotradeSPY2018_5sec <- sum(nonzeroSPY_5sec)/(sum(SPYtotal_5sec))
-nonzerotradeTLT2018_5sec <- sum(nonzeroTLT_5sec)/(sum(TLTtotal_5sec))
+nonzerotradeSPY_5sec <- sum(nonzeroSPY_5sec)/(sum(SPYtotal_5sec))
+nonzerotradeTLT_5sec <- sum(nonzeroTLT_5sec)/(sum(TLTtotal_5sec))
 
 #--------------------------------------------------NOISE ESTIMATOR-----------------------------------
 #This is based on based on TRTS employing all transactions.
