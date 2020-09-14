@@ -88,11 +88,11 @@ meantime20142016SPY <- mean(meantimeSPY[1007:1510])
 meantime20162018SPY <- mean(meantimeSPY[1511:2013])
 meantime20182020SPY <- mean(meantimeSPY[2014:2516])
 
-meantime20102012SPY
-meantime20122014SPY
-meantime20142016SPY
-meantime20162018SPY
-meantime20182020SPY
+meantime20102012SPY 
+meantime20122014SPY 
+meantime20142016SPY 
+meantime20162018SPY 
+meantime20182020SPY 
 
 
 #average daily transaction time in seconds:
@@ -147,19 +147,19 @@ rawtradesSPYtotal
 
 
 #------------------------------Average number of cand.outliers (candidate outliers)----------------------
-#the average number of candidate outliers  as identified by the filtering procedure.
+#the average number of daily candidate outliers as identified by the filtering procedure.
 
 
 SummarystatsTLT <- read.csv("SummaryStatisticsforcleaning_TLT.csv", header = T)
 SummarystatsSPY <- read.csv("SummaryStatisticsforcleaning_SPY.csv", header = T)
 
 
-outliersSPY20102012 <- sum(SummarystatsSPY$T4[1:504])
-outliersSPY20122014 <- sum(SummarystatsSPY$T4[505:1006])
-outliersSPY20142016 <- sum(SummarystatsSPY$T4[1007:1510])
-outliersSPY20162018 <- sum(SummarystatsSPY$T4[1511:2013])
-outliersSPY20182020 <- sum(SummarystatsSPY$T4[2014:2513])
-outliersSPYtotal <- sum(SummarystatsSPY$T4)
+outliersSPY20102012 <- mean(SummarystatsSPY$T4[1:504])
+outliersSPY20122014 <- mean(SummarystatsSPY$T4[505:1006])
+outliersSPY20142016 <- mean(SummarystatsSPY$T4[1007:1510])
+outliersSPY20162018 <- mean(SummarystatsSPY$T4[1511:2013])
+outliersSPY20182020 <- mean(SummarystatsSPY$T4[2014:2513])
+outliersSPYtotal <- mean(SummarystatsSPY$T4)
 
 
 outliersSPY20102012
@@ -169,12 +169,12 @@ outliersSPY20162018
 outliersSPY20182020
 outliersSPYtotal
 
-outliersTLT20102012 <- sum(SummarystatsTLT$T4[1:504])
-outliersTLT20122014 <- sum(SummarystatsTLT$T4[505:1006])
-outliersTLT20142016 <- sum(SummarystatsTLT$T4[1007:1510])
-outliersTLT20162018 <- sum(SummarystatsTLT$T4[1511:2013])
-outliersTLT20182020 <- sum(SummarystatsTLT$T4[2014:2515])
-outliersTLTtotal <- sum(SummarystatsTLT$T4)
+outliersTLT20102012 <- mean(SummarystatsTLT$T4[1:504])
+outliersTLT20122014 <- mean(SummarystatsTLT$T4[505:1006])
+outliersTLT20142016 <- mean(SummarystatsTLT$T4[1007:1510])
+outliersTLT20162018 <- mean(SummarystatsTLT$T4[1511:2013])
+outliersTLT20182020 <- mean(SummarystatsTLT$T4[2014:2515])
+outliersTLTtotal <- mean(SummarystatsTLT$T4)
 
 
 outliersTLT20102012
@@ -209,8 +209,28 @@ rawtradesTLT <- allcleanedTLT + datalengthTLT[1:2515]
 rawtradesSPY <- allcleanedSPY + datalengthSPY[1:2513]
 
 #The average amount of raw trades for each day during the trading session.
+
+
+mean(rawtradesTLT[1:504])
+mean(rawtradesTLT[505:1006])
+mean(rawtradesTLT[1007:1510])
+mean(rawtradesTLT[1511:2013])
+mean(rawtradesTLT[2014:2515])
+
+
 mean(rawtradesTLT)
+
+
+mean(rawtradesSPY[1:504]) +
+mean(rawtradesSPY[505:1006]) +
+mean(rawtradesSPY[1007:1510]) +
+mean(rawtradesSPY[1511:2013]) +
+mean(rawtradesSPY[2014:2513]) 
+
+
 mean(rawtradesSPY)
+
+
 
 
 #------------------------------------Average proportion of non-zero trade returns----------------------------
@@ -234,11 +254,34 @@ for (i in 1:length(dataTLT)){
 }
 
 
+TLT_1sec <- list()
+TLT_5sec <- list()
+
+
+SPY_1sec <- list()
+SPY_5sec <- list()
+
+
+for(i in 1:length(dataTLT)){
+
+	TLT_1sec[[i]] <- diff(log(aggregatets(dataTLT[[i]], on = "seconds", k=1)))[-1]
+	TLT_5sec[[i]] <- diff(log(aggregatets(dataTLT[[i]], on = "seconds", k=5)))[-1]
+
+	SPY_1sec[[i]] <- diff(log(aggregatets(dataSPY[[i]], on = "seconds", k=1)))[-1]
+	SPY_5sec[[i]] <- diff(log(aggregatets(dataSPY[[i]], on = "seconds", k=5)))[-1]
+
+}
+
+
 
 nonzeroSPY <- vector()
+nonzeroSPY_1sec <- vector()
+nonzeroSPY_5sec <- vector()
+
 
 nonzeroTLT <- vector()
-
+nonzeroTLT_1sec <- vector()
+nonzeroTLT_5sec <- vector()
 
 SPYtotal <- numeric()
 TLTtotal <- numeric()
@@ -246,12 +289,22 @@ TLTtotal <- numeric()
 for (i in 1:length(dataTLT)){
 
 nonzeroSPY[i] <- apply(rawreturnsSPY[[i]], 2, function(c)sum(c!=0))
+nonzeroSPY_1sec[i] <- apply(SPY_1sec[[i]], 2, function(c)sum(c!=0))
+nonzeroSPY_5sec[i] <- apply(SPY_5sec[[i]], 2, function(c)sum(c!=0))
 
 nonzeroTLT[i] <- apply(rawreturnsTLT[[i]], 2, function(c)sum(c!=0))
+nonzeroTLT_1sec[i] <- apply(TLT_1sec[[i]], 2, function(c)sum(c!=0))
+nonzeroTLT_5sec[i] <- apply(TLT_5sec[[i]], 2, function(c)sum(c!=0))
+
 
 SPYtotal[i] <- dim(rawreturnsSPY[[i]])[1]
+SPYtotal_1sec[i] <- dim(SPY_1sec[[i]])[1]
+SPYtotal_5sec[i] <- dim(SPY_5sec[[i]])[1]
+
 
 TLTtotal[i] <- dim(rawreturnsTLT[[i]])[1]
+TLTtotal_1sec[i] <- dim(TLT_1sec[[i]])[1]
+TLTtotal_5sec[i] <- dim(TLT_5sec[[i]])[1]
 
 }
 
@@ -265,25 +318,56 @@ nonzerotrades20142016SPY <- sum(nonzeroSPY[1007:1510])/(sum(SPYtotal[1007:1510])
 nonzerotrades20162018SPY <- sum(nonzeroSPY[1511:2013])/(sum(SPYtotal[1511:2013]))
 nonzerotrades20182020SPY <- sum(nonzeroSPY[2014:2516])/(sum(SPYtotal[2014:2516]))
 
-nonzerotrades20102012TLT <- sum(nonzeroSPY[1:504])/(sum(SPYtotal[1:504]))
-nonzerotrades20122014TLT <- sum(nonzeroSPY[505:1006])/(sum(SPYtotal[505:1006]))
-nonzerotrades20142016TLT <- sum(nonzeroSPY[1007:1510])/(sum(SPYtotal[1007:1510]))
-nonzerotrades20162018TLT <- sum(nonzeroSPY[1511:2013])/(sum(SPYtotal[1511:2013]))
-nonzerotrades20182020TLT <- sum(nonzeroSPY[2014:2516])/(sum(SPYtotal[2014:2516]))
+nonzerotrades20102012TLT <- sum(nonzeroTLT[1:504])/(sum(TLTtotal[1:504]))
+nonzerotrades20122014TLT <- sum(nonzeroTLT[505:1006])/(sum(TLTtotal[505:1006]))
+nonzerotrades20142016TLT <- sum(nonzeroTLT[1007:1510])/(sum(TLTtotal[1007:1510]))
+nonzerotrades20162018TLT <- sum(nonzeroTLT[1511:2013])/(sum(TLTtotal[1511:2013]))
+nonzerotrades20182020TLT <- sum(nonzeroTLT[2014:2516])/(sum(TLTtotal[2014:2516]))
 
-#As a test, here's 2018: (CORRECT)
 
-nonzerotradeSPY2018 <- sum(nonzeroSPY[2014:2264])/(sum(SPYtotal[2014:2264]))
-nonzerotradeTLT2018 <- sum(nonzeroTLT[2014:2263])/(sum(TLTtotal[2014:2263]))
+# 1 sec 
 
+nonzerotrades20102012SPY_1sec <- sum(nonzeroSPY_1sec[1:504])/(sum(SPYtotal_1sec[1:504]))
+nonzerotrades20122014SPY_1sec <- sum(nonzeroSPY_1sec[505:1006])/(sum(SPYtotal_1sec[505:1006]))
+nonzerotrades20142016SPY_1sec <- sum(nonzeroSPY_1sec[1007:1510])/(sum(SPYtotal_1sec[1007:1510]))
+nonzerotrades20162018SPY_1sec <- sum(nonzeroSPY_1sec[1511:2013])/(sum(SPYtotal_1sec[1511:2013]))
+nonzerotrades20182020SPY_1sec <- sum(nonzeroSPY_1sec[2014:2516])/(sum(SPYtotal_1sec[2014:2516]))
+
+
+nonzerotrades20102012TLT_1sec <- sum(nonzeroTLT_1sec[1:504])/(sum(TLTtotal_1sec[1:504]))
+nonzerotrades20122014TLT_1sec <- sum(nonzeroTLT_1sec[505:1006])/(sum(TLTtotal_1sec[505:1006]))
+nonzerotrades20142016TLT_1sec <- sum(nonzeroTLT_1sec[1007:1510])/(sum(TLTtotal_1sec[1007:1510]))
+nonzerotrades20162018TLT_1sec <- sum(nonzeroTLT_1sec[1511:2013])/(sum(TLTtotal_1sec[1511:2013]))
+nonzerotrades20182020TLT_1sec <- sum(nonzeroTLT_1sec[2014:2516])/(sum(TLTtotal_1sec[2014:2516]))
+
+
+# 5 sec 
+
+nonzerotrades20102012SPY_5sec <- sum(nonzeroSPY_5sec[1:504])/(sum(SPYtotal_5sec[1:504]))
+nonzerotrades20122014SPY_5sec <- sum(nonzeroSPY_5sec[505:1006])/(sum(SPYtotal_5sec[505:1006]))
+nonzerotrades20142016SPY_5sec <- sum(nonzeroSPY_5sec[1007:1510])/(sum(SPYtotal_5sec[1007:1510]))
+nonzerotrades20162018SPY_5sec <- sum(nonzeroSPY_5sec[1511:2013])/(sum(SPYtotal_5sec[1511:2013]))
+nonzerotrades20182020SPY_5sec <- sum(nonzeroSPY_5sec[2014:2516])/(sum(SPYtotal_5sec[2014:2516]))
+
+
+nonzerotrades20102012TLT_5sec <- sum(nonzeroTLT_5sec[1:504])/(sum(TLTtotal_5sec[1:504]))
+nonzerotrades20122014TLT_5sec <- sum(nonzeroTLT_5sec[505:1006])/(sum(TLTtotal_5sec[505:1006]))
+nonzerotrades20142016TLT_5sec <- sum(nonzeroTLT_5sec[1007:1510])/(sum(TLTtotal_5sec[1007:1510]))
+nonzerotrades20162018TLT_5sec <- sum(nonzeroTLT_5sec[1511:2013])/(sum(TLTtotal_5sec[1511:2013]))
+nonzerotrades20182020TLT_5sec <- sum(nonzeroTLT_5sec[2014:2516])/(sum(TLTtotal_5sec[2014:2516]))
 
 
 #total
 (sum(nonzeroSPY) / sum(SPYtotal))
 
-
 (sum(nonzeroTLT) / sum(TLTtotal))
 
+
+nonzerotradeSPY2018_1sec <- sum(nonzeroSPY_1sec)/(sum(SPYtotal_1sec))
+nonzerotradeTLT2018_1sec <- sum(nonzeroTLT_1sec)/(sum(TLTtotal_1sec))
+
+nonzerotradeSPY2018_5sec <- sum(nonzeroSPY_5sec)/(sum(SPYtotal_5sec))
+nonzerotradeTLT2018_5sec <- sum(nonzeroTLT_5sec)/(sum(TLTtotal_5sec))
 
 #--------------------------------------------------NOISE ESTIMATOR-----------------------------------
 #This is based on based on TRTS employing all transactions.
