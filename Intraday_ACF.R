@@ -31,6 +31,15 @@ for(j in 1:length(secs)){
 }
 
 
+rawreturnsSPY <- list()
+rawreturnsTLT <- list()
+
+for(i in 1:length(dataSPY)){
+
+rawreturnsSPY[[i]] <- diff(log(dataSPY[[i]]))[-1]
+rawreturnsTLT[[i]] <- diff(log(dataTLT[[i]]))[-1]
+
+}
 
 for(j in 1:length(secs)){
 	for(i in 1:length(dataSPY)){
@@ -41,6 +50,7 @@ for(j in 1:length(secs)){
 	}
 	print(sprintf("%s", j))
 }
+
 
 
 
@@ -55,6 +65,17 @@ library(forecast)
 
 acfnumbersspy <- array(0L, dim = c(31,2516,length(secs)))
 acfnumberstlt <- array(0L, dim = c(31,2516,length(secs)))
+
+acfrawspy <- matrix(0L, nrow = 31, ncol = 2516)
+acfrawtlt <- matrix(0L, nrow = 31, ncol = 2516)
+
+for(i in 1:length(dataSPY)){
+
+	acfrawspy[,i] <- acf(rawreturnsSPY[[i]], lag.max  = 30, plot =  F)$acf
+	acfrawtlt[,i] <- acf(rawreturnsTLT[[i]], lag.max  = 30, plot =  F)$acf
+
+}
+
 
 for(j in 1:length(secs)){
 	for(i in 1:length(aggregatespy)){
@@ -71,8 +92,10 @@ for(j in 1:length(secs)){
 avgacfspy <- rowMeans(acfnumbersspy)
 avgacftlt <- rowMeans(acfnumberstlt)
 
+avgacfspyraw <- rowMeans(acfrawspy)
+avgacftltraw <- rowMeans(acfrawtlt)
 
-data2 <- data.frame(avgacfspy, avgacftlt)[-1,]
+data2 <- data.frame(avgacfspyraw, avgacftltraw)[-1,]
 lag <- 1:30
 ciline <- qnorm((1 - 0.95)/2)/sqrt(length(dataSPY))
 
