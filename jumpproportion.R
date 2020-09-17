@@ -61,11 +61,11 @@ for(i in 1:length(dataTLT)){
 }
 
 
-#find first non-negative return. For test purposes. Sampling too many zero returns will downward bias the vol:
+#find first non-negative return and last non-negative return. 
+#Reason: Each day we have two returns, one of them will be zero making BV zero and we will get negative jump proportion. 
 
-opentocloseTLTnonneg <- lapply(opentocloseTLT, function(x) x[c(which(x>0)[1], length(x))])
-opentocloseSPYnonneg <- lapply(opentocloseSPY, function(x) x[c(which(x>0)[1], length(x))])
-
+opentocloseTLTnonneg <- lapply(opentocloseTLT, function(x) x[c(which(x>0)[1], max(which(x>0)))])
+opentocloseSPYnonneg <- lapply(opentocloseSPY, function(x) x[c(which(x>0)[1], max(which(x>0)))])
 
 
 
@@ -111,6 +111,13 @@ JPsecond <-function(data){
 }
 
 
+#Do the analysis. First five needs jpsecond, last five needs jpminute. 
+
+
+
+
+
+
 
 tester <- list() #opentoclose
 tester2 <- list() #opentoclose first non negative return. 
@@ -120,5 +127,12 @@ for(i in 1:length(frequenciesTLT[[10]])){
 	tester2[[i]] <- JPminute(opentocloseTLTnonneg[[i]])
 }
 
+#In essence, just use normal open-to-close log-returns. 
 
-tester2[[1]]
+
+
+
+test <- lapply(tester2, function(x) x$JP)
+test <- unlist(test)
+
+JPminute(opentocloseTLTnonneg[[8]])
