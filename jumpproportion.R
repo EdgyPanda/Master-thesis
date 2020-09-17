@@ -80,24 +80,45 @@ frequenciesTLT[[10]] <- opentocloseTLT
 #--------------------jump proportion calculation-------------------------------
 
 #minute, no pre-averaging
-JPmin <-function(data){
+JPminute <-function(data){
 
-	JP <- (realCov(data) - preavBPCOV(data,F,F,F))/realCov(data) 
+	RV <- realCov(data)
+	BV <- preavBPCOV(data,F,F,F)
 
-	return(JP)
+	JP <- (RV - BV)/RV
+
+	lout <- list(RV, BV, JP)
+
+	names(lout) <- c("RV", "BV", "JP")
+
+	return(lout)
 }
 
-#need pre-average version. 
+#pre-average version. 
+
+JPsecond <-function(data){
+
+	RV <- preavCov(data,T,T,F,1)
+	BV <- preavBPCOV(data,T,F,T,1)
+
+	JP <- (RV - BV)/RV
+
+	lout <- list(RV, BV, JP)
+
+	names(lout) <- c("RV", "BV", "JP")
+
+	return(lout)
+}
 
 
 
-
-
-tester <- numeric() #opentoclose
-tester2 <- numeric() #opentoclose first non negative return. 
+tester <- list() #opentoclose
+tester2 <- list() #opentoclose first non negative return. 
 for(i in 1:length(frequenciesTLT[[10]])){
 
-	tester[i] <- JPmin(frequenciesTLT[[10]][[i]])
-	tester2[i] <- JPmin(opentocloseTLTnonneg[[i]])
+	tester[[i]] <- JPminute(frequenciesTLT[[10]][[i]])
+	tester2[[i]] <- JPminute(opentocloseTLTnonneg[[i]])
 }
 
+
+tester2[[1]]
