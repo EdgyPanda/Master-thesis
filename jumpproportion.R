@@ -13,10 +13,6 @@ dataTLT <- readRDS("dataTLT.rds")
 dataSPY <- readRDS("dataSPY.rds")
 
 
-#open to close test
-
-dataTLT[[1]][c(1,length(dataTLT[[1]])), ]
-
 
 #you only need open-to-close
 
@@ -36,13 +32,48 @@ for(j in 1:length(secs)){
 
 		tempTLT[[i]] <- aggregatets(dataTLT[[i]], on="seconds", k=secs[j])
 		tempSPY[[i]] <- aggregatets(dataSPY[[i]], on="seconds", k=secs[j])
-
-
 	}
 
 	frequenciesTLT[[j]] <- tempTLT
 	frequenciesSPY[[j]] <- tempSPY
-
-
+	print(sprintf("%s",j))
 }
+
+#log-returns
+
+for(j in 1:length(secs)){
+	for(i in 1:length(dataTLT)){
+
+		frequenciesTLT[[j]][[i]] <- diff(log(frequenciesTLT[[j]][[i]]))[-1]
+		frequenciesSPY[[j]][[i]] <- diff(log(frequenciesSPY[[j]][[i]]))[-1]
+
+	}
+}
+
+
+opentocloseTLT <- list()
+opentocloseSPY <- list()
+
+for(i in 1:length(dataTLT)){
+
+	opentocloseTLT[[i]] <- diff(log(dataTLT[[i]]))[-1]
+	opentocloseSPY[[i]] <- diff(log(dataSPY[[i]]))[-1]
+}
+
+
+#find first non-negative return. For test purposes. Sampling too many zero returns will downward bias the vol:
+
+opentocloseTLTnonneg <- lapply(opentocloseTLT, function(x) x[c(which(x>0)[1], length(x))])
+opentocloseSPYnonneg <- lapply(opentocloseSPY, function(x) x[c(which(x>0)[1], length(x))])
+
+
+
+
+opentocloseTLT <- lapply(opentocloseTLT, function(x) x[c(1,length(x))])
+opentocloseSPY <- lapply(opentocloseSPY, function(x) x[c(1,length(x))])
+
+
+frequenciesSPY[[10]] <- opentocloseSPY
+frequenciesTLT[[10]] <- opentocloseTLT
+
 
