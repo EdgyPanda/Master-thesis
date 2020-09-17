@@ -77,3 +77,27 @@ frequenciesSPY[[10]] <- opentocloseSPY
 frequenciesTLT[[10]] <- opentocloseTLT
 
 
+#--------------------jump proportion calculation-------------------------------
+
+#minute, no pre-averaging
+JPmin <-function(data){
+
+	JP <- (realCov(data) - preavBPCOV(data,F,F,F))/realCov(data) 
+
+	return(JP)
+}
+
+#need pre-average version. 
+
+
+
+
+
+tester <- numeric() #opentoclose
+tester2 <- numeric() #opentoclose first non negative return. 
+for(i in 1:length(frequenciesTLT[[10]])){
+
+	tester[i] <- JPmin(frequenciesTLT[[10]][[i]])
+	tester2[i] <- JPmin(opentocloseTLTnonneg[[i]])
+}
+
