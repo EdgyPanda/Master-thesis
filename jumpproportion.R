@@ -113,8 +113,42 @@ JPsecond <-function(data){
 
 #Do the analysis. First five needs jpsecond, last five needs jpminute. 
 
+JPTLT <- list()
+JPSPY <- list()
+
+RVTLT <- list()
+RVSPY <- list()
+
+BVTLT <- list()
+BVSPY <- list()
+
+tempTLT <- list()
+tempSPY <- list()
+
+tempTLT2 <- list()
+tempSPY 2<- list()
+
+for(j in 1:(length(frequenciesTLT)/2)){
+	for(i in 1:length(dataTLT)){
+		tempTLT[[i]] <- JPsecond(frequenciesTLT[[j]][[i]])
+		tempTLT2[[i]] <- JPminute(frequenciesTLT[[j+5]][[i]])
+
+		tempSPY[[i]] <- JPsecond(frequenciesSPY[[j]][[i]])
+		tempSPY2[[i]] <- JPminute(frequenciesSPY[[j+5]][[i]])
+	}
+
+	
+	JPTLT[[j]] <- unlist(lapply(tempTLT, function(x) x$JP))
+	JPTLT[[j+5]] <- unlist(lapply(tempTLT2, function(x) x$JP))
+
+	RVTLT[[j]] <- unlist(lapply(tempTLT, function(x) x$RV))
+	RVTLT[[j+5]] <- unlist(lapply(tempTLT2, function(x) x$RV))
+
+	RVTLT[[j]] <- unlist(lapply(tempTLT, function(x) x$RV))
+	RVTLT[[j+5]] <- unlist(lapply(tempTLT2, function(x) x$RV))
 
 
+}
 
 
 
@@ -129,10 +163,4 @@ for(i in 1:length(frequenciesTLT[[10]])){
 
 #In essence, just use normal open-to-close log-returns. 
 
-
-
-
-test <- lapply(tester2, function(x) x$JP)
-test <- unlist(test)
-
-JPminute(opentocloseTLTnonneg[[8]])
+t <- unlist(lapply(tester, function(x) x$BV))
