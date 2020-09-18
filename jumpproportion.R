@@ -177,14 +177,19 @@ saveRDS(list(JPTLT, RVTLT, BVTLT, JPSPY, RVSPY, BVSPY), file = "jumpproportionda
 
 
 
-tester <- list() #opentoclose
-tester2 <- list() #opentoclose first non negative return. 
-for(i in 1:length(frequenciesTLT[[10]])){
+meanJPTLT <- unlist(lapply(JPTLT, function(x) mean(x, na.rm = T)))
+meanRVTLT <- unlist(lapply(RVTLT, function(x) mean(x, na.rm = T)))
+meanBVTLT <- unlist(lapply(BVTLT, function(x) mean(x, na.rm = T)))
 
-	tester[[i]] <- JPminute(frequenciesTLT[[10]][[i]])
-	tester2[[i]] <- JPminute(opentocloseTLTnonneg[[i]])
-}
+meanJPSPY <- unlist(lapply(JPSPY, function(x) mean(x, na.rm = T)))
+meanRVSPY <- unlist(lapply(RVSPY, function(x) mean(x, na.rm = T)))
+meanBVSPY <- unlist(lapply(BVSPY, function(x) mean(x, na.rm = T)))
 
-#In essence, just use normal open-to-close log-returns. 
 
-t <- unlist(lapply(tester, function(x) x$BV))
+meanJPTLT*100 #Percentage
+sqrt(252*meanRVTLT)*100 #Percentage annualized standard deviation.
+sqrt(252*meanBVTLT)*100
+
+meanJPSPY*100
+sqrt(252*meanRVSPY)*100
+sqrt(252*meanBVSPY)*100
