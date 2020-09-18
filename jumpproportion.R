@@ -128,36 +128,52 @@ tempSPY <- list()
 tempTLT2 <- list()
 tempSPY2 <- list()
 
+#Splitting up second and minute calculations due to second calc being incredibly slow. 
+
 for(j in 1:(length(frequenciesTLT)/2)){
 	for(i in 1:length(dataTLT)){
-		tempTLT[[i]] <- JPsecond(frequenciesTLT[[j]][[i]])
 		tempTLT2[[i]] <- JPminute(frequenciesTLT[[j+5]][[i]])
-
-		tempSPY[[i]] <- JPsecond(frequenciesSPY[[j]][[i]])
 		tempSPY2[[i]] <- JPminute(frequenciesSPY[[j+5]][[i]])
 	}
 	print(sprintf("%s",j))
-	
-	JPTLT[[j]] <- unlist(lapply(tempTLT, function(x) x$JP))
 	JPTLT[[j+5]] <- unlist(lapply(tempTLT2, function(x) x$JP))
-
-	RVTLT[[j]] <- unlist(lapply(tempTLT, function(x) x$RV))
 	RVTLT[[j+5]] <- unlist(lapply(tempTLT2, function(x) x$RV))
-
-	BVTLT[[j]] <- unlist(lapply(tempTLT, function(x) x$BV))
 	BVTLT[[j+5]] <- unlist(lapply(tempTLT2, function(x) x$BV))
 
-	JPSPY[[j]] <- unlist(lapply(tempSPY, function(x) x$JP))
 	JPSPY[[j+5]] <- unlist(lapply(tempSPY2, function(x) x$JP))
-
-	RVSPY[[j]] <- unlist(lapply(tempSPY, function(x) x$RV))
 	RVSPY[[j+5]] <- unlist(lapply(tempSPY2, function(x) x$RV))
-
-	BVSPY[[j]] <- unlist(lapply(tempSPY, function(x) x$BV))
 	BVSPY[[j+5]] <- unlist(lapply(tempSPY2, function(x) x$BV))
+
 
 }
 
+
+for(j in 1:(length(frequenciesTLT)/2)){
+	for(i in 1:length(dataTLT)){
+		tempTLT[[i]] <- JPsecond(frequenciesTLT[[j]][[i]])
+
+		tempSPY[[i]] <- JPsecond(frequenciesSPY[[j]][[i]])
+
+		print(sprintf("Second frequency of %s over day %s",secs[j],i))
+
+	}
+	
+	JPTLT[[j]] <- unlist(lapply(tempTLT, function(x) x$JP))
+
+	RVTLT[[j]] <- unlist(lapply(tempTLT, function(x) x$RV))
+
+	BVTLT[[j]] <- unlist(lapply(tempTLT, function(x) x$BV))
+
+	JPSPY[[j]] <- unlist(lapply(tempSPY, function(x) x$JP))
+
+	RVSPY[[j]] <- unlist(lapply(tempSPY, function(x) x$RV))
+
+	BVSPY[[j]] <- unlist(lapply(tempSPY, function(x) x$BV))
+
+}
+
+
+saveRDS(list(JPTLT, RVTLT, BVTLT, JPSPY, RVSPY, BVSPY), file = "jumpproportiondata.rds") 
 
 
 
