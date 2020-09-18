@@ -193,3 +193,11 @@ sqrt(252*meanBVTLT)*100
 meanJPSPY*100
 sqrt(252*meanRVSPY)*100
 sqrt(252*meanBVSPY)*100
+
+
+#avg
+colMeans(rbind(sqrt(252*meanRVTLT)*100,sqrt(252*meanRVSPY)*100))
+
+colMeans(rbind(sqrt(252*meanBVTLT)*100,sqrt(252*meanBVSPY)*100))
+
+colMeans(rbind(meanJPTLT*100,meanJPSPY*100))
