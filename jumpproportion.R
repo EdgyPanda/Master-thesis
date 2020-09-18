@@ -96,10 +96,10 @@ JPminute <-function(data){
 
 #pre-average version. 
 
-JPsecond <-function(data){
+JPsecond <-function(data, theta=1){
 
-	RV <- preavCov(data,T,T,F,1)
-	BV <- preavBPCOV(data,T,F,T,1)
+	RV <- preavCov(data,T,T,F,theta)
+	BV <- preavBPCOV(data,T,F,T,theta)
 
 	JP <- (RV - BV)/RV
 
@@ -177,6 +177,7 @@ saveRDS(list(JPTLT, RVTLT, BVTLT, JPSPY, RVSPY, BVSPY), file = "jumpproportionda
 
 
 
+
 meanJPTLT <- unlist(lapply(JPTLT, function(x) mean(x, na.rm = T)))
 meanRVTLT <- unlist(lapply(RVTLT, function(x) mean(x, na.rm = T)))
 meanBVTLT <- unlist(lapply(BVTLT, function(x) mean(x, na.rm = T)))
@@ -201,3 +202,47 @@ colMeans(rbind(sqrt(252*meanRVTLT)*100,sqrt(252*meanRVSPY)*100))
 colMeans(rbind(sqrt(252*meanBVTLT)*100,sqrt(252*meanBVSPY)*100))
 
 colMeans(rbind(meanJPTLT*100,meanJPSPY*100))
+
+
+
+#theta plot (done on in 2019):
+
+theta <- seq(0.1,2,0.1)
+
+JPTLT_plot <- list()
+JPSPY_plot <- list()
+
+tempTLT <- matrix(0L, ncol = length(days2019), nrow=length(theta))
+tempSPY <- matrix(0L, ncol = length(days2019), nrow=length(theta))
+
+days2019 <- seq(2265, 2516,1)
+
+for(j in 1:(length(frequenciesTLT)/2)){ #all second frequencies
+	for(i in 1:length(theta)){ #amount of thetas to test
+		for(k in 1:length(days2019)){ #first 10 days
+			tempTLT[i,k] <- c(JPsecond(frequenciesTLT[[j]][[days2019[k]]],theta[i])$JP)
+			tempSPY[i,k] <- c(JPsecond(frequenciesSPY[[j]][[days2019[k]]],theta[i])$JP)
+
+			print(sprintf("Theta: %s, Frequency: %s, Day: %s",i,j,k))
+		}
+	}
+	JPTLT_plot[[j]] <- tempTLT
+	JPSPY_plot[[j]] <- tempSPY
+}
+saveRDS(ist(JPTLT_plot, JPSPY_plot), file = "jumppropforplot.rds")
+
+library(ggplot2)
+library(zoo)
+
+ggplot() + geom_line(aes(theta, rowMeans(JPSPY_plot[[3]])))
+
+tester <- JPSPY_plot[[3]]
+
+tester[tester<0] <- 
+
+tt <- rowMeans(rollapply(tester, 10, function(x) rowMeans(x), by.column = F, align = 'center'))
+
+lines(theta, rowMeans(JPTLT_plot[[6]]))
+
+
+ts.plot(tt)
