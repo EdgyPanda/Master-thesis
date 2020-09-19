@@ -207,6 +207,8 @@ colMeans(rbind(meanJPTLT*100,meanJPSPY*100))
 
 #theta plot (done on in 2019):
 
+#THIS IS NOT USEFUL. DISCARDED.
+
 theta <- seq(0.1,2,0.1)
 
 JPTLT_plot <- list()
@@ -229,16 +231,19 @@ for(j in 1:(length(frequenciesTLT)/2)){ #all second frequencies
 	JPTLT_plot[[j]] <- tempTLT
 	JPSPY_plot[[j]] <- tempSPY
 }
-saveRDS(ist(JPTLT_plot, JPSPY_plot), file = "jumppropforplot.rds")
+
+saveRDS(list(JPTLT_plot, JPSPY_plot), file = "jumppropforplot.rds")
 
 library(ggplot2)
 library(zoo)
 
 ggplot() + geom_line(aes(theta, rowMeans(JPSPY_plot[[3]])))
 
-tester <- JPSPY_plot[[3]]
+tester <- JPSPY_plot[[1]]
 
-tester[tester<0] <- 
+tester[tester<0] <- NaN
+
+ts.plot(rowMeans(tester, na.rm = T))
 
 tt <- rowMeans(rollapply(tester, 10, function(x) rowMeans(x), by.column = F, align = 'center'))
 
