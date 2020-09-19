@@ -180,7 +180,7 @@ saveRDS(list(JPTLT, RVTLT, BVTLT, JPSPY, RVSPY, BVSPY), file = "jumpproportionda
 #Estimated jp can go outside the interval [0,1]. One solution would be to set all jp<0 equal to 0. 
 
 
-for(i in 1:length(test)){
+for(i in 1:length(JPTLT)){
 	JPTLT[[i]][JPTLT[[i]]<0] <- 0
 	RVTLT[[i]][RVTLT[[i]]<0] <- 0
 	BVTLT[[i]][BVTLT[[i]]<0] <- 0
@@ -191,9 +191,6 @@ for(i in 1:length(test)){
 
 }
 
-
-testJPTLT <- unlist(lapply(test, function(x) mean(x, na.rm = T)))
-testJPSPY <- unlist(lapply(test2, function(x) mean(x, na.rm = T)))
 
 
 meanJPTLT <- unlist(lapply(JPTLT, function(x) mean(x, na.rm = T)))
@@ -208,6 +205,7 @@ meanBVSPY <- unlist(lapply(BVSPY, function(x) mean(x, na.rm = T)))
 meanJPTLT*100 #Percentage
 sqrt(252*meanRVTLT)*100 #Percentage annualized standard deviation.
 sqrt(252*meanBVTLT)*100
+
 
 meanJPSPY*100
 sqrt(252*meanRVSPY)*100
