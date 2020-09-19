@@ -7,6 +7,7 @@ source("functions.R")
 library(xts)
 library(highfrequency)
 library(matlib)
+library(MCS)
 
 dataTLT <- readRDS("dataTLT.rds")
 dataSPY <- readRDS("dataSPY.rds")
