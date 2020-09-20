@@ -134,7 +134,37 @@ ggplot() + geom_line(aes(as.Date(getDates), H, group = 1)) + geom_hline(yinterce
 
 
 RCov_5min <- lapply(mergedfrequencies[[7]], function(x) realCov(x))
+BPCov_5min <- lapply(mergedfrequencies[[7]], function(x) preavBPCOV(x, F, F, F))
+TCov_5min <- lapply(mergedfrequencies[[7]], function(x) preavthrCOV(x,F))
+RSCovpos <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"P"))
+RSCovneg <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"N"))
 RCov_daily <- lapply(mergedopentoclose, function(x) realCov(x))
 
-MRC_30sec <- lapply(mergedfrequencies[[4]], function(x) preavCov(x, T, T, F, 1))
-MRK_30sec <- 
+MRC_30sec <- lapply(mergedfrequencies[[5]], function(x) preavCov(x, T, T, F, 1))
+PBPCov_30sec <- lapply(mergedfrequencies[[7]], function(x) preavBPCOV(x, T, F, T, 1))
+
+MRK_15sec <- list()
+
+for(i in 1:length(dataTLT)){
+
+	MRK_15sec[[i]] <-  rKernelCov(list(mergedfrequencies[[3]][[i]][,1], mergedfrequencies[[3]][[i]][,2]), makeReturns = FALSE, kernel.type = "Parzen", kernel.param  = H[i])
+
+
+}
+
+
+RCov_5min <- matrix(unlist(lapply(RCov_5min, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(RCov_5min) <- c("TLT", "SPY", "Correlation")
+
+#transforming
+RCov_5min[,1:2] <- sqrt(252*RCov_5min[,1:2])*100
+RCov_5min[,3] <- RCov_5min[,3]*100
+
+
+library(PerformanceAnalytics)
+
+#using performanceAnalytics package you can easily get your summary statistics. 
+table.Stats(RCov_5min[,1])
+table.Autocorrelation(RCov_5min[,1])
