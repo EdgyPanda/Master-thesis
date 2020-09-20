@@ -182,3 +182,25 @@ realsemicov <- function(matrix,type, correlation = FALSE){
  return( realcovariance ) 
 }
 
+bandwidthH <- function(list, sparsedata){
+
+	n <- as.vector(sapply(list,length))
+
+	c <- ((12)^2/0.269)^(1/5)
+
+	w <- numeric()
+	IV <- numeric()
+	for(i in 1:length(list)){
+
+		w[i] <- 1/(2*n[i]) * realCov(list[[i]])
+		IV[i] <- realCov(sparsedata[[i]])
+
+	}
+
+	e <- w/(IV/n)
+
+	H <- c * e^(4/5) * n^(3/5)
+
+	return(H)
+
+}
