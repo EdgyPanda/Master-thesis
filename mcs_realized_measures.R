@@ -17,38 +17,27 @@ dataSPY <- readRDS("dataSPY.rds")
 
 
 
+#need sparse sampled data for bandwidth selection. 
 
-bandwidthH <- function(list, sparsedata){
 
-	n <- as.vector(sapply(list,length))
+sparseTLT20min <- list()
+sparseSPY20min <- list()
 
-	#n <- as.vector(sapply(list, length))
 
-	c <- ((12)^2/0.269)^(1/5)
+for(i in 1:length(dataTLT)){
 
-	#w <- -1/(n-1) * t(data[1:(n-1)]) %*% data[2:n]
-	w <- numeric()
-	IV <- numeric()
-	for(i in 1:length(list)){
-
-		w[i] <- 1/(2*n[i]) * realCov(list[[i]])
-		IV[i] <- realCov(sparsedata[[i]])
-
-	}
-
-	e <- w/(IV/n)
-
-	#e <- noisetosignal(list)
-
-	H <- c * e^(4/5) * n^(3/5)
-
-	return(H)
+	sparseTLT20min[[i]] <- aggregatets(dataTLT[[i]], on = "minutes", k = 20)
+	sparseSPY20min[[i]] <- aggregatets(dataSPY[[i]], on = "minutes", k = 20)
 
 }
 
+for(i in 1:length(dataTLT)){
 
+	sparseTLT20min[[i]] <- diff(log(sparseTLT20min[[i]]))[-1]
+	sparseSPY20min[[i]] <- diff(log(sparseSPY20min[[i]]))[-1]
 
-
+}
+#--------------------------------------------------
 
 secs <-c(1,5,15,20,30,60,300,900,1800)
 
@@ -125,6 +114,10 @@ for(j in 1:length(secs)){
 
 #--------------------------------------------------SUMMARY STATISTICS------------------------------------------
 
+#finding optimal bandwidth for MRK:
+
+H <- cbind(bandwidthH(frequenciesTLT[[3]],sparseTLT20min), bandwidthH(frequenciesSPY[[3]],sparseSPY20min))
+
 #We do it on preferred sampling schemes. 
 
 
@@ -132,4 +125,4 @@ RCov_5min <- lapply(mergedfrequencies[[7]], function(x) realCov(x))
 RCov_daily <- lapply(mergedopentoclose, function(x) realCov(x))
 
 MRC_30sec <- lapply(mergedfrequencies[[4]], function(x) preavCov(x, T, T, F, 1))
-MRK_30sec
+MRK_30sec <- 
