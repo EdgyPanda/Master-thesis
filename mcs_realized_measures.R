@@ -136,8 +136,8 @@ ggplot() + geom_line(aes(as.Date(getDates), H, group = 1)) + geom_hline(yinterce
 RCov_5min <- lapply(mergedfrequencies[[7]], function(x) realCov(x))
 BPCov_5min <- lapply(mergedfrequencies[[7]], function(x) preavBPCOV(x, F, F, F))
 TCov_5min <- lapply(mergedfrequencies[[7]], function(x) preavthrCOV(x,F))
-RSCovpos <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"P"))
-RSCovneg <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"N"))
+RSCovpos_5min <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"P"))
+RSCovneg_5min <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"N"))
 RCov_daily <- lapply(mergedopentoclose, function(x) realCov(x))
 
 MRC_30sec <- lapply(mergedfrequencies[[5]], function(x) preavCov(x, T, T, F, 1))
@@ -158,13 +158,176 @@ RCov_5min <- matrix(unlist(lapply(RCov_5min, function(x) cbind(x[1,1], x[2,2], x
 
 colnames(RCov_5min) <- c("TLT", "SPY", "Correlation")
 
+BPCov_5min <- matrix(unlist(lapply(BPCov_5min, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(BPCov_5min) <- c("TLT", "SPY", "Correlation")
+
+TCov_5min <- matrix(unlist(lapply(TCov_5min, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(TCov_5min) <- c("TLT", "SPY", "Correlation")
+
+RSCovpos_5min <- matrix(unlist(lapply(RSCovpos_5min, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(RSCovpos_5min) <- c("TLT", "SPY", "Correlation")
+
+RSCovneg_5min <- matrix(unlist(lapply(RSCovneg_5min, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(RSCovneg_5min) <- c("TLT", "SPY", "Correlation")
+
+RCov_daily <- matrix(unlist(lapply(RCov_daily, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(RCov_daily) <- c("TLT", "SPY", "Correlation")
+
+MRC_30sec <- matrix(unlist(lapply(MRC_30sec, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(MRC_30sec) <- c("TLT", "SPY", "Correlation")
+
+PBPCov_30sec <- matrix(unlist(lapply(PBPCov_30sec, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(PBPCov_30sec) <- c("TLT", "SPY", "Correlation")
+
+MRK_15sec <- matrix(unlist(lapply(MRK_15sec, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(MRK_15sec) <- c("TLT", "SPY", "Correlation")
+
 #transforming
 RCov_5min[,1:2] <- sqrt(252*RCov_5min[,1:2])*100
-RCov_5min[,3] <- RCov_5min[,3]*100
+RCov_5min[,3] <- RCov_5min[,3]
 
+BPCov_5min[,1:2] <- sqrt(252*BPCov_5min[,1:2])*100
+BPCov_5min[,3] <- BPCov_5min[,3]
+
+TCov_5min[,1:2] <- sqrt(252*TCov_5min[,1:2])*100
+TCov_5min[,3] <- TCov_5min[,3]
+
+RSCovpos_5min[,1:2] <- sqrt(252*RSCovpos_5min[,1:2])*100
+RSCovpos_5min[,3] <- RSCovpos_5min[,3]
+
+RSCovneg_5min[,1:2] <- sqrt(252*RSCovneg_5min[,1:2])*100
+RSCovneg_5min[,3] <- RSCovneg_5min[,3]
+
+RCov_daily[,1:2] <- sqrt(252*RCov_daily[,1:2])*100
+RCov_daily[,3] <- RCov_daily[,3]
+
+MRC_30sec[,1:2] <- sqrt(252*MRC_30sec[,1:2])*100
+MRC_30sec[,3] <- MRC_30sec[,3]
+
+PBPCov_30sec[,1:2] <- sqrt(252*PBPCov_30sec[,1:2])*100
+PBPCov_30sec[,3] <- PBPCov_30sec[,3]
+
+MRK_15sec[,1:2] <- sqrt(252*MRK_15sec[,1:2])*100
+MRK_15sec[,3] <- MRK_15sec[,3]
 
 library(PerformanceAnalytics)
 
 #using performanceAnalytics package you can easily get your summary statistics. 
+
+#TLT
 table.Stats(RCov_5min[,1])
 table.Autocorrelation(RCov_5min[,1])
+
+table.Stats(BPCov_5min[,1])
+table.Autocorrelation(BPCov_5min[,1])
+
+table.Stats(TCov_5min[,1])
+table.Autocorrelation(TCov_5min[,1])
+
+table.Stats(RSCovpos_5min[,1])
+table.Autocorrelation(RSCovpos_5min[,1])
+
+table.Stats(RSCovneg_5min[,1])
+table.Autocorrelation(RSCovneg_5min[,1])
+
+table.Stats(RCov_daily[,1])
+table.Autocorrelation(RCov_daily[,1])
+
+table.Stats(MRC_30sec[,1])
+table.Autocorrelation(MRC_30sec[,1])
+
+table.Stats(PBPCov_30sec[,1])
+table.Autocorrelation(PBPCov_30sec[,1])
+
+table.Stats(MRK_15sec[,1])
+table.Autocorrelation(MRK_15sec[,1])
+
+#SPY
+table.Stats(RCov_5min[,2])
+table.Autocorrelation(RCov_5min[,2])
+
+table.Stats(BPCov_5min[,2])
+table.Autocorrelation(BPCov_5min[,2])
+
+table.Stats(TCov_5min[,2])
+table.Autocorrelation(TCov_5min[,2])
+
+table.Stats(RSCovpos_5min[,2])
+table.Autocorrelation(RSCovpos_5min[,2])
+
+table.Stats(RSCovneg_5min[,2])
+table.Autocorrelation(RSCovneg_5min[,2])
+
+table.Stats(RCov_daily[,2])
+table.Autocorrelation(RCov_daily[,2])
+
+table.Stats(MRC_30sec[,2])
+table.Autocorrelation(MRC_30sec[,2])
+
+table.Stats(PBPCov_30sec[,2])
+table.Autocorrelation(PBPCov_30sec[,2])
+
+table.Stats(MRK_15sec[,2])
+table.Autocorrelation(MRK_15sec[,2])
+
+#Correlation
+table.Stats(RCov_5min[,3])
+table.Autocorrelation(RCov_5min[,3])
+
+table.Stats(BPCov_5min[,3])
+table.Autocorrelation(BPCov_5min[,3])
+
+table.Stats(TCov_5min[,3])
+table.Autocorrelation(TCov_5min[,3])
+
+table.Stats(RSCovpos_5min[,3])
+table.Autocorrelation(RSCovpos_5min[,3])
+
+table.Stats(RSCovneg_5min[,3])
+table.Autocorrelation(RSCovneg_5min[,3])
+
+table.Stats(RCov_daily[,3])
+table.Autocorrelation(RCov_daily[,3])
+
+table.Stats(MRC_30sec[,3])
+table.Autocorrelation(MRC_30sec[,3])
+
+table.Stats(PBPCov_30sec[,3])
+table.Autocorrelation(PBPCov_30sec[,3])
+
+table.Stats(MRK_15sec[,3])
+table.Autocorrelation(MRK_15sec[,3])
+
+#introductory graph
+
+p1 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,1]), col = "firebrick") + ylab("Ann. standard deviation (%)") + 
+xlab("Dates") + ggtitle("TLT") + theme(plot.title = element_text(hjust = 0.5))
+
+
+p2 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,2]), col = "deepskyblue1") + ylab("Ann. standard deviation (%)") + 
+xlab("Dates") + ggtitle("SPY") + theme(plot.title = element_text(hjust = 0.5))
+
+
+p3 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,3]), col = "maroon") + ylab("Correlation") + 
+xlab("Dates") + ggtitle("Correlation") + theme(plot.title = element_text(hjust = 0.5))
+
+
+library(gridExtra)
+
+grid.arrange(p1,p2,p3, ncol=1)
