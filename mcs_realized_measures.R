@@ -118,6 +118,18 @@ for(j in 1:length(secs)){
 
 H <- cbind(bandwidthH(frequenciesTLT[[3]],sparseTLT20min), bandwidthH(frequenciesSPY[[3]],sparseSPY20min))
 
+H <- rowMeans(H)
+
+getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
+
+for(i in 1:length(getDates)){
+	getDates[i] <- strsplit(getDates, " ")[[i]][1]
+}
+
+library(ggplot2)
+
+ggplot() + geom_line(aes(as.Date(getDates), H, group = 1)) + geom_hline(yintercept = mean(H), col="steelblue", lwd=1)
+
 #We do it on preferred sampling schemes. 
 
 
