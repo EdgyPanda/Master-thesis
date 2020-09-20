@@ -91,10 +91,10 @@ for(i in 1:length(dataTLT)){
 
 }
 
-opentocloseTLT <- lapply(opentocloseTLT, function(x) x[c(1,length(x))])
-opentocloseSPY <- lapply(opentocloseSPY, function(x) x[c(1,length(x))])
-mergedopentoclose <- lapply(mergedopentoclose, function(x) x[c(1,nrow(x))])
+mergedopentoclose[[1]][which(mergedopentoclose[[1]][,1]>0 & mergedopentoclose[[1]][,2]>0)]
 
+#mergedopentoclose <- lapply(mergedopentoclose, function(x) x[c(1,nrow(x))])
+mergedopentoclose <- lapply(mergedopentoclose, function(x) x[c(which(x[,1]>0 & x[,2]>0)[1], max(which(x[,1]>0 & x[,2]>0)))])
 
 #merging list elements. 
 
@@ -199,31 +199,31 @@ MRK_15sec <- matrix(unlist(lapply(MRK_15sec, function(x) cbind(x[1,1], x[2,2], x
 colnames(MRK_15sec) <- c("TLT", "SPY", "Correlation")
 
 #transforming
-RCov_5min[,1:2] <- sqrt(252*RCov_5min[,1:2])*100
+RCov_5min[,1:2] <- 252*RCov_5min[,1:2]*100*(24/6.5)
 RCov_5min[,3] <- RCov_5min[,3]
 
-BPCov_5min[,1:2] <- sqrt(252*BPCov_5min[,1:2])*100
+BPCov_5min[,1:2] <- 252*BPCov_5min[,1:2]*100*(24/6.5)
 BPCov_5min[,3] <- BPCov_5min[,3]
 
-TCov_5min[,1:2] <- sqrt(252*TCov_5min[,1:2])*100
+TCov_5min[,1:2] <- 252*TCov_5min[,1:2]*100*(24/6.5)
 TCov_5min[,3] <- TCov_5min[,3]
 
-RSCovpos_5min[,1:2] <- sqrt(252*RSCovpos_5min[,1:2])*100
+RSCovpos_5min[,1:2] <- 252*RSCovpos_5min[,1:2]*100*(24/6.5)
 RSCovpos_5min[,3] <- RSCovpos_5min[,3]
 
-RSCovneg_5min[,1:2] <- sqrt(252*RSCovneg_5min[,1:2])*100
+RSCovneg_5min[,1:2] <- 252*RSCovneg_5min[,1:2]*100*(24/6.5)
 RSCovneg_5min[,3] <- RSCovneg_5min[,3]
 
-RCov_daily[,1:2] <- sqrt(252*RCov_daily[,1:2])*100
+RCov_daily[,1:2] <- 252*RCov_daily[,1:2]*100*(24/6.5)
 RCov_daily[,3] <- RCov_daily[,3]
 
-MRC_30sec[,1:2] <- sqrt(252*MRC_30sec[,1:2])*100
+MRC_30sec[,1:2] <- 252*MRC_30sec[,1:2]*100*(24/6.5)
 MRC_30sec[,3] <- MRC_30sec[,3]
 
-PBPCov_30sec[,1:2] <- sqrt(252*PBPCov_30sec[,1:2])*100
+PBPCov_30sec[,1:2] <- 252*PBPCov_30sec[,1:2]*100*(24/6.5)
 PBPCov_30sec[,3] <- PBPCov_30sec[,3]
 
-MRK_15sec[,1:2] <- sqrt(252*MRK_15sec[,1:2])*100
+MRK_15sec[,1:2] <- 252*MRK_15sec[,1:2]*100*(24/6.5)
 MRK_15sec[,3] <- MRK_15sec[,3]
 
 library(PerformanceAnalytics)
@@ -316,18 +316,24 @@ table.Autocorrelation(MRK_15sec[,3])
 
 #introductory graph
 
-p1 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,1]), col = "firebrick") + ylab("Ann. standard deviation (%)") + 
-xlab("Dates") + ggtitle("TLT") + theme(plot.title = element_text(hjust = 0.5))
+meanpriceTLT <- unlist(lapply(dataTLT, function(x) mean(x)))
+
+p1 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,1]/(24/6.5)), col = "firebrick") + ylab("Ann. variance (%)") + 
+xlab("Dates") + ggtitle("TLT") + theme(plot.title = element_text(hjust = 0.5)) 
 
 
-p2 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,2]), col = "deepskyblue1") + ylab("Ann. standard deviation (%)") + 
+p2 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,2]/(24/6.5)), col = "deepskyblue1") + ylab("Ann. variance (%)") + 
 xlab("Dates") + ggtitle("SPY") + theme(plot.title = element_text(hjust = 0.5))
 
 
 p3 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,3]), col = "maroon") + ylab("Correlation") + 
-xlab("Dates") + ggtitle("Correlation") + theme(plot.title = element_text(hjust = 0.5))
+xlab("Dates") + theme(plot.title = element_text(hjust = 0.5)) + 
+geom_hline(yintercept = 0, linetype = "dashed")
 
 
 library(gridExtra)
 
-grid.arrange(p1,p2,p3, ncol=1)
+pf <- grid.arrange(p1,p2,p3, ncol=1)
+
+
+ggsave(pf, file="varianceassets.eps", device="eps")
