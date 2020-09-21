@@ -68,13 +68,13 @@ for(j in 1:length(secs)){
 	print(sprintf("%s",j))
 }
 
-#log-returns
+# percentage log-returns to construct percentage daily averages.
 
 for(j in 1:length(secs)){
 	for(i in 1:length(dataTLT)){
 
-		frequenciesTLT[[j]][[i]] <- diff(log(frequenciesTLT[[j]][[i]]))[-1]
-		frequenciesSPY[[j]][[i]] <- diff(log(frequenciesSPY[[j]][[i]]))[-1]
+		frequenciesTLT[[j]][[i]] <- diff(log(frequenciesTLT[[j]][[i]]))[-1] * 100
+		frequenciesSPY[[j]][[i]] <- diff(log(frequenciesSPY[[j]][[i]]))[-1] * 100
 
 	}
 }
@@ -91,8 +91,8 @@ for(i in 1:length(dataTLT)){
 
 for(i in 1:length(dataTLT)){
 
-	opentocloseTLT[[i]] <- diff(log(opentocloseTLT[[i]]))[-1]
-	opentocloseSPY[[i]] <- diff(log(opentocloseSPY[[i]]))[-1]
+	opentocloseTLT[[i]] <- diff(log(opentocloseTLT[[i]]))[-1] * 100
+	opentocloseSPY[[i]] <- diff(log(opentocloseSPY[[i]]))[-1] * 100
 
 }
 
@@ -232,30 +232,30 @@ daily_TLT <- diff(log(daily_TLT$close))[-1]
 merged <- cbind(daily_TLT, daily_SPY)
 
 #HOW SHOULD YOU TRANSFORM IT?!?
-RCov_5min[,1:2] <- RCov_5min[,1:2]*(24/6.5) * 100
+RCov_5min[,1:2] <- RCov_5min[,1:2]*(24/6.5)
 
-BPCov_5min[,1:2] <- 252*BPCov_5min[,1:2]*100*(24/6.5)
+BPCov_5min[,1:2] <- 252*BPCov_5min[,1:2]*(24/6.5)
 
-TCov_5min[,1:2] <- 252*TCov_5min[,1:2]*100*(24/6.5)
+TCov_5min[,1:2] <- 252*TCov_5min[,1:2]*(24/6.5)
 
-RSCovpos_5min[,1:2] <- 252*RSCovpos_5min[,1:2]*100*(24/6.5)
+RSCovpos_5min[,1:2] <- 252*RSCovpos_5min[,1:2]*(24/6.5)
 
-RSCovneg_5min[,1:2] <- 252*RSCovneg_5min[,1:2]*100*(24/6.5)
+RSCovneg_5min[,1:2] <- 252*RSCovneg_5min[,1:2]*(24/6.5)
 
 RCov_daily[,1:2] <- 252*RCov_daily[,1:2]*(24/6.5)
 
-MRC_30sec[,1:2] <- 252*MRC_30sec[,1:2]*100*(24/6.5)
+MRC_30sec[,1:2] <- 252*MRC_30sec[,1:2]*(24/6.5)
 
-PBPCov_30sec[,1:2] <- 252*PBPCov_30sec[,1:2]*100*(24/6.5)
+PBPCov_30sec[,1:2] <- 252*PBPCov_30sec[,1:2]*(24/6.5)
 
-MRK_15sec[,1:2] <- 252*MRK_15sec[,1:2]*100*(24/6.5)
+MRK_15sec[,1:2] <- 252*MRK_15sec[,1:2]*(24/6.5)
 
 library(PerformanceAnalytics)
 
 #using performanceAnalytics package you can easily get your summary statistics. 
 
 #TLT
-table.Stats(RCov_5min[,1]*1e5)
+table.Stats(RCov_5min[,1])
 table.Autocorrelation(RCov_5min[,1])
 
 table.Stats(BPCov_5min[,1])
