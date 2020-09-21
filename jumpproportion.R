@@ -51,6 +51,9 @@ for(j in 1:length(secs)){
 }
 
 
+
+
+
 opentocloseTLT <- list()
 opentocloseSPY <- list()
 

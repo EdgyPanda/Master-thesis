@@ -19,6 +19,12 @@ dataSPY <- readRDS("dataSPY.rds")
 
 #need sparse sampled data for bandwidth selection. 
 
+getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
+
+for(i in 1:length(getDates)){
+	getDates[i] <- strsplit(getDates, " ")[[i]][1]
+}
+
 
 sparseTLT20min <- list()
 sparseSPY20min <- list()
@@ -79,22 +85,43 @@ opentocloseSPY <- list()
 
 for(i in 1:length(dataTLT)){
 
-	opentocloseTLT[[i]] <- diff(log(dataTLT[[i]]))[-1]
-	opentocloseSPY[[i]] <- diff(log(dataSPY[[i]]))[-1]
+	opentocloseTLT[[i]] <- dataTLT[[i]][c(1,length(dataTLT[[i]]))]
+	opentocloseSPY[[i]] <- dataSPY[[i]][c(1,length(dataSPY[[i]]))]
 }
+
+for(i in 1:length(dataTLT)){
+
+	opentocloseTLT[[i]] <- diff(log(opentocloseTLT[[i]]))[-1]
+	opentocloseSPY[[i]] <- diff(log(opentocloseSPY[[i]]))[-1]
+
+}
+
 
 mergedopentoclose <- list()
 
 for(i in 1:length(dataTLT)){
 
-	mergedopentoclose[[i]] <- na.omit(cbind(opentocloseTLT[[i]], opentocloseSPY[[i]]))
+	mergedopentoclose[[i]] <- cbind(opentocloseTLT[[i]], opentocloseSPY[[i]])
 
 }
 
-mergedopentoclose[[1]][which(mergedopentoclose[[1]][,1]>0 & mergedopentoclose[[1]][,2]>0)]
+
 
 #mergedopentoclose <- lapply(mergedopentoclose, function(x) x[c(1,nrow(x))])
-mergedopentoclose <- lapply(mergedopentoclose, function(x) x[c(which(x[,1]>0 & x[,2]>0)[1], max(which(x[,1]>0 & x[,2]>0)))])
+mergedopentoclose <- lapply(mergedopentoclose, function(x) colSums(x, na.rm = T))
+
+mergedopentoclose <- lapply(mergedopentoclose, function(x) matrix(x, nrow=1, ncol=2, byrow = T))
+
+
+for(i in 1:length(dataTLT)){
+
+
+	mergedopentoclose[[i]] <- xts(mergedopentoclose[[i]], order.by = as.Date(getDates[i]))
+
+}
+
+
+
 
 #merging list elements. 
 
@@ -120,11 +147,6 @@ H <- cbind(bandwidthH(frequenciesTLT[[3]],sparseTLT20min), bandwidthH(frequencie
 
 H <- rowMeans(H)
 
-getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
-
-for(i in 1:length(getDates)){
-	getDates[i] <- strsplit(getDates, " ")[[i]][1]
-}
 
 library(ggplot2)
 
@@ -132,6 +154,8 @@ ggplot() + geom_line(aes(as.Date(getDates), H, group = 1)) + geom_hline(yinterce
 
 #We do it on preferred sampling schemes. 
 
+
+tt <- lapply(mergedfrequencies[[7]], function(x) x*100)
 
 RCov_5min <- lapply(mergedfrequencies[[7]], function(x) realCov(x))
 BPCov_5min <- lapply(mergedfrequencies[[7]], function(x) preavBPCOV(x, F, F, F))
@@ -198,40 +222,40 @@ MRK_15sec <- matrix(unlist(lapply(MRK_15sec, function(x) cbind(x[1,1], x[2,2], x
 
 colnames(MRK_15sec) <- c("TLT", "SPY", "Correlation")
 
-#transforming
-RCov_5min[,1:2] <- 252*RCov_5min[,1:2]*100*(24/6.5)
-RCov_5min[,3] <- RCov_5min[,3]
+
+daily_SPY <- read.csv("daily_SPY.csv", header = T)
+daily_SPY <- diff(log(daily_SPY$close))[-1]
+
+daily_TLT <- read.csv("daily_TLT.csv", header = T)
+daily_TLT <- diff(log(daily_TLT$close))[-1]
+
+merged <- cbind(daily_TLT, daily_SPY)
+
+#HOW SHOULD YOU TRANSFORM IT?!?
+RCov_5min[,1:2] <- RCov_5min[,1:2]*(24/6.5) * 100
 
 BPCov_5min[,1:2] <- 252*BPCov_5min[,1:2]*100*(24/6.5)
-BPCov_5min[,3] <- BPCov_5min[,3]
 
 TCov_5min[,1:2] <- 252*TCov_5min[,1:2]*100*(24/6.5)
-TCov_5min[,3] <- TCov_5min[,3]
 
 RSCovpos_5min[,1:2] <- 252*RSCovpos_5min[,1:2]*100*(24/6.5)
-RSCovpos_5min[,3] <- RSCovpos_5min[,3]
 
 RSCovneg_5min[,1:2] <- 252*RSCovneg_5min[,1:2]*100*(24/6.5)
-RSCovneg_5min[,3] <- RSCovneg_5min[,3]
 
-RCov_daily[,1:2] <- 252*RCov_daily[,1:2]*100*(24/6.5)
-RCov_daily[,3] <- RCov_daily[,3]
+RCov_daily[,1:2] <- 252*RCov_daily[,1:2]*(24/6.5)
 
 MRC_30sec[,1:2] <- 252*MRC_30sec[,1:2]*100*(24/6.5)
-MRC_30sec[,3] <- MRC_30sec[,3]
 
 PBPCov_30sec[,1:2] <- 252*PBPCov_30sec[,1:2]*100*(24/6.5)
-PBPCov_30sec[,3] <- PBPCov_30sec[,3]
 
 MRK_15sec[,1:2] <- 252*MRK_15sec[,1:2]*100*(24/6.5)
-MRK_15sec[,3] <- MRK_15sec[,3]
 
 library(PerformanceAnalytics)
 
 #using performanceAnalytics package you can easily get your summary statistics. 
 
 #TLT
-table.Stats(RCov_5min[,1])
+table.Stats(RCov_5min[,1]*1e5)
 table.Autocorrelation(RCov_5min[,1])
 
 table.Stats(BPCov_5min[,1])
