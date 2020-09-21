@@ -53,27 +53,59 @@ for(j in 1:length(secs)){
 
 
 
+getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
+
+for(i in 1:length(getDates)){
+	getDates[i] <- strsplit(getDates, " ")[[i]][1]
+}
 
 opentocloseTLT <- list()
 opentocloseSPY <- list()
 
 for(i in 1:length(dataTLT)){
 
-	opentocloseTLT[[i]] <- diff(log(dataTLT[[i]]))[-1]
-	opentocloseSPY[[i]] <- diff(log(dataSPY[[i]]))[-1]
+	opentocloseTLT[[i]] <- dataTLT[[i]][c(1,length(dataTLT[[i]]))]
+	opentocloseSPY[[i]] <- dataSPY[[i]][c(1,length(dataSPY[[i]]))]
+}
+
+for(i in 1:length(dataTLT)){
+
+	opentocloseTLT[[i]] <- diff(log(opentocloseTLT[[i]]))[-1]
+	opentocloseSPY[[i]] <- diff(log(opentocloseSPY[[i]]))[-1]
+
+}
+
+mergedopentoclose <- list()
+
+for(i in 1:length(dataTLT)){
+
+	mergedopentoclose[[i]] <- cbind(opentocloseTLT[[i]], opentocloseSPY[[i]])
+
 }
 
 
-#find first non-negative return and last non-negative return. 
-#Reason: Each day we have two returns, one of them will be zero making BV zero and we will get negative jump proportion. 
 
-opentocloseTLTnonneg <- lapply(opentocloseTLT, function(x) x[c(which(x>0)[1], max(which(x>0)))])
-opentocloseSPYnonneg <- lapply(opentocloseSPY, function(x) x[c(which(x>0)[1], max(which(x>0)))])
+#mergedopentoclose <- lapply(mergedopentoclose, function(x) x[c(1,nrow(x))])
+mergedopentoclose <- lapply(mergedopentoclose, function(x) colSums(x, na.rm = T))
+
+mergedopentoclose <- lapply(mergedopentoclose, function(x) matrix(x, nrow=1, ncol=2, byrow = T))
+
+
+for(i in 1:length(dataTLT)){
+
+
+	mergedopentoclose[[i]] <- xts(mergedopentoclose[[i]], order.by = as.Date(getDates[i]))
+
+}
+
+
+#opentocloseTLTnonneg <- lapply(opentocloseTLT, function(x) x[c(which(x>0)[1], max(which(x>0)))])
+#opentocloseSPYnonneg <- lapply(opentocloseSPY, function(x) x[c(which(x>0)[1], max(which(x>0)))])
 
 
 
-opentocloseTLT <- lapply(opentocloseTLT, function(x) x[c(1,length(x))])
-opentocloseSPY <- lapply(opentocloseSPY, function(x) x[c(1,length(x))])
+#opentocloseTLT <- lapply(opentocloseTLT, function(x) x[c(1,length(x))])
+#opentocloseSPY <- lapply(opentocloseSPY, function(x) x[c(1,length(x))])
 
 
 frequenciesSPY[[10]] <- opentocloseSPY
@@ -81,6 +113,23 @@ frequenciesTLT[[10]] <- opentocloseTLT
 
 
 #--------------------jump proportion calculation-------------------------------
+
+
+#ad-hoc method to computing the daily jump proportion
+JPdaily <- function(data){
+	Rcov <- realCov(data) 
+	TLTRV <- Rcov[1,1]
+	SPYRV <- Rcov[2,2]
+
+	BPcov <- preavBPCOV(data,F,F,F)
+	TLTBV <- BPcov[1,1]
+	SPYBV <- BPcov[2,2]
+
+	JPTLT <- (TLTRV - TLTBV)/TLTRV
+	JPSPY <- (SPYRV - SPYBV)/SPYRV
+
+	return(c(JPTLT, JPSPY))
+}
 
 #minute, no pre-averaging
 JPminute <-function(data){
