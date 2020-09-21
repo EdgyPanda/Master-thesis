@@ -85,3 +85,6 @@ theme( legend.position = c(0.80, 0.23), legend.background = element_rect(fill="l
 	plot.title = element_text(hjust = 0.5, face = "bold"),  axis.title=element_text(size=12)) 
 
 ggsave(p1, file = "Semicovariances.eps", device = "eps")
+
+
+max(abs(RSCovmixed_5min[,3])) > max(RSCovpos_5min[,3]+RSCovneg_5min[,3])
