@@ -177,10 +177,12 @@ BPCov_5min <- lapply(mergedfrequencies[[7]], function(x) preavBPCOV(x, F, F, F))
 TCov_5min <- lapply(mergedfrequencies[[7]], function(x) preavthrCOV(x,F))
 RSCovpos_5min <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"P"))
 RSCovneg_5min <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"N"))
+RSCovmixed_5min <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"M"))
+
 RCov_daily <- lapply(mergedopentoclose, function(x) realCov(x))
 
 MRC_30sec <- lapply(mergedfrequencies[[5]], function(x) preavCov(x, T, T, F, 1))
-PBPCov_30sec <- lapply(mergedfrequencies[[7]], function(x) preavBPCOV(x, T, F, T, 1))
+PBPCov_30sec <- lapply(mergedfrequencies[[5]], function(x) preavBPCOV(x, T, F, T, 1))
 
 MRK_15sec <- list()
 
@@ -218,6 +220,11 @@ RSCovneg_5min <- matrix(unlist(lapply(RSCovneg_5min, function(x) cbind(x[1,1], x
 
 colnames(RSCovneg_5min) <- c("TLT", "SPY", "Correlation")
 
+RSCovmixed_5min <- matrix(unlist(lapply(RSCovmixed_5min, function(x) cbind(x[1,1], x[2,2], x[2,1]))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(RSCovmixed_5min) <- c("TLT", "SPY", "Covariance")
+
 RCov_daily <- matrix(unlist(lapply(RCov_daily, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
 	nrow = 2516, ncol=3, byrow=T)
 
@@ -239,13 +246,6 @@ MRK_15sec <- matrix(unlist(lapply(MRK_15sec, function(x) cbind(x[1,1], x[2,2], x
 colnames(MRK_15sec) <- c("TLT", "SPY", "Correlation")
 
 
-daily_SPY <- read.csv("daily_SPY.csv", header = T)
-daily_SPY <- diff(log(daily_SPY$close))[-1]
-
-daily_TLT <- read.csv("daily_TLT.csv", header = T)
-daily_TLT <- diff(log(daily_TLT$close))[-1]
-
-merged <- cbind(daily_TLT, daily_SPY)
 
 #HOW SHOULD YOU TRANSFORM IT?!?
 RCov_5min[,1:2] <- RCov_5min[,1:2]*(24/6.5)

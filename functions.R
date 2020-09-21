@@ -167,7 +167,9 @@ realsemicov <- function(matrix,type, correlation = FALSE){
   if(type == 'M'){
   	realcovariance <- t(positive) %*% negative + t(negative) %*% positive
   }
-
+  if(type == 'hM'){
+  	realcovariance <- t(positive) %*% negative
+  }
 
   if(correlation){
 
