@@ -68,7 +68,22 @@ for(j in 1:length(secs)){
 	print(sprintf("%s",j))
 }
 
+#For bandwidth procedure. 
+HbandwithfreqTLT <- list()
+HbandwithfreqSPY <- list()
+
+for(i in 1:length(dataTLT)){
+
+	HbandwithfreqTLT[[i]] <- diff(log(frequenciesTLT[[3]][[i]]))[-1]
+	HbandwithfreqSPY[[i]] <- diff(log(frequenciesSPY[[3]][[i]]))[-1]
+
+
+}
+
+
+
 # percentage log-returns to construct percentage daily averages.
+
 
 for(j in 1:length(secs)){
 	for(i in 1:length(dataTLT)){
@@ -143,7 +158,7 @@ for(j in 1:length(secs)){
 
 #finding optimal bandwidth for MRK:
 
-H <- cbind(bandwidthH(frequenciesTLT[[3]],sparseTLT20min), bandwidthH(frequenciesSPY[[3]],sparseSPY20min))
+H <- cbind(bandwidthH(HbandwithfreqTLT,sparseTLT20min), bandwidthH(HbandwithfreqSPY,sparseSPY20min))
 
 H <- rowMeans(H)
 
@@ -171,7 +186,8 @@ MRK_15sec <- list()
 
 for(i in 1:length(dataTLT)){
 
-	MRK_15sec[[i]] <-  rKernelCov(list(mergedfrequencies[[3]][[i]][,1], mergedfrequencies[[3]][[i]][,2]), makeReturns = FALSE, kernel.type = "Parzen", kernel.param  = H[i])
+	MRK_15sec[[i]] <-  rKernelCov(list(mergedfrequencies[[3]][[i]][,1], mergedfrequencies[[3]][[i]][,2]), 
+		makeReturns = FALSE, kernel.type = "Parzen", kernel.param  = H[i])
 
 
 }
@@ -234,21 +250,21 @@ merged <- cbind(daily_TLT, daily_SPY)
 #HOW SHOULD YOU TRANSFORM IT?!?
 RCov_5min[,1:2] <- RCov_5min[,1:2]*(24/6.5)
 
-BPCov_5min[,1:2] <- 252*BPCov_5min[,1:2]*(24/6.5)
+BPCov_5min[,1:2] <- BPCov_5min[,1:2]*(24/6.5)
 
-TCov_5min[,1:2] <- 252*TCov_5min[,1:2]*(24/6.5)
+TCov_5min[,1:2] <- TCov_5min[,1:2]*(24/6.5)
 
-RSCovpos_5min[,1:2] <- 252*RSCovpos_5min[,1:2]*(24/6.5)
+RSCovpos_5min[,1:2] <- RSCovpos_5min[,1:2]*(24/6.5)
 
-RSCovneg_5min[,1:2] <- 252*RSCovneg_5min[,1:2]*(24/6.5)
+RSCovneg_5min[,1:2] <- RSCovneg_5min[,1:2]*(24/6.5)
 
-RCov_daily[,1:2] <- 252*RCov_daily[,1:2]*(24/6.5)
+RCov_daily[,1:2] <- RCov_daily[,1:2]*(24/6.5)
 
-MRC_30sec[,1:2] <- 252*MRC_30sec[,1:2]*(24/6.5)
+MRC_30sec[,1:2] <- MRC_30sec[,1:2]*(24/6.5)
 
-PBPCov_30sec[,1:2] <- 252*PBPCov_30sec[,1:2]*(24/6.5)
+PBPCov_30sec[,1:2] <- PBPCov_30sec[,1:2]*(24/6.5)
 
-MRK_15sec[,1:2] <- 252*MRK_15sec[,1:2]*(24/6.5)
+MRK_15sec[,1:2] <- MRK_15sec[,1:2]*(24/6.5)
 
 library(PerformanceAnalytics)
 
