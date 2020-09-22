@@ -150,7 +150,7 @@ for(j in 1:length(secs)){
 	mergedfrequencies[[j]] <- tempmerged
 }
 
-saveRDS(mergedfrequencies, file = "mergedfrequencies.rds")
+#saveRDS(mergedfrequencies, file = "mergedfrequencies.rds")
 
 #--------------------------------------------------SUMMARY STATISTICS------------------------------------------
 
