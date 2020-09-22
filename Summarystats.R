@@ -177,6 +177,8 @@ RSCovpos_5min <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"P"))
 RSCovneg_5min <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"N"))
 RSCovmixed_5min <- lapply(mergedfrequencies[[7]], function(x) realsemicov(x,"M"))
 
+RCov_5sec <- lapply(mergedfrequencies[[2]], function(x) realCov(x))
+
 RCov_daily <- lapply(mergedopentoclose, function(x) realCov(x))
 
 MRC_30sec <- lapply(mergedfrequencies[[5]], function(x) preavCov(x, T, T, F, 1))
@@ -197,6 +199,11 @@ RCov_5min <- matrix(unlist(lapply(RCov_5min, function(x) cbind(x[1,1], x[2,2], x
 	nrow = 2516, ncol=3, byrow=T)
 
 colnames(RCov_5min) <- c("TLT", "SPY", "Correlation")
+
+RCov_5sec <- matrix(unlist(lapply(RCov_5sec, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
+	nrow = 2516, ncol=3, byrow=T)
+
+colnames(RCov_5sec) <- c("TLT", "SPY", "Correlation")
 
 BPCov_5min <- matrix(unlist(lapply(BPCov_5min, function(x) cbind(x[1,1], x[2,2], x[2,1]/(sqrt(x[2,2])*sqrt(x[1,1]))))), 
 	nrow = 2516, ncol=3, byrow=T)
@@ -248,6 +255,8 @@ colnames(MRK_15sec) <- c("TLT", "SPY", "Correlation")
 #HOW SHOULD YOU TRANSFORM IT?!?
 RCov_5min[,1:2] <- RCov_5min[,1:2]*(24/6.5)
 
+RCov_5sec[,1:2] <- RCov_5sec[,1:2]*(24/6.5)
+
 BPCov_5min[,1:2] <- BPCov_5min[,1:2]*(24/6.5)
 
 TCov_5min[,1:2] <- TCov_5min[,1:2]*(24/6.5)
@@ -271,6 +280,9 @@ library(PerformanceAnalytics)
 #TLT
 table.Stats(RCov_5min[,1])
 table.Autocorrelation(RCov_5min[,1])
+
+table.Stats(RCov_5sec[,1])
+table.Autocorrelation(RCov_5sec[,1])
 
 table.Stats(BPCov_5min[,1])
 table.Autocorrelation(BPCov_5min[,1])
@@ -299,6 +311,9 @@ table.Autocorrelation(MRK_15sec[,1])
 #SPY
 table.Stats(RCov_5min[,2])
 table.Autocorrelation(RCov_5min[,2])
+
+table.Stats(RCov_5sec[,2])
+table.Autocorrelation(RCov_5sec[,2])
 
 table.Stats(BPCov_5min[,2])
 table.Autocorrelation(BPCov_5min[,2])
@@ -374,4 +389,4 @@ library(gridExtra)
 pf <- grid.arrange(p1,p2,p3, ncol=1)
 
 
-ggsave(pf, file="varianceassets.eps", device="eps")
+#ggsave(pf, file="varianceassets.eps", device="eps")
