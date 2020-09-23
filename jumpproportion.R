@@ -51,7 +51,7 @@ for(j in 1:length(secs)){
 }
 
 
-
+#-----------------preparing open-to-close returns. Everything is calculated separately. 
 
 getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
 
@@ -99,6 +99,19 @@ for(i in 1:length(dataTLT)){
 }
 
 
+dailyacross <- array(unlist(mergedopentoclose), c(2,2,2516))
+
+
+#constructing an array instead of list!
+for(i in 1:2516){
+
+	dailyacross[,,i] <- t(dailyacross[,,i])
+
+}
+
+
+
+
 #opentocloseTLTnonneg <- lapply(opentocloseTLT, function(x) x[c(which(x>0)[1], max(which(x>0)))])
 #opentocloseSPYnonneg <- lapply(opentocloseSPY, function(x) x[c(which(x>0)[1], max(which(x>0)))])
 
@@ -108,8 +121,6 @@ for(i in 1:length(dataTLT)){
 #opentocloseSPY <- lapply(opentocloseSPY, function(x) x[c(1,length(x))])
 
 
-frequenciesSPY[[10]] <- opentocloseSPY
-frequenciesTLT[[10]] <- opentocloseTLT
 
 
 #--------------------jump proportion calculation-------------------------------
@@ -128,7 +139,11 @@ JPdaily <- function(data){
 	JPTLT <- (TLTRV - TLTBV)/TLTRV
 	JPSPY <- (SPYRV - SPYBV)/SPYRV
 
-	return(c(JPTLT, JPSPY))
+	lout <- list(JPTLT,TLTRV, TLTBV, JPSPY, SPYRV, SPYBV)
+
+	names(lout) <- c("JPTLT", "TLTRV", "TLTBV", "JPSPY", "SPYRV", "SPYBV")
+
+	return(lout)
 }
 
 #minute, no pre-averaging
@@ -163,6 +178,41 @@ JPsecond <-function(data, theta=1){
 }
 
 
+#first analysis for open-to-close:
+
+jpdaily <- list()
+
+for(i in 1:length(dataTLT)){
+
+	jpdaily[[i]] <- JPdaily(dailyacross[,,i])
+
+}
+
+
+#forcing jp interval between [0,1] due to extremely high measurement error
+jptlt_daily <- sapply(jpdaily, function(x) x$JPTLT)
+jptlt_daily[jptlt_daily < 0] <- 0 
+
+rvtlt_daily <- sapply(jpdaily, function(x) x$TLTRV)
+bvtlt_daily <- sapply(jpdaily, function(x) x$TLTBV)
+
+sqrt(mean(bvtlt_daily)*252)*100
+sqrt(mean(rvtlt_daily)*252)*100
+mean(jptlt_daily)*100
+
+
+ #(mean(rvtlt_daily+0.0000118) 
+
+jpspy_daily <- sapply(jpdaily, function(x) x$JPSPY)
+jpspy_daily[jpspy_daily < 0] <- 0
+rvspy_daily <- sapply(jpdaily, function(x) x$SPYRV)
+bvspy_daily <- sapply(jpdaily, function(x) x$SPYBV)
+
+sqrt(mean(bvspy_daily)*252)*100
+sqrt(mean(rvspy_daily)*252)*100
+mean(jpspy_daily)*100
+
+#mean(rvspy_daily+0.00002344)
 #Do the analysis. First five needs jpsecond, last five needs jpminute. 
 
 JPTLT <- list()
@@ -182,7 +232,7 @@ tempSPY2 <- list()
 
 #Splitting up second and minute calculations due to second calc being incredibly slow. 
 
-for(j in 1:(length(frequenciesTLT)/2)){
+for(j in 1:4){
 	for(i in 1:length(dataTLT)){
 		tempTLT2[[i]] <- JPminute(frequenciesTLT[[j+5]][[i]])
 		tempSPY2[[i]] <- JPminute(frequenciesSPY[[j+5]][[i]])
@@ -200,7 +250,7 @@ for(j in 1:(length(frequenciesTLT)/2)){
 }
 
 
-for(j in 1:(length(frequenciesTLT)/2)){
+for(j in 1:5)){
 	for(i in 1:length(dataTLT)){
 		tempTLT[[i]] <- JPsecond(frequenciesTLT[[j]][[i]])
 
@@ -225,7 +275,7 @@ for(j in 1:(length(frequenciesTLT)/2)){
 }
 
 
-saveRDS(list(JPTLT, RVTLT, BVTLT, JPSPY, RVSPY, BVSPY), file = "jumpproportiondata.rds") 
+#saveRDS(list(JPTLT, RVTLT, BVTLT, JPSPY, RVSPY, BVSPY), file = "jumpproportiondata.rds") 
 
 
 
@@ -240,7 +290,6 @@ for(i in 1:length(JPTLT)){
 	JPSPY[[i]][JPSPY[[i]]<0] <- 0
 	RVSPY[[i]][RVSPY[[i]]<0] <- 0
 	BVSPY[[i]][BVSPY[[i]]<0] <- 0
-
 }
 
 
@@ -270,6 +319,86 @@ colMeans(rbind(sqrt(252*meanRVTLT)*100,sqrt(252*meanRVSPY)*100))
 colMeans(rbind(sqrt(252*meanBVTLT)*100,sqrt(252*meanBVSPY)*100))
 
 colMeans(rbind(meanJPTLT*100,meanJPSPY*100))
+
+
+
+
+#--------------------------------visualising Jump variation----------------
+jp <- readRDS("jumpproportiondata.rds")
+
+
+dailyacross <- array(unlist(mergedopentoclose), c(2,2,2516))
+
+for(i in 1:2516){
+
+	dailyacross[,,i] <- t(dailyacross[,,i])
+
+}
+
+
+Jpdaily <- list()
+
+for(i in 1:length(dataTLT)){
+
+	Jpdaily[[i]] <- JPdaily(dailyacross[,,i])
+
+}
+
+
+rvtlt_daily <- sapply(Jpdaily, function(x) x$TLTRV)
+bvtlt_daily <- sapply(Jpdaily, function(x) x$TLTBV)
+
+rvspy_daily <- sapply(Jpdaily, function(x) x$SPYRV)
+bvspy_daily <- sapply(Jpdaily, function(x) x$SPYBV)
+
+
+
+#5min
+
+jvtlt_5min <- numeric()
+
+jvspy_5min <- numeric()
+
+
+jvtlt_daily <- numeric()
+
+jvspy_daily <- numeric()
+
+
+for(i in 1:length(jp[[2]][[7]])){
+
+	jvtlt_5min[i] <- max(sqrt(jp[[2]][[7]][i]*252) - sqrt(jp[[3]][[7]][i]*252),0)*100
+	jvspy_5min[i] <- max(sqrt(jp[[5]][[7]][i]*252) - sqrt(jp[[6]][[7]][i]*252),0)*100
+
+	jvtlt_daily[i] <- max(sqrt(rvtlt_daily[i]*252) - sqrt(bvtlt_daily[i]*252),0)*100
+	jvspy_daily[i] <- max(sqrt(rvspy_daily[i]*252) - sqrt(bvspy_daily[i]*252),0)*100
+}
+
+
+library(ggplot2)
+library(gridExtra)
+library(ggpubr)
+
+
+
+p1 <- ggplot() + geom_line(aes(as.Date(getDates), jvtlt_5min), col ="cyan4") + xlab("") + ylab("JV (%)") + 
+ggtitle("TLT") + theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+p2 <- ggplot() + geom_line(aes(as.Date(getDates), jvtlt_daily),col ="slateblue4")+ xlab("") + ylab("JV (%)") +
+ggtitle("TLT") + theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+p3 <- ggplot() + geom_line(aes(as.Date(getDates), jvspy_5min),col ="cyan4") + xlab("") + ylab("JV (%)") +
+ggtitle("SPY") + theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+p4 <- ggplot() + geom_line(aes(as.Date(getDates), jvspy_daily),col ="slateblue4")+ xlab("") + ylab("JV (%)") +
+ggtitle("SPY") + theme(plot.title = element_text(hjust = 0.5), legend.position = "none")
+
+
+
+
+
+ggarrange(p1,p2,p3,p4,ncol=2, nrow=2)
+
+ggsave("JVdiff.eps", device = "eps")
+
+
 
 
 
