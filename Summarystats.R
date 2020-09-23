@@ -371,11 +371,11 @@ table.Autocorrelation(MRK_15sec[,3])
 
 meanpriceTLT <- unlist(lapply(dataTLT, function(x) mean(x)))
 
-p1 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,1]/(24/6.5)), col = "firebrick") + ylab("Ann. variance (%)") + 
+p1 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,1]/(24/6.5)), col = "firebrick") + ylab("Ann. var (%)") + 
 xlab("Dates") + ggtitle("TLT") + theme(plot.title = element_text(hjust = 0.5)) 
 
 
-p2 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,2]/(24/6.5)), col = "deepskyblue1") + ylab("Ann. variance (%)") + 
+p2 <- ggplot() + geom_line(aes(as.Date(getDates), RCov_5min[,2]/(24/6.5)), col = "deepskyblue1") + ylab("Ann. var (%)") + 
 xlab("Dates") + ggtitle("SPY") + theme(plot.title = element_text(hjust = 0.5))
 
 
