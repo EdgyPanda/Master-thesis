@@ -176,7 +176,7 @@ for(i in 1:(length(mergedfrequencies)-1)){
 		tempBPcov[,,j] <- preavBPCOV(mergedfrequencies[[i]][[j]],F,F,F)
 		tempPBPcov[,,j] <- preavBPCOV(mergedfrequencies[[i]][[j]],T,F,T,1)
 		tempMRC[,,j] <- preavCov(mergedfrequencies[[i]][[j]], T, T, F, 1)
-		tempMRK[,,j] <- rKernelCov(list(mergedfrequencies[[i]][[i]][,1], mergedfrequencies[[i]][[i]][,2]), 
+		tempMRK[,,j] <- rKernelCov(list(mergedfrequencies[[i]][[j]][,1], mergedfrequencies[[i]][[j]][,2]), 
 		makeReturns = FALSE, kernel.type = "Parzen", kernel.param  = H[[i]][j])
 		print(sprintf("frequency: %s, day: %s", i,j))
 
@@ -191,3 +191,5 @@ for(i in 1:(length(mergedfrequencies)-1)){
 
 #estimators that doesn't work on daily data: BPCov (sampling across days works), PBPCov, MRC.
 
+saveRDS(list(Rcov_frequencies, Rcovpos_frequencies, Rcovneg_frequencies, Tcov_frequencies, BPcov_frequencies, 
+	PBPcov_frequencies, MRC_frequencies, MRK_frequencies), file = "calculatedcovariances.rds")
