@@ -28,7 +28,8 @@ for(i in 1:length(getDates)){
 
 sparseTLT20min <- list()
 sparseSPY20min <- list()
-
+opentocloseTLT <- list()
+opentocloseSPY <- list()
 
 for(i in 1:length(dataTLT)){
 
@@ -52,8 +53,8 @@ for(i in 1:length(dataTLT)){
 
 for(i in 1:length(dataTLT)){
 
-	opentocloseTLT[[i]] <- diff(log(opentocloseTLT[[i]]))[-1] * 100
-	opentocloseSPY[[i]] <- diff(log(opentocloseSPY[[i]]))[-1] * 100
+	opentocloseTLT[[i]] <- diff(log(opentocloseTLT[[i]]))[-1] 
+	opentocloseSPY[[i]] <- diff(log(opentocloseSPY[[i]]))[-1] 
 
 }
 
@@ -66,11 +67,24 @@ for(i in 1:length(dataTLT)){
 
 }
 
+mergedopentoclose <- lapply(mergedopentoclose, function(x) colSums(x, na.rm = T))
+
+mergedopentoclose <- lapply(mergedopentoclose, function(x) matrix(x, nrow=1, ncol=2, byrow = T))
+
+
+for(i in 1:length(dataTLT)){
+
+
+	mergedopentoclose[[i]] <- xts(mergedopentoclose[[i]], order.by = as.Date(getDates[i]))
+
+}
+
+
 
 #log-returns and not percentage log-returns.
 mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
-
+mergedfrequencies[[10]] <- mergedopentoclose
 
 #----------------------Finding optimal bandwidth for all frequencies: 
 
@@ -98,4 +112,82 @@ mergedfrequencies <- readRDS("mergedfrequencies.rds")
 #saveRDS(H,"bandwidthH.rds")
 
 H <- readRDS("bandwidthH.rds")
+
+
+# -------------------------------------------Calculating realized measures  across frequencies -------------------
+#
+#
+#
+
+
+Rcov_frequencies <- list()
+
+tempRcov <- array(0L, dim = c(2,2,length(dataTLT)))
+
+Rcovpos_frequencies <- list()
+
+tempRcovpos <- array(0L, dim = c(2,2,length(dataTLT)))
+
+Rcovneg_frequencies <- list()
+
+tempRcovneg <- array(0L, dim = c(2,2,length(dataTLT)))
+
+Tcov_frequencies <- list()
+
+tempTcov <- array(0L, dim = c(2,2,length(dataTLT)))
+
+for(i in 1:length(mergedfrequencies)){
+	for(j in 1:length(dataTLT)){
+
+		tempRcov[,,j] <- realCov(mergedfrequencies[[i]][[j]])
+		tempRcovpos[,,j] <- realsemicov(mergedfrequencies[[i]][[j]], "P")
+		tempRcovneg[,,j] <- realsemicov(mergedfrequencies[[i]][[j]], "N")
+		tempTcov[,,j] <- preavthrCOV(mergedfrequencies[[i]][[j]])
+
+		print(sprintf("frequency: %s, day: %s", i,j))
+	}
+	Rcov_frequencies[[i]] <- tempRcov	
+	Rcovpos_frequencies[[i]] <- tempRcovpos
+	Rcovneg_frequencies[[i]] <- tempRcovneg
+	Tcov_frequencies[[i]] <- tempTcov
+}
+
+
+BPcov_frequencies <- list()
+
+tempBPcov <- array(0L, dim = c(2,2,length(dataTLT)))
+
+MRC_frequencies <- list()
+
+tempMRC <- array(0L, dim = c(2,2,length(dataTLT)))
+
+PBPcov_frequencies <- list()
+
+tempPBPcov <- array(0L, dim = c(2,2,length(dataTLT)))
+
+MRK_frequencies <- list()
+
+tempMRK <- array(0L, dim = c(2,2,length(dataTLT)))
+
+
+for(i in 1:(length(mergedfrequencies)-1)){
+	for(j in 1:length(dataTLT)){
+
+		tempBPcov[,,j] <- preavBPCOV(mergedfrequencies[[i]][[j]],F,F,F)
+		tempPBPcov[,,j] <- preavBPCOV(mergedfrequencies[[i]][[j]],T,F,T,1)
+		tempMRC[,,j] <- preavCov(mergedfrequencies[[i]][[j]], T, T, F, 1)
+		tempMRK[,,j] <- rKernelCov(list(mergedfrequencies[[i]][[i]][,1], mergedfrequencies[[i]][[i]][,2]), 
+		makeReturns = FALSE, kernel.type = "Parzen", kernel.param  = H[[i]][j])
+		print(sprintf("frequency: %s, day: %s", i,j))
+
+	}
+
+	BPcov_frequencies[[i]] <- tempBPcov
+	PBPcov_frequencies[[i]] <- tempPBPcov
+	MRC_frequencies[[i]] <- tempMRC
+	MRK_frequencies[[i]] <- tempMRK
+}
+
+
+#estimators that doesn't work on daily data: BPCov (sampling across days works), PBPCov, MRC.
 
