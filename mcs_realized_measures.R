@@ -193,3 +193,5 @@ for(i in 1:(length(mergedfrequencies)-1)){
 
 saveRDS(list(Rcov_frequencies, Rcovpos_frequencies, Rcovneg_frequencies, Tcov_frequencies, BPcov_frequencies, 
 	PBPcov_frequencies, MRC_frequencies, MRK_frequencies), file = "calculatedcovariances.rds")
+
+
