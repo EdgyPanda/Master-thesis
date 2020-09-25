@@ -324,7 +324,7 @@ temptcov_bpcov[temptcov_bpcov == 0] <- mean(temptcov_bpcov, na.rm = T)
 
 #-------------------------merging---------------------------
 
-rcov_loss <- cbind(rcov_loss, temprcov, na.rm = T)
+rcov_loss <- cbind(rcov_loss, temprcov)
 rcovpos_loss <- cbind(rcovpos_loss, temprcovpos)
 rcovneg_loss <- cbind(rcovneg_loss, temprcovneg)
 tcov_loss_rcov <- cbind(tcov_loss_rcov, temptcov_rcov)
@@ -332,8 +332,11 @@ tcov_loss_bpcov <- cbind(tcov_loss_bpcov, temptcov_bpcov)
 
 
 
-loss_matrix <- cbind(rcov_loss, rcovpos_loss, rcovneg_loss, MRC_loss, MRK_loss, 
-	tcov_loss_rcov, bpcov_loss_rcov, pbpcov_loss_rcov, tcov_loss_bpcov, bpcov_loss_bpcov, pbpcov_loss_bpcov)
+loss_matrix <- as.matrix(cbind(rcov_loss, rcovpos_loss, rcovneg_loss, MRC_loss, MRK_loss, 
+	tcov_loss_rcov, bpcov_loss_rcov, pbpcov_loss_rcov, tcov_loss_bpcov, bpcov_loss_bpcov, pbpcov_loss_bpcov))
+
+
+rownames(loss_matrix) <- (getDates)[-1]
 
 estnames <- c("Rcov_1sec", "Rcov_5sec", "Rcov_15sec", "Rcov_20sec", "Rcov_30sec",
 	"Rcov_1min", "Rcov_5min", "Rcov_15min", "Rcov_30min", "Rcov_daily", "Rcovpos_1sec", "Rcovpos_5sec", "Rcovpos_15sec", 
@@ -359,3 +362,9 @@ estnames <- c("Rcov_1sec", "Rcov_5sec", "Rcov_15sec", "Rcov_20sec", "Rcov_30sec"
 
 
 	colnames(loss_matrix) <- estnames 
+
+MCSprocedure(loss_matrix, alpha =  0.05, B = 1000, k=10)
+
+head(Loss)
+
+max(loss_matrix[,1:10]/100)
