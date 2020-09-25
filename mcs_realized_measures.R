@@ -196,4 +196,166 @@ for(i in 1:(length(mergedfrequencies)-1)){
 
 calccov <- readRDS("calculatedcovariances.rds")
 
-QLIKE()
+
+
+#QLIKE <- function(realized, proxy)
+
+#WE WILL CALCULATE OPEN-TO-CLOSE LOSSES SEPARATELY.
+
+
+rcov_loss <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+rcovpos_loss <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+rcovneg_loss <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+MRC_loss <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+MRK_loss <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+
+
+#two types of jump robust estimates, one following proxy of bpcov and other following rcov:
+
+#estimate_loss_proxy
+bpcov_loss_rcov <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+tcov_loss_rcov <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+pbpcov_loss_rcov <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+
+bpcov_loss_bpcov <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+tcov_loss_bpcov <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+pbpcov_loss_bpcov <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
+
+
+for(j in 1:(length(mergedfrequencies)-1)){
+
+	for(i in 1:(length(dataTLT)-1)){
+
+		rcov_loss[i,j] <- QLIKE(calccov[[1]][[j]][,,i],calccov[[1]][[7]][,,i+1])
+		rcovpos_loss[i,j] <- QLIKE(calccov[[2]][[j]][,,i],calccov[[1]][[7]][,,i+1]) #produces singular at 9th freq
+		rcovneg_loss[i,j] <- QLIKE(calccov[[3]][[j]][,,i],calccov[[1]][[7]][,,i+1]) #produces singular at 9th freq
+		MRC_loss[i,j] <- QLIKE(calccov[[7]][[j]][,,i],calccov[[1]][[7]][,,i+1])
+		MRK_loss[i,j] <- QLIKE(calccov[[8]][[j]][,,i],calccov[[1]][[7]][,,i+1])
+
+		tcov_loss_rcov[i,j] <- QLIKE(calccov[[4]][[j]][,,i],calccov[[1]][[7]][,,i+1]) #produces singular at 1st + 2nd freq
+		bpcov_loss_rcov[i,j] <- QLIKE(calccov[[5]][[j]][,,i],calccov[[1]][[7]][,,i+1]) #produces NaNs
+		pbpcov_loss_rcov[i,j] <- QLIKE(calccov[[6]][[j]][,,i],calccov[[1]][[7]][,,i+1]) #produces NaNs
+
+		tcov_loss_bpcov[i,j] <- QLIKE(calccov[[4]][[j]][,,i],calccov[[5]][[7]][,,i+1]) #produces singular at 1st + 2nd freq
+		bpcov_loss_bpcov[i,j] <- QLIKE(calccov[[5]][[j]][,,i],calccov[[5]][[7]][,,i+1]) #produces NaNs
+		pbpcov_loss_bpcov[i,j] <- QLIKE(calccov[[6]][[j]][,,i],calccov[[5]][[7]][,,i+1]) #produces NaNs
+
+
+	}
+	print(sprintf("frequency: %s", j))
+
+}
+
+#Replacing NaN values with mean over losses for each frequency. 
+
+for(j in 1:(length(mergedfrequencies)-1)){
+
+	rcov_loss[is.nan(rcov_loss[,j]),j] <- mean(rcov_loss[,j], na.rm = T) 
+	tcov_loss_rcov[is.nan(tcov_loss_rcov[,j]),j] <- mean(tcov_loss_rcov[,j], na.rm = T) 
+	tcov_loss_bpcov[is.nan(tcov_loss_bpcov[,j]),j] <- mean(tcov_loss_bpcov[,j], na.rm = T) 
+	rcovpos_loss[is.nan(rcovpos_loss[,j]),j] <- mean(rcovpos_loss[,j], na.rm = T) 
+	rcovneg_loss[is.nan(rcovneg_loss[,j]),j] <- mean(rcovneg_loss[,j], na.rm = T) 
+	bpcov_loss_rcov[is.nan(bpcov_loss_rcov[,j]),j] <- mean(bpcov_loss_rcov[,j], na.rm = T) 
+	bpcov_loss_bpcov[is.nan(bpcov_loss_bpcov[,j]),j] <- mean(bpcov_loss_bpcov[,j], na.rm = T) 
+	pbpcov_loss_rcov[is.nan(pbpcov_loss_rcov[,j]),j] <- mean(pbpcov_loss_rcov[,j], na.rm = T) 
+	pbpcov_loss_bpcov[is.nan(pbpcov_loss_bpcov[,j]),j] <- mean(pbpcov_loss_bpcov[,j], na.rm = T) 
+
+}
+
+
+
+#DAILY COMPUTATIONS:
+
+#Had to do smoothing in order to avoid numerical singularity due to lack of returns. 
+#-------------------smoothing------------------------
+
+mergedopentoclose <- cbind(sapply(mergedfrequencies[[10]], function(x) x[,1]), sapply(mergedfrequencies[[10]], function(x) x[,2]))
+
+mergedopentoclose <- xts(mergedopentoclose, order.by = as.Date(getDates))
+
+library(matlib)
+
+rcov_smooth <- rollapply(mergedopentoclose, 4, function(x) realCov(x), by.column = F, align = 'left')
+rcov_smooth <- array(t(rcov_smooth), dim = c(2,2,2516))
+
+rcovpos_smooth <- rollapply(mergedopentoclose, 4, function(x) realsemicov(x, "P"), by.column = F, align = 'left')
+rcovpos_smooth <- array(t(rcovpos_smooth), dim = c(2,2,2516))
+
+rcovneg_smooth <- rollapply(mergedopentoclose, 4, function(x) realsemicov(x, "P"), by.column = F, align = 'left')
+rcovneg_smooth <- array(t(rcovneg_smooth), dim = c(2,2,2516))
+
+tcov_smooth <- rollapply(mergedopentoclose, 4, function(x) preavBPCOV(x,F,F,F,1), by.column = F, align = 'left')
+tcov_smooth <- array(t(tcov_smooth), dim = c(2,2,2516))
+
+#-------------end of smoothing --------------------
+
+temprcov <- matrix(0L, nrow=(length(dataTLT)-1), ncol = 1)
+temprcovpos <- matrix(0L, nrow=(length(dataTLT)-1), ncol = 1)
+temprcovneg <- matrix(0L, nrow=(length(dataTLT)-1), ncol = 1)
+temptcov_rcov <- matrix(0L, nrow=(length(dataTLT)-1), ncol = 1)
+temptcov_bpcov <- matrix(0L, nrow=(length(dataTLT)-1), ncol = 1)
+
+for(i in 1:(length(dataTLT)-1)){
+
+	temprcov[i,] <- QLIKE(rcov_smooth[,,i],calccov[[1]][[7]][,,i+1])
+	temprcovpos[i,] <- QLIKE(rcovpos_smooth[,,i],calccov[[1]][[7]][,,i+1])
+	temprcovneg[i,] <- QLIKE(rcovneg_smooth[,,i],calccov[[1]][[7]][,,i+1])
+	temptcov_rcov[i,] <- QLIKE(tcov_smooth[,,i],calccov[[1]][[7]][,,i+1])
+	temptcov_bpcov[i,] <- QLIKE(tcov_smooth[,,i],calccov[[5]][[7]][,,i+1])
+
+}
+
+#Last losses are zerom thus replaces with mean. 
+temprcov[is.nan(temprcov)] <- mean(temprcov, na.rm = T)
+temprcov[temprcov == 0] <- mean(temprcov,  na.rm = T)
+
+
+temprcovpos[is.nan(temprcovpos),] <- mean(temprcovpos, na.rm = T)
+temprcovpos[temprcovpos == 0] <- mean(temprcovpos, na.rm = T)
+temprcovneg[is.nan(temprcovneg),] <- mean(temprcovneg, na.rm = T)
+temprcovneg[temprcovneg == 0] <- mean(temprcovneg, na.rm = T)
+temptcov_rcov[is.nan(temptcov_rcov),] <- mean(temptcov_rcov, na.rm = T)
+temptcov_rcov[temptcov_rcov == 0] <- mean(temptcov_rcov, na.rm = T)
+
+temptcov_bpcov[is.nan(temptcov_bpcov)] <- mean(temptcov_bpcov, na.rm = T)
+temptcov_bpcov[temptcov_bpcov == 0] <- mean(temptcov_bpcov, na.rm = T)
+
+#----------------end of open-to-close-returns---------------
+
+#-------------------------merging---------------------------
+
+rcov_loss <- cbind(rcov_loss, temprcov, na.rm = T)
+rcovpos_loss <- cbind(rcovpos_loss, temprcovpos)
+rcovneg_loss <- cbind(rcovneg_loss, temprcovneg)
+tcov_loss_rcov <- cbind(tcov_loss_rcov, temptcov_rcov)
+tcov_loss_bpcov <- cbind(tcov_loss_bpcov, temptcov_bpcov)
+
+
+
+loss_matrix <- cbind(rcov_loss, rcovpos_loss, rcovneg_loss, MRC_loss, MRK_loss, 
+	tcov_loss_rcov, bpcov_loss_rcov, pbpcov_loss_rcov, tcov_loss_bpcov, bpcov_loss_bpcov, pbpcov_loss_bpcov)
+
+estnames <- c("Rcov_1sec", "Rcov_5sec", "Rcov_15sec", "Rcov_20sec", "Rcov_30sec",
+	"Rcov_1min", "Rcov_5min", "Rcov_15min", "Rcov_30min", "Rcov_daily", "Rcovpos_1sec", "Rcovpos_5sec", "Rcovpos_15sec", 
+	"Rcovpos_20sec", "Rcovpos_30sec", "Rcovpos_1min", "Rcovpos_5min", "Rcovpos_15min", "Rcovpos_30min", 
+	"Rcovpos_daily", "Rcovneg_1sec", "Rcovneg_5sec", "Rcovneg_15sec", "Rcovneg_20sec", "Rcovneg_30sec",
+	"Rcovneg_1min", "Rcovneg_5min", "Rcovneg_15min", "Rcovneg_30min", "Rcovneg_daily", "MRC_1sec", "MRC_5sec", 
+	"MRC_15sec", "MRC_20sec", "MRC_30sec", "MRC_1min", "MRC_5min", "MRC_15min", "MRC_30min", "MRK_1sec", 
+	"MRK_5sec", "MRK_15sec", "MRK_20sec", "MRK_30sec", "MRK_1min", "MRK_5min", "MRK_15min", "MRK_30min", 
+	"Tcov_1sec (pxy: Rcov)", "Tcov_5sec (pxy: Rcov)", "Tcov_15sec (pxy: Rcov)", "Tcov_20sec (pxy: Rcov)", 
+	"Tcov_30sec (pxy: Rcov)", "Tcov_1min (pxy: Rcov)", "Tcov_5min (pxy: Rcov)", "Tcov_15min (pxy: Rcov)", 
+	"Tcov_30min (pxy: Rcov)", "Tcov_daily (pxy: Rcov)", "BPcov_1sec (pxy: Rcov)", "BPcov_5sec (pxy: Rcov)", 
+	"BPcov_15sec (pxy: Rcov)", "BPcov_20sec (pxy: Rcov)", "BPcov_30sec (pxy: Rcov)", "BPcov_1min (pxy: Rcov)",
+	"BPcov_5min (pxy: Rcov)", "BPcov_15min (pxy: Rcov)", "BPcov_30min (pxy: Rcov)", "PBPcov_1sec (pxy: Rcov)", 
+	"PBPcov_5sec (pxy: Rcov)", "PBPcov_15sec (pxy: Rcov)", "PBPcov_20sec (pxy: Rcov)", "PBPcov_30sec (pxy: Rcov)",
+	"PBPcov_1min (pxy: Rcov)", "PBPcov_5min (pxy: Rcov)", "PBPcov_15min (pxy: Rcov)", "PBPcov_30min (pxy: Rcov)", 
+	"Tcov_1sec (pxy: BPcov)", "Tcov_5sec (pxy: BPcov)", "Tcov_15sec (pxy: BPcov)", "Tcov_20sec (pxy: BPcov)", 
+	"Tcov_30sec (pxy: BPcov)", "Tcov_1min (pxy: BPcov)", "Tcov_5min (pxy: BPcov)", "Tcov_15min (pxy: BPcov)", 
+	"Tcov_30min (pxy: BPcov)", "Tcov_daily (pxy: BPcov)", "BPcov_1sec (pxy: BPcov)", "BPcov_5sec (pxy: BPcov)", 
+	"BPcov_15sec (pxy: BPcov)", "BPcov_20sec (pxy: BPcov)", "BPcov_30sec (pxy: BPcov)", "BPcov_1min (pxy: BPcov)", 
+	"BPcov_5min (pxy: BPcov)", "BPcov_15min (pxy: BPcov)", "BPcov_30min (pxy: BPcov)",  "PBPcov_1sec (pxy: BPcov)", 
+	"PBPcov_5sec (pxy: BPcov)", "PBPcov_15sec (pxy: BPcov)", "PBPcov_20sec (pxy: BPcov)", "PBPcov_30sec (pxy: BPcov)",
+	"PBPcov_1min (pxy: BPcov)", "PBPcov_5min (pxy: BPcov)", "PBPcov_15min (pxy: BPcov)", "PBPcov_30min (pxy: BPcov)")
+
+
+	colnames(loss_matrix) <- estnames 
