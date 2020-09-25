@@ -191,7 +191,9 @@ for(i in 1:(length(mergedfrequencies)-1)){
 
 #estimators that doesn't work on daily data: BPCov (sampling across days works), PBPCov, MRC.
 
-saveRDS(list(Rcov_frequencies, Rcovpos_frequencies, Rcovneg_frequencies, Tcov_frequencies, BPcov_frequencies, 
-	PBPcov_frequencies, MRC_frequencies, MRK_frequencies), file = "calculatedcovariances.rds")
+#saveRDS(list(Rcov_frequencies, Rcovpos_frequencies, Rcovneg_frequencies, Tcov_frequencies, BPcov_frequencies, 
+#	PBPcov_frequencies, MRC_frequencies, MRK_frequencies), file = "calculatedcovariances.rds")
 
+calccov <- readRDS("calculatedcovariances.rds")
 
+QLIKE()
