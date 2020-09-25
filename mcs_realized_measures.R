@@ -281,7 +281,7 @@ rcov_smooth <- array(t(rcov_smooth), dim = c(2,2,2516))
 rcovpos_smooth <- rollapply(mergedopentoclose, 4, function(x) realsemicov(x, "P"), by.column = F, align = 'left')
 rcovpos_smooth <- array(t(rcovpos_smooth), dim = c(2,2,2516))
 
-rcovneg_smooth <- rollapply(mergedopentoclose, 4, function(x) realsemicov(x, "P"), by.column = F, align = 'left')
+rcovneg_smooth <- rollapply(mergedopentoclose, 4, function(x) realsemicov(x, "N"), by.column = F, align = 'left')
 rcovneg_smooth <- array(t(rcovneg_smooth), dim = c(2,2,2516))
 
 tcov_smooth <- rollapply(mergedopentoclose, 4, function(x) preavBPCOV(x,F,F,F,1), by.column = F, align = 'left')
@@ -363,8 +363,14 @@ estnames <- c("Rcov_1sec", "Rcov_5sec", "Rcov_15sec", "Rcov_20sec", "Rcov_30sec"
 
 	colnames(loss_matrix) <- estnames 
 
-MCSprocedure(loss_matrix, alpha =  0.05, B = 1000, k=10)
 
-head(Loss)
+library(parallel)
 
-max(loss_matrix[,1:10]/100)
+
+cl <- parallel::makeCluster(detectCores())
+
+
+MCS <- MCSprocedure(loss_matrix, cl = cl, alpha =  0.05, B = 1000, k=10)
+
+
+parallel::stopCluster(cl)
