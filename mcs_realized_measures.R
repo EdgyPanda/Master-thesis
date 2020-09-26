@@ -417,5 +417,50 @@ head(loss_matrix[,c(tt$includedR)])
 head(loss_matrix[,c(6,45,82,96)])
 
 
+#------------------------------------------min var losses ---------------------------------------------
+
+#Min var losses for each estimator. 
+
+#try catch statement to catch singular matrices. Will replace with mean. Remember that the only purpose is to
+#use it for comparison analysis. 
+minvar <- function(Covar){
+
+	ones <- matrix(rep(1, ncol(Covar)), ncol=1, nrow=ncol(Covar))
+
+	t <- try(inv(Covar), silent = F)
+
+	if("try-error" %in% class(t)){return(matrix(rep(NaN,ncol(Covar)), ncol=2, nrow =1))}
+	else{
+	w1 <- t %*% ones
+	w2 <- t(ones) %*% t %*% (ones)
+
+	w <- w1 %*% w2^-1
+
+	return(w)
+}
+}
 
 
+#GONNA CALCULATE DAILY ESTIMATES SEPARATELY. 
+
+weights1 <- array(0L, c(length(dataTLT),2,length(calccov[[1]])-1))
+
+all_weights <- list()
+
+for(j in 1:length(calccov)){
+	for(i in 1:(length(calccov[[1]])-1)){
+
+		weights1[,,i] <- t(apply(calccov[[j]][[i]], MARGIN = c(3), FUN = function(x) minvar(x)))
+
+	}
+	print(sprintf("%s", j))
+	all_weights[[j]] <- weights1 
+}
+
+
+
+tt15 <- t(apply(calccov[[2]][[9]], MARGIN = c(3), FUN = function(x) minvar2(x)))
+
+tt15[is.nan(tt15)] <- colMeans(tt15, na.rm = T)
+
+ts.plot(tt15[,1])
