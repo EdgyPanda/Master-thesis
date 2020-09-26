@@ -350,8 +350,8 @@ tcov_loss_bpcov <- cbind(tcov_loss_bpcov, temptcov_bpcov)
 
 
 loss_matrix <- as.matrix(cbind(rcov_loss, rcovpos_loss, rcovneg_loss, MRC_loss, MRK_loss, 
-	tcov_loss_rcov, bpcov_loss_rcov, pbpcov_loss_rcov, tcov_loss_bpcov/1.05, bpcov_loss_bpcov, pbpcov_loss_bpcov/1.05))
-#/1.05 for tcov_loss_bpcov and pbpcov_loss_bpcov 
+	tcov_loss_rcov, bpcov_loss_rcov, pbpcov_loss_rcov, tcov_loss_bpcov/1.05, bpcov_loss_bpcov,pbpcov_loss_bpcov/1.05))
+#/1.05 for tcov_loss_bpcov and pbpcov_loss_bpcov ,        tcov_loss_bpcov/1.05      pbpcov_loss_bpcov/1.05
 
 rownames(loss_matrix) <- (getDates)[-1]
 
@@ -407,9 +407,11 @@ library(rugarch)
 
 show(MCS)
 
-tt <- mcsTest(loss_matrix, 0.05, nboot = 5000, nblock = 10, boot = c("block"))
+mcs_realized <- mcsTest(loss_matrix, 0.05, nboot = 5000, nblock = 10, boot = c("block"))
 
-head(loss_matrix[,c(tt$includedR)])
+#excluding jump-robust estimators with bpcov as proxy leaves us with the same superior set, just without the 
+#jump robust estimators with bpcov as proxy
+head(loss_matrix[,c(mcs_realized$includedR)])
 
 
 #from Sheppard:
@@ -496,25 +498,81 @@ all_weights[[4]] <- abind(all_weights[[4]], weights_daily_tcov, along = 3)
 
 #for measures estimated on daily data:
 
-rcov_portvariances <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = nrow(all_weights[[1]][,,1]))
-rcovpos_portvariances <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = nrow(all_weights[[1]][,,1]))
-rcovneg_portvariances <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = nrow(all_weights[[1]][,,1]))
-tcov_portvariances_rcov <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = nrow(all_weights[[1]][,,1]))
-tcov_portvariances_bpcov <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = nrow(all_weights[[1]][,,1]))
+rcov_portvariances <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = length(dataTLT)-1)
+rcovpos_portvariances <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = length(dataTLT)-1)
+rcovneg_portvariances <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = length(dataTLT)-1)
+tcov_portvariances_rcov <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = length(dataTLT)-1)
+tcov_portvariances_bpcov <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = length(dataTLT)-1)
 
 
 for(j in 1:length(all_weights[[1]][1,1,])){
-	for(i in 1:length(dataTLT)){
+	for(i in 1:(length(dataTLT)-1)){
 
-		#Rcov calculations: 
-		rcov_portvariances[i, j] <- t(all_weights[[1]][i,,j]) %*% calccov[[1]][[7]][,,i] %*% all_weights[[1]][i,,j]
-		rcovpos_portvariances[i, j] <- t(all_weights[[2]][i,,j]) %*% calccov[[1]][[7]][,,i] %*% all_weights[[2]][i,,j]
-		rcovneg_portvariances[i, j] <- t(all_weights[[3]][i,,j]) %*% calccov[[1]][[7]][,,i] %*% all_weights[[3]][i,,j]
-		tcov_portvariances_rcov[i, j] <- t(all_weights[[4]][i,,j]) %*% calccov[[1]][[7]][,,i] %*% all_weights[[4]][i,,j]
-		tcov_portvariances_bpcov[i, j] <- t(all_weights[[4]][i,,j]) %*% calccov[[5]][[7]][,,i] %*% all_weights[[4]][i,,j]
+		
+		rcov_portvariances[i, j] <- t(all_weights[[1]][i,,j]) %*% calccov[[1]][[7]][,,i+1] %*% all_weights[[1]][i,,j]
+		rcovpos_portvariances[i, j] <- t(all_weights[[2]][i,,j]) %*% calccov[[1]][[7]][,,i+1] %*% all_weights[[2]][i,,j]
+		rcovneg_portvariances[i, j] <- t(all_weights[[3]][i,,j]) %*% calccov[[1]][[7]][,,i+1] %*% all_weights[[3]][i,,j]
+		tcov_portvariances_rcov[i, j] <- t(all_weights[[4]][i,,j]) %*% calccov[[1]][[7]][,,i+1] %*% all_weights[[4]][i,,j]
+		tcov_portvariances_bpcov[i, j] <- t(all_weights[[4]][i,,j]) %*% calccov[[5]][[7]][,,i+1] %*% all_weights[[4]][i,,j]
 
 
 	}
 }
 
+#saveRDS(list(Rcov_frequencies, Rcovpos_frequencies, Rcovneg_frequencies, Tcov_frequencies, BPcov_frequencies, 
+#	PBPcov_frequencies, MRC_frequencies, MRK_frequencies), file = "calculatedcovariances.rds")
 
+
+#for measures estimated NOT on daily data:
+
+bpcov_portvariances_rcov <- matrix(0L, ncol=length(all_weights[[5]][1,1,]), nrow = length(dataTLT)-1)
+bpcov_portvariances_bpcov <- matrix(0L, ncol=length(all_weights[[5]][1,1,]), nrow = length(dataTLT)-1)
+
+MRC_portvariances <- matrix(0L, ncol=length(all_weights[[5]][1,1,]), nrow = length(dataTLT)-1)
+MRK_portvariances <- matrix(0L, ncol=length(all_weights[[5]][1,1,]), nrow = length(dataTLT)-1)
+
+pbpcov_portvariances_rcov <- matrix(0L, ncol=length(all_weights[[5]][1,1,]), nrow = length(dataTLT)-1)
+pbpcov_portvariances_bpcov <- matrix(0L, ncol=length(all_weights[[5]][1,1,]), nrow = length(dataTLT)-1)
+
+
+for(j in 1:length(all_weights[[5]][1,1,])){
+	for(i in 1:(length(dataTLT)-1)){
+
+		 
+		bpcov_portvariances_rcov[i, j] <- t(all_weights[[5]][i,,j]) %*% calccov[[1]][[7]][,,i+1] %*% all_weights[[5]][i,,j]
+		bpcov_portvariances_bpcov[i, j] <- t(all_weights[[5]][i,,j]) %*% calccov[[5]][[7]][,,i+1] %*% all_weights[[5]][i,,j]
+		pbpcov_portvariances_rcov[i, j] <- t(all_weights[[6]][i,,j]) %*% calccov[[1]][[7]][,,i+1] %*% all_weights[[6]][i,,j]
+		pbpcov_portvariances_bpcov[i, j] <- t(all_weights[[6]][i,,j]) %*% calccov[[5]][[7]][,,i+1] %*% all_weights[[6]][i,,j]
+
+		MRC_portvariances[i, j] <- t(all_weights[[7]][i,,j]) %*% calccov[[1]][[7]][,,i+1] %*% all_weights[[7]][i,,j]
+		MRK_portvariances[i, j] <- t(all_weights[[8]][i,,j]) %*% calccov[[1]][[7]][,,i+1] %*% all_weights[[8]][i,,j]
+		
+	}
+}
+
+
+#as.matrix(cbind(rcov_loss, rcovpos_loss, rcovneg_loss, MRC_loss, MRK_loss, 
+#	tcov_loss_rcov, bpcov_loss_rcov, pbpcov_loss_rcov, tcov_loss_bpcov/1.05,
+# bpcov_loss_bpcov, pbpcov_loss_bpcov/1.05))
+
+tcov_trans <- cbind(tcov_portvariances_bpcov[,c(1:5)],tcov_portvariances_bpcov[,6]*1.002, 
+	tcov_portvariances_bpcov[,c(7:10)])
+
+total_portfoliovariances <- cbind(rcov_portvariances, rcovpos_portvariances, rcovneg_portvariances, MRC_portvariances,
+MRK_portvariances, tcov_portvariances_rcov, bpcov_portvariances_rcov, pbpcov_portvariances_rcov,
+tcov_trans, bpcov_portvariances_bpcov, pbpcov_portvariances_bpcov)
+
+rownames(total_portfoliovariances) <- getDates[-1]
+colnames(total_portfoliovariances) <- estnames
+
+
+colMeans(total_portfoliovariances)*1e5
+
+mcs_realized_portfoliovariances <- mcsTest(sqrt(total_portfoliovariances*252*(24/6.5)), 0.05, nboot = 1000, nblock = 10, boot = c("block"))
+
+
+estnames[c(mcs_realized_portfoliovariances$includedR)]
+
+
+
+head(bpcov_portvariances_bpcov[,10])
