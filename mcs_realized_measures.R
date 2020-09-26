@@ -91,25 +91,28 @@ mergedfrequencies[[10]] <- mergedopentoclose
 #This is loaded into the bandwidthH.rds for better access. Below takes 15 mins to run. 
 
 
+#skips code when executing the entire script.
+if(FALSE){
+H <- list()
 
-#H <- list()
+frequenciesTLT <- lapply(mergedfrequencies, function(x) sapply(x, function(z) z[,1]))
 
-#frequenciesTLT <- lapply(mergedfrequencies, function(x) sapply(x, function(z) z[,1]))
-
-#frequenciesSPY <- lapply(mergedfrequencies, function(x) sapply(x, function(z) z[,2]))
+frequenciesSPY <- lapply(mergedfrequencies, function(x) sapply(x, function(z) z[,2]))
 
 
 
-#for(i in 1:length(mergedfrequencies)){
+for(i in 1:length(mergedfrequencies)){
 
-#	temp <- cbind(bandwidthH(frequenciesTLT[[i]],sparseTLT20min), 
-#		bandwidthH(frequenciesSPY[[i]],sparseSPY20min))
-#
-#	H[[i]] <- rowMeans(temp)
-#	print(sprintf("%s", i))
-#}
+	temp <- cbind(bandwidthH(frequenciesTLT[[i]],sparseTLT20min), 
+		bandwidthH(frequenciesSPY[[i]],sparseSPY20min))
+
+	H[[i]] <- rowMeans(temp)
+	print(sprintf("%s", i))
+}
 
 #saveRDS(H,"bandwidthH.rds")
+}
+
 
 H <- readRDS("bandwidthH.rds")
 
@@ -119,6 +122,8 @@ H <- readRDS("bandwidthH.rds")
 #
 #
 
+#skips code when executing the entire script.
+if(FALSE){
 
 Rcov_frequencies <- list()
 
@@ -187,7 +192,7 @@ for(i in 1:(length(mergedfrequencies)-1)){
 	MRC_frequencies[[i]] <- tempMRC
 	MRK_frequencies[[i]] <- tempMRK
 }
-
+}
 
 #estimators that doesn't work on daily data: BPCov (sampling across days works), PBPCov, MRC.
 
@@ -410,3 +415,7 @@ head(loss_matrix[,c(tt$includedR)])
 #from Sheppard:
 
 head(loss_matrix[,c(6,45,82,96)])
+
+
+
+
