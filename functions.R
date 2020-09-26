@@ -206,3 +206,20 @@ bandwidthH <- function(list, sparsedata){
 	return(H)
 
 }
+
+minvar <- function(Covar){
+
+	ones <- matrix(rep(1, ncol(Covar)), ncol=1, nrow=ncol(Covar))
+
+	t <- try(inv(Covar), silent = F)
+
+	if("try-error" %in% class(t)){return(matrix(rep(NaN,ncol(Covar)), ncol=2, nrow =1))}
+	else{
+	w1 <- t %*% ones
+	w2 <- t(ones) %*% t %*% (ones)
+
+	w <- w1 %*% w2^-1
+
+	return(w)
+	}
+}

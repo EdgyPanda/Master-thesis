@@ -437,7 +437,7 @@ minvar <- function(Covar){
 	w <- w1 %*% w2^-1
 
 	return(w)
-}
+	}
 }
 
 
@@ -451,16 +451,70 @@ for(j in 1:length(calccov)){
 	for(i in 1:(length(calccov[[1]])-1)){
 
 		weights1[,,i] <- t(apply(calccov[[j]][[i]], MARGIN = c(3), FUN = function(x) minvar(x)))
-
+		weights1[,,i][is.nan(weights1[,,i])] <- colMeans(weights1[,,i], na.rm = T)
 	}
 	print(sprintf("%s", j))
 	all_weights[[j]] <- weights1 
 }
 
 
+#all weights description: Every list element is a measure, every array dimension is a frequency. 
 
-tt15 <- t(apply(calccov[[2]][[9]], MARGIN = c(3), FUN = function(x) minvar2(x)))
 
-tt15[is.nan(tt15)] <- colMeans(tt15, na.rm = T)
+#----------------------------------daily estimates---------------------------------------------
 
-ts.plot(tt15[,1])
+
+weights_daily_rcov <- t(apply(rcov_smooth, MARGIN = c(3), FUN = function(x) minvar(x)))
+weights_daily_rcovpos <- t(apply(rcovpos_smooth, MARGIN = c(3), FUN = function(x) minvar(x)))
+weights_daily_rcovneg <- t(apply(rcovneg_smooth, MARGIN = c(3), FUN = function(x) minvar(x)))
+weights_daily_tcov <- t(apply(tcov_smooth, MARGIN = c(3), FUN = function(x) minvar(x)))
+
+weights_daily_rcov[is.nan(weights_daily_rcov)] <- colMeans(weights_daily_rcov, na.rm = T)
+weights_daily_rcovpos[is.nan(weights_daily_rcovpos)] <- colMeans(weights_daily_rcovpos, na.rm = T)
+weights_daily_rcovneg[is.nan(weights_daily_rcovneg)] <- colMeans(weights_daily_rcovneg, na.rm = T)
+weights_daily_tcov[is.nan(weights_daily_tcov)] <- colMeans(weights_daily_tcov, na.rm = T)
+
+
+#merging with all_weights:
+
+library(abind)
+
+all_weights[[1]] <- abind(all_weights[[1]], weights_daily_rcov, along = 3)
+
+all_weights[[2]] <- abind(all_weights[[2]], weights_daily_rcovpos, along = 3)
+
+all_weights[[3]] <- abind(all_weights[[3]], weights_daily_rcovneg, along = 3)
+
+all_weights[[4]] <- abind(all_weights[[4]], weights_daily_tcov, along = 3)
+
+
+#------------------------------------end of daily weights ---------------------
+
+
+#constructing portfolio variances.
+
+
+#for measures estimated on daily data:
+
+rcov_portvariances <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = nrow(all_weights[[1]][,,1]))
+rcovpos_portvariances <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = nrow(all_weights[[1]][,,1]))
+rcovneg_portvariances <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = nrow(all_weights[[1]][,,1]))
+tcov_portvariances_rcov <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = nrow(all_weights[[1]][,,1]))
+tcov_portvariances_bpcov <- matrix(0L, ncol=length(all_weights[[1]][1,1,]), nrow = nrow(all_weights[[1]][,,1]))
+
+
+for(j in 1:length(all_weights[[1]][1,1,])){
+	for(i in 1:length(dataTLT)){
+
+		#Rcov calculations: 
+		rcov_portvariances[i, j] <- t(all_weights[[1]][i,,j]) %*% calccov[[1]][[7]][,,i] %*% all_weights[[1]][i,,j]
+		rcovpos_portvariances[i, j] <- t(all_weights[[2]][i,,j]) %*% calccov[[1]][[7]][,,i] %*% all_weights[[2]][i,,j]
+		rcovneg_portvariances[i, j] <- t(all_weights[[3]][i,,j]) %*% calccov[[1]][[7]][,,i] %*% all_weights[[3]][i,,j]
+		tcov_portvariances_rcov[i, j] <- t(all_weights[[4]][i,,j]) %*% calccov[[1]][[7]][,,i] %*% all_weights[[4]][i,,j]
+		tcov_portvariances_bpcov[i, j] <- t(all_weights[[4]][i,,j]) %*% calccov[[5]][[7]][,,i] %*% all_weights[[4]][i,,j]
+
+
+	}
+}
+
+
