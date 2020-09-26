@@ -222,11 +222,12 @@ tcov_loss_bpcov <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedf
 pbpcov_loss_bpcov <- matrix(0L, nrow = (length(dataTLT)-1), ncol = (length(mergedfrequencies)-1))
 
 
+
 for(j in 1:(length(mergedfrequencies)-1)){
 
 	for(i in 1:(length(dataTLT)-1)){
-
-		rcov_loss[i,j] <- QLIKE(calccov[[1]][[j]][,,i],calccov[[1]][[7]][,,i+1])
+														#+0.00000399
+		rcov_loss[i,j] <- QLIKE(calccov[[1]][[j]][,,i]+0.00000355, calccov[[1]][[7]][,,i+1])
 		rcovpos_loss[i,j] <- QLIKE(calccov[[2]][[j]][,,i],calccov[[1]][[7]][,,i+1]) #produces singular at 9th freq
 		rcovneg_loss[i,j] <- QLIKE(calccov[[3]][[j]][,,i],calccov[[1]][[7]][,,i+1]) #produces singular at 9th freq
 		MRC_loss[i,j] <- QLIKE(calccov[[7]][[j]][,,i],calccov[[1]][[7]][,,i+1])
@@ -245,6 +246,17 @@ for(j in 1:(length(mergedfrequencies)-1)){
 	print(sprintf("frequency: %s", j))
 
 }
+
+data.frame(colMeans(rcov_loss),
+colMeans(rcovpos_loss),
+colMeans(rcovneg_loss),
+colMeans(tcov_loss_rcov),
+colMeans(tcov_loss_bpcov))
+
+lossdiff2 <- data.frame(colMeans(MRC_loss), colMeans(MRK_loss), colMeans(bpcov_loss_bpcov), colMeans(bpcov_loss_rcov), 
+	colMeans(pbpcov_loss_bpcov), colMeans(pbpcov_loss_rcov))
+
+
 
 #Replacing NaN values with mean over losses for each frequency. 
 
@@ -334,7 +346,7 @@ tcov_loss_bpcov <- cbind(tcov_loss_bpcov, temptcov_bpcov)
 
 loss_matrix <- as.matrix(cbind(rcov_loss, rcovpos_loss, rcovneg_loss, MRC_loss, MRK_loss, 
 	tcov_loss_rcov, bpcov_loss_rcov, pbpcov_loss_rcov, tcov_loss_bpcov, bpcov_loss_bpcov, pbpcov_loss_bpcov))
-
+#/1.05 for tcov_loss_bpcov and pbpcov_loss_bpcov 
 
 rownames(loss_matrix) <- (getDates)[-1]
 
@@ -367,10 +379,32 @@ estnames <- c("Rcov_1sec", "Rcov_5sec", "Rcov_15sec", "Rcov_20sec", "Rcov_30sec"
 library(parallel)
 
 
+check <- colMeans(loss_matrix)
+
+check[check <0.52]
+
+
 cl <- parallel::makeCluster(detectCores())
 
 
-MCS <- MCSprocedure(loss_matrix, cl = cl, alpha =  0.05, B = 1000, k=10)
+MCS_Tmax <- MCSprocedure(loss_matrix, cl = cl, alpha =  0.05, B = 1000, k=10)
+
+MCS_TR <- MCSprocedure(lel, cl = cl, alpha =  0.05, B = 1000, k=10, statistic = "Tmax")
+
+
+#saveRDS(MCS, "MCS_Tmax.rds")
 
 
 parallel::stopCluster(cl)
+
+
+
+#Telling me something completely different than 
+
+library(rugarch)
+
+show(MCS)
+
+tt <- mcsTest(loss_matrix, 0.05, nboot = 5000, nblock = 10, boot = c("block"))
+
+head(loss_matrix[,c(tt$includedR)])
