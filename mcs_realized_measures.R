@@ -413,6 +413,9 @@ mcs_realized <- mcsTest(loss_matrix, 0.05, nboot = 5000, nblock = 10, boot = c("
 #jump robust estimators with bpcov as proxy
 head(loss_matrix[,c(mcs_realized$includedR)])
 
+#excluded but positive p-value:
+head(loss_matrix[,c(5,44)]) #Rcov_30sec MRK_30sec
+
 
 #from Sheppard:
 

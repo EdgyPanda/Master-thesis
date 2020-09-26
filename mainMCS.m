@@ -11,4 +11,3 @@ losses = losses(:,2:end);
 includedR
 includedSQ
 
-losses(1:4,includedR)
