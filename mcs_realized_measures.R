@@ -405,9 +405,8 @@ library(parallel)
 
 library(rugarch)
 
-show(MCS)
-
-mcs_realized <- mcsTest(loss_matrix, 0.05, nboot = 5000, nblock = 10, boot = c("block"))
+#90% and 95% gives the same superior set. 
+mcs_realized <- mcsTest(loss_matrix, 0.10, nboot = 5000, nblock = 10, boot = c("block"))
 
 #excluding jump-robust estimators with bpcov as proxy leaves us with the same superior set, just without the 
 #jump robust estimators with bpcov as proxy
@@ -416,10 +415,11 @@ head(loss_matrix[,c(mcs_realized$includedR)])
 #excluded but positive p-value:
 head(loss_matrix[,c(5,44)]) #Rcov_30sec MRK_30sec
 
-
 #from Sheppard:
 
-head(loss_matrix[,c(6,45,82,96)])
+colMeans(loss_matrix[,c(96,82,6,45,5,44,97,92, 81)])
+
+head(loss_matrix[,c(96,82,6,45)])
 
 
 #------------------------------------------min var losses ---------------------------------------------
@@ -569,13 +569,20 @@ rownames(total_portfoliovariances) <- getDates[-1]
 colnames(total_portfoliovariances) <- estnames
 
 
-colMeans(total_portfoliovariances)*1e5
 
-mcs_realized_portfoliovariances <- mcsTest(sqrt(total_portfoliovariances*252*(24/6.5)), 0.05, nboot = 1000, nblock = 10, boot = c("block"))
+#95% ci and 90% ci gives the same results albeit different p-vals.
+
+mcs_realized_portfoliovariances <- mcsTest(sqrt(total_portfoliovariances*252*(24/6.5)), 0.10, nboot = 1000, nblock = 10, boot = c("block"))
+
+
 
 
 estnames[c(mcs_realized_portfoliovariances$includedR)]
 
+sqrt(colMeans(total_portfoliovariances[,c(mcs_realized_portfoliovariances$includedR)])*252)*100
+#excluded but positive p-value:
+estnames[c(91,97)]
 
 
-head(bpcov_portvariances_bpcov[,10])
+
+sqrt(colMeans(total_portfoliovariances[,c(96,82,6,45,5,44,97,92, 81)]) * 252)*100
