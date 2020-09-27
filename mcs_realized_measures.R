@@ -192,6 +192,7 @@ for(i in 1:(length(mergedfrequencies)-1)){
 	MRC_frequencies[[i]] <- tempMRC
 	MRK_frequencies[[i]] <- tempMRK
 }
+
 }
 
 #estimators that doesn't work on daily data: BPCov (sampling across days works), PBPCov, MRC.
@@ -586,3 +587,4 @@ estnames[c(91,97)]
 
 
 sqrt(colMeans(total_portfoliovariances[,c(96,82,6,45,5,44,97,92, 81)]) * 252)*100
+
