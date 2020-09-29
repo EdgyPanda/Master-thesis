@@ -25,11 +25,13 @@ riskparity_2dim <- function(matrix, risktarget, rt = F){
 
   	w_new <- w %*% alpha
 
-  	lout <- list(w_new, portrisk)
-  	
-  	names(lout) <- c("w", "portrisk")
+  	portrisk <-  w_new %*% portrisk  #gives marginal risk for each asset. 
 
- 	return(w_new)
+  	lout <- list(w_new, portrisk, riskcont)
+  	
+  	names(lout) <- c("w", "portrisk", "riskcont")
+
+ 	return(lout)
   }
 
   lout <- list(w, portrisk, riskcont)
@@ -50,7 +52,7 @@ weightspalomar <-  matrix(0L, nrow = 100, ncol = 2)
 
 for(i in 1:100){
 
-weightsrp[i,] <- riskparity_2dim(calccov[[1]][[1]][,,i])$w
+weightsrp[i,] <- riskparity_2dim(calccov[[1]][[7]][,,i], 0.1, T)$portrisk
 
 weightspalomar[i, ] <- riskParityPortfolio(calccov[[1]][[1]][,,i])$w
 

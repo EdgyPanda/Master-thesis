@@ -392,11 +392,9 @@ ggtitle("SPY") + theme(plot.title = element_text(hjust = 0.5), legend.position =
 
 
 
-
-
 ggarrange(p1,p2,p3,p4,ncol=2, nrow=2)
 
-ggsave("JVdiff.eps", device = "eps")
+#ggsave("JVdiff.eps", device = "eps")
 
 
 
