@@ -121,15 +121,30 @@ riskparity_2dim(newcovariance, 0.1,F)
 dailygains = (0.01*100)/252
 
 
-priceriskfree <- numeric()
+priceriskfree <- numeric(2515)
 
 priceriskfree[1] <- 100
 
-for(i in 2:251){
+#this is not completely correct
+for(i in 2:2516){
 
-	priceriskfree[i] <- priceriskfree[i-1] + (0.01*100)/251
+	priceriskfree[i] <- priceriskfree[i-1] + (0.01*priceriskfree[i-1])/252
 
 
 }
 
-priceriskfree[252] + dailygains
+
+riskfreereturns <- diff(log(priceriskfree))[-1]
+
+
+returns2 <-  cbind(lel[-c(1,2),], riskfreereturns)
+
+
+portret <- t(t(riskparity_2dim(newcovariance, 0.1,T)$w) %*% t(returns2))
+
+portret2 <- t(t(riskparity_2dim(newcovariance, 0.1,T)$w[1:2]) %*% t(lel))
+
+ts.plot(1+cumsum(portret)) + lines(1+cumsum(portret2), col="red")
+
+
+lel <- t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[,2])))
