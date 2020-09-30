@@ -86,6 +86,10 @@ mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
 mergedfrequencies[[10]] <- mergedopentoclose
 
+
+
+#saveRDS(mergedfrequencies, "mergedfrequencies.rds")
+
 #----------------------Finding optimal bandwidth for all frequencies: 
 
 #This is loaded into the bandwidthH.rds for better access. Below takes 15 mins to run. 

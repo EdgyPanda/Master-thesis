@@ -9,6 +9,9 @@ library(highfrequency)
 library(matlib)
 library(MCS)
 
+tb3ms <- read.csv("TB3MS.csv")
+
+mean(tb3ms[,2])
 
 
 riskparity_2dim <- function(matrix, risktarget, rt = F){
@@ -38,6 +41,11 @@ riskparity_2dim <- function(matrix, risktarget, rt = F){
   	portrisk <-  as.numeric(sqrt(t(w_new) %*% matrix %*% w_new))  #gives marginal risk for each asset. 
 
   	riskcont <- (w_new * (matrix %*% w_new)) / portrisk
+
+  	w_riskfree <- uniroot(function(x) colSums(w_new)+x-1, interval = c(-100,100))$root
+
+  	w_new <- matrix(c(w_new, w_riskfree), ncol=1, nrow=3)
+  	rownames(w_new) <- c("TLT", "SPY", "riskfree")
 
   	lout <- list(w_new, portrisk, riskcont)
   	
@@ -95,7 +103,7 @@ library(ggplot2)
 #Shows the volatility's sensitivity to correlation for the unlevered risk-parity portfolio. In essence, 
 #upscaling and downscaling the portfolios using a leverage parameter only shifts the graph.
 
-ggplot() + geom_line(aes(correlations, sensitivity2), col = "red", lwd = 1) + 
+ggplot() + geom_line(aes(correlations, sensitivity2*100), col = "red", lwd = 1) + 
   scale_x_continuous(breaks = round(seq(-0.9,0.9, by = 0.1),1)) + ylab("portfolio volatility (%)")
 
 
@@ -103,7 +111,25 @@ ggplot() + geom_line(aes(correlations, sensitivity2), col = "red", lwd = 1) +
 
 riskparity_2dim(newcovariance, 0.1,F)
 
-riskparity_2dim(newcovariance, 0.1,T)
 
 
 
+#0.5 risk free asset? 
+
+#assume 1% each year. Then with a notional on 100, we have scale it out everyday:
+
+dailygains = (0.01*100)/252
+
+
+priceriskfree <- numeric()
+
+priceriskfree[1] <- 100
+
+for(i in 2:251){
+
+	priceriskfree[i] <- priceriskfree[i-1] + (0.01*100)/251
+
+
+}
+
+priceriskfree[252] + dailygains
