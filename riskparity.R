@@ -159,20 +159,43 @@ ggplot() + geom_line(aes(stockvol*1e5, weightsfordistribution[,2]))
 # Be aware that TLT did a better job than SPY therefore you can only construct this where you go
 # 100% into TLT instead of SPY. 
 
-daily_logret <- t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[,2])))
 
-covlol <- realCov(daily_logret)
+#data get and preparation: 
+library(alphavantager)
+library(xts)
+
+av_api_key('0WXHEIY0O87LX4A3')
+
+TLT <- as.data.frame(av_get(symbol = "TLT", av_fun = "TIME_SERIES_DAILY", outputsize = "full"))
+rownames(TLT) <- TLT$timestamp
+SPY <- as.data.frame(av_get(symbol = "SPY", av_fun = "TIME_SERIES_DAILY", outputsize = "full"))
+rownames(SPY) <- SPY$timestamp
+
+returns_TLT <- as.xts(diff(log(TLT[,4])), order.by = as.Date(TLT[,1], format='%d/%m/%Y')[-1])
+returns_SPY <- as.xts(diff(log(SPY[,4])), order.by = as.Date(SPY[,1])[-1])
+
+returns_TLT <-  returns_TLT[seq(from= as.Date('2010-01-02'), to = as.Date('2019-12-31'), by=1), ]
+returns_SPY <- returns_SPY[seq(from= as.Date('2010-01-02'), to = as.Date('2019-12-31'), by=1), ]
+
+merged_ret <- cbind(returns_TLT, returns_SPY)
+
+
+ggplot() + geom_line(aes(index(returns_TLT), 1+cumsum(returns_TLT), col="TLT")) + 
+geom_line(aes(index(returns_TLT), 1+cumsum(returns_SPY), col="SPY")) 
+
+covlol <- realCov(merged_ret)
+
 
 colnames(covlol) <- c("TLT", "SPY")
 
 minvarweights <- minvar(covlol)
 
-minvarret <- daily_logret %*% minvarweights
+minvarret <- merged_ret %*% minvarweights
 
-#TLT
-w1 <- seq(minvarweights[1],1,0.001)
 #SPY
-w2 <- 1-w1
+w2 <- seq(minvarweights[2],1,0.001)
+#SPY
+w1 <- 1-w2
 
 w_synthetic <- matrix(cbind(w1,w2), ncol = 2, nrow = length(w1))
 
@@ -180,7 +203,7 @@ portfolios <- matrix(0L, ncol = length(w1), nrow = length(daily_logret[,2]))
 
 for(i in 1:length(w1)){
 
-	portfolios[,i] <- (daily_logret) %*% w_synthetic[i, ]
+	portfolios[,i] <- (merged_ret) %*% w_synthetic[i, ]
 
 }
 
