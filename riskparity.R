@@ -92,9 +92,9 @@ mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
 #getting average vol for tlt and spy.
 
-meanvolTLT <- mean(sqrt(calccov[[1]][[7]][1,1,]*252*(24/6.5)))
+meanvolTLT <- mean(sqrt(calccov[[1]][[7]][1,1,]*252))
 
-meanvolSPY <-  mean(sqrt(calccov[[1]][[7]][2,2,]*252*(24/6.5)))
+meanvolSPY <-  mean(sqrt(calccov[[1]][[7]][2,2,]*252))
 
 correlations <- seq(-0.9,0.9,0.01)
 
@@ -224,8 +224,9 @@ for(i in 1:length(w1)){
 
 }
 
+#ADDED 2 AS 2% FOR THE RISKFREE ASSET. IT IS ALL THE WAY DOWN TO THE GGPLOT GRAPH 
 
-expectedreturns <- colMeans(portfolios)*252*100
+expectedreturns <- colMeans(portfolios)*252*100  + 2
 
 portdev <- apply(portfolios, MARGIN = c(2), FUN = function(x) sd(x))* sqrt(252)*100
 
@@ -238,7 +239,7 @@ rpunlevered <- riskparity_2dim(covlol)$w
 
 retrpunlevered <- merged_ret %*% rpunlevered 
 
-meanrpunlevered <- mean(retrpunlevered) * 252 *100
+meanrpunlevered <- mean(retrpunlevered) * 252 *100  + 2
 
 sdrpunlevered <- sd(retrpunlevered) * sqrt(252) * 100
 
@@ -249,14 +250,14 @@ leverageline <- rpunlevered %*% alpha
 
 leveragelineret <- merged_ret %*% leverageline 
 
-leveragelinemeans <- colMeans(leveragelineret) * 252 * 100
+leveragelinemeans <- colMeans(leveragelineret) * 252 * 100 +2
 leveragelinestds <- apply(leveragelineret, MARGIN = c(2), FUN = function(x) sd(x))* sqrt(252)*100
 
 rplevered <- riskparity_2dim(covlol, 0.0846, T)$w[1:2]
 
 retrplevered <- merged_ret %*% rplevered 
 
-meanrplevered <- mean(retrplevered) * 252 *100
+meanrplevered <- mean(retrplevered) * 252 *100 
 
 sdrplevered <- sd(retrplevered) * sqrt(252) * 100
 
@@ -267,18 +268,18 @@ rplevered <- rpunlevered %*%  root
 
 retrplevered <- merged_ret %*% rplevered 
 
-meanrplevered <- mean(retrplevered) * 252 *100
+meanrplevered <- mean(retrplevered) * 252 *100 + 2
 
 sdrplevered <- sd(retrplevered) * sqrt(252) * 100
 
 
 ggplot() + geom_line(aes(portdev, expectedreturns, col = "Efficient frontier"), lwd=1)  +
 geom_line(aes(leveragelinestds, leveragelinemeans, col ="Leverage line"), lwd=1) +
-geom_point(aes(sd(minvarret)*sqrt(252)*100,colMeans(minvarret)*252*100)) +
+geom_point(aes(sd(minvarret)*sqrt(252)*100,colMeans(minvarret)*252*100+2)) +
 geom_point(aes(portdev[166],expectedreturns[166])) +
 geom_point(aes(portdev[366],expectedreturns[366])) +
 geom_point(aes(sdrpunlevered,meanrpunlevered)) + 
-geom_text(aes(sd(minvarret)*sqrt(252)*100,colMeans(minvarret)*252*100, 
+geom_text(aes(sd(minvarret)*sqrt(252)*100,colMeans(minvarret)*252*100+2, 
 	label="Minimum variance portfolio"),hjust=-.05, vjust=0) + 
 geom_text(aes(portdev[166],expectedreturns[166], 
 	label="60/40 equity/bond"),hjust=-0.05, vjust=0.5) + 
