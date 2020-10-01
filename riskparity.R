@@ -9,9 +9,16 @@ library(highfrequency)
 library(matlib)
 library(MCS)
 
-tb3ms <- read.csv("TB3MS.csv")
+dtb3 <- read.csv("DTB3.csv", header =  F)
 
-mean(tb3ms[,2])
+dtb3[,2] <- as.numeric(levels(dtb3[,2]))[dtb3[,2]]
+
+dtb3 <- dtb3[!is.na(dtb3[,2]), ]
+
+ts.plot(dtb3[,2])
+
+logriskfreerate <- log(1 + dtb3[,2]/100) #daily
+
 
 
 riskparity_2dim <- function(matrix, risktarget, rt = F){
@@ -106,10 +113,141 @@ library(ggplot2)
 ggplot() + geom_line(aes(correlations, sensitivity2*100), col = "red", lwd = 1) + 
   scale_x_continuous(breaks = round(seq(-0.9,0.9, by = 0.1),1)) + ylab("portfolio volatility (%)")
 
+#-------------------------------weight distribution dependent on excess returns---------------------------------------
 
-(riskparity_2dim(newcovariance, 0.1,T)$w) * (newcovariance %*% riskparity_2dim(newcovariance, 0.1,T)$w)/0.1
+ #done for returns until you have control over a risk-free asset.
 
-riskparity_2dim(newcovariance, 0.1,F)
+ #fix bond return at 3%
+
+source("Previous functions/projectfunctions.R")
+
+stockvol <- seq(0,0.15,0.001)*1e-5
+bondvol <- rep(0.03, length(stockvol))*1e-5
+
+covs <- array(0L, c(2,2,length(stockvol)))
+
+for(i in 1:length(stockvol)){
+
+	covs[,,i] <- matrix(c(bondvol[i]^2, 0, 0, stockvol[i]^2), ncol=2, nrow=2)
+
+
+}
+
+weightsfordistribution <- matrix(0L, ncol=2, nrow=length(stockvol))
+
+for(i in 1:length(stockvol)){
+
+	weightsfordistribution[i, ] <- riskparity_2dim(covs[,,i])$w
+
+
+}
+
+library(PerformanceAnalytics)
+
+rownames(weightsfordistribution) <- stockvol * 1e5
+
+
+
+ggplot() + geom_line(aes(stockvol*1e5, weightsfordistribution[,2]))
+
+
+#------------------------------------------trying effcient frontier and "risk-parity line"--------------------------
+
+#starts at minvar portfolio and then goes to 100% stocks. 
+#
+#
+# Be aware that TLT did a better job than SPY therefore you can only construct this where you go
+# 100% into TLT instead of SPY. 
+
+daily_logret <- t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[,2])))
+
+covlol <- realCov(daily_logret)
+
+colnames(covlol) <- c("TLT", "SPY")
+
+minvarweights <- minvar(covlol)
+
+minvarret <- daily_logret %*% minvarweights
+
+#TLT
+w1 <- seq(minvarweights[1],1,0.001)
+#SPY
+w2 <- 1-w1
+
+w_synthetic <- matrix(cbind(w1,w2), ncol = 2, nrow = length(w1))
+
+portfolios <- matrix(0L, ncol = length(w1), nrow = length(daily_logret[,2]))
+
+for(i in 1:length(w1)){
+
+	portfolios[,i] <- (daily_logret) %*% w_synthetic[i, ]
+
+}
+
+
+expectedreturns <- colMeans(portfolios)*252*100
+
+portdev <- apply(portfolios, MARGIN = c(2), FUN = function(x) sd(x))* sqrt(252)*100
+
+#expectedreturns <- sort(expectedreturns[1:58], decreasing = T)
+#portdev <- sort(portdev[1:58], decreasing = T)
+
+
+
+
+ggplot() + geom_line(aes(portdev, expectedreturns))  +
+geom_point(aes(sd(minvarret)*sqrt(252)*100,colMeans(minvarret)*252*100)) +
+geom_point(aes(portdev[36],expectedreturns[36])) +
+geom_text(aes(sd(minvarret)*sqrt(252)*100,colMeans(minvarret)*252*100, 
+	label="Minimum variance portfolio"),hjust=-.05, vjust=0) + 
+geom_text(aes(portdev[36],expectedreturns[36], 
+	label="60/40 bond/equity"),hjust=-0.05, vjust=0)
+
+
+#60/40 check
+
+w1t <- 0.6
+w2t <- 0.4
+
+six4ret <- daily_logret %*% matrix(c(w1t, w2t), ncol=1, nrow=2) 
+
+sd(six4ret)*sqrt(252)*100
+
+mean(six4ret)*252*100
+
+
+
+
+
+test <- seq(0.1,1,0.01)
+
+portrettest <- matrix(0L, ncol = length(test), nrow = length(daily_logret[,2]))
+
+for(i in 1:length(test)){
+
+	portrettest[,i] <- daily_logret[,2] * test[i]
+
+}
+
+ devtest <- apply(portrettest, MARGIN = c(2), FUN = function(x) sd(x)) * sqrt(252)*100
+
+meantest <- colMeans(portrettest) * 252 * 100
+
+
+ts.plot(1+cumsum(daily_logret[,1]), col = "red") + lines(1+cumsum(daily_logret[,2]))
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
