@@ -19,6 +19,8 @@ ts.plot(dtb3[,2])
 
 logriskfreerate <- log(1 + dtb3[,2]/100) #daily
 
+logdiff <- diff(logriskfreerate)
+
 
 
 riskparity_2dim <- function(matrix, risktarget, rt = F){
@@ -31,9 +33,10 @@ riskparity_2dim <- function(matrix, risktarget, rt = F){
 
   w <- matrix(c(w_1, w_2), ncol=1, nrow=2) #dimnames = list(c(), c("Bond", "Stock"))
   
-  portrisk <- as.numeric(sqrt(t(w) %*% (matrix) %*% w)) 
+  #Palomar uses portfolio variance as portfolio risk, thus no sqrt. 
+  portrisk <- as.numeric(t(w) %*% (matrix) %*% w)
   
-  riskcont <-  (w * (matrix %*% w)) / portrisk
+  riskcont <-  portrisk/2
 
   relativeriskcont <- (w * (matrix %*% w)) / portrisk^2
 
@@ -44,7 +47,7 @@ riskparity_2dim <- function(matrix, risktarget, rt = F){
   	w_new <- w %*% alpha
 
   	w_new <- matrix(c(w_new[1], w_new[2]), ncol=1, nrow=2)
-
+  				#here is sqrt, while palomar uses variance, no sqrt.
   	portrisk <-  as.numeric(sqrt(t(w_new) %*% matrix %*% w_new))  #gives marginal risk for each asset. 
 
   	riskcont <- (w_new * (matrix %*% w_new)) / portrisk
@@ -215,49 +218,78 @@ portdev <- apply(portfolios, MARGIN = c(2), FUN = function(x) sd(x))* sqrt(252)*
 #expectedreturns <- sort(expectedreturns[1:58], decreasing = T)
 #portdev <- sort(portdev[1:58], decreasing = T)
 
+#unlevered risk-parity:
 
 
+rpunlevered <- riskparity_2dim(covlol)$w
 
-ggplot() + geom_line(aes(portdev, expectedreturns))  +
+retrpunlevered <- merged_ret %*% rpunlevered 
+
+meanrpunlevered <- mean(retrpunlevered) * 252 *100
+
+sdrpunlevered <- sd(retrpunlevered) * sqrt(252) * 100
+
+#constructing risk-parity leverage line. 
+alpha <- seq(0.95,1.7,0.01)
+
+leverageline <- rpunlevered %*% alpha
+
+leveragelineret <- merged_ret %*% leverageline 
+
+leveragelinemeans <- colMeans(leveragelineret) * 252 * 100
+leveragelinestds <- apply(leveragelineret, MARGIN = c(2), FUN = function(x) sd(x))* sqrt(252)*100
+
+rplevered <- riskparity_2dim(covlol, 0.0846, T)$w[1:2]
+
+retrplevered <- merged_ret %*% rplevered 
+
+meanrplevered <- mean(retrplevered) * 252 *100
+
+sdrplevered <- sd(retrplevered) * sqrt(252) * 100
+
+#Finding the levered risk parity portfolio with same standard deviation as 80/20 portfolio.
+uniroot(function(x)  sd(merged_ret %*% (rpunlevered %*% x))*sqrt(252)*100 - portdev[366], interval = c(0,100))$root
+
+rplevered <- rpunlevered %*%  1.4641
+
+retrplevered <- merged_ret %*% rplevered 
+
+meanrplevered <- mean(retrplevered) * 252 *100
+
+sdrplevered <- sd(retrplevered) * sqrt(252) * 100
+
+
+ggplot() + geom_line(aes(portdev, expectedreturns, col = "Efficient frontier"), lwd=1)  +
+geom_line(aes(leveragelinestds, leveragelinemeans, col ="Leverage line"), lwd=1) +
 geom_point(aes(sd(minvarret)*sqrt(252)*100,colMeans(minvarret)*252*100)) +
-geom_point(aes(portdev[36],expectedreturns[36])) +
+geom_point(aes(portdev[166],expectedreturns[166])) +
+geom_point(aes(portdev[366],expectedreturns[366])) +
+geom_point(aes(sdrpunlevered,meanrpunlevered)) + 
 geom_text(aes(sd(minvarret)*sqrt(252)*100,colMeans(minvarret)*252*100, 
 	label="Minimum variance portfolio"),hjust=-.05, vjust=0) + 
-geom_text(aes(portdev[36],expectedreturns[36], 
-	label="60/40 bond/equity"),hjust=-0.05, vjust=0)
-
-
-#60/40 check
-
-w1t <- 0.6
-w2t <- 0.4
-
-six4ret <- daily_logret %*% matrix(c(w1t, w2t), ncol=1, nrow=2) 
-
-sd(six4ret)*sqrt(252)*100
-
-mean(six4ret)*252*100
-
-
+geom_text(aes(portdev[166],expectedreturns[166], 
+	label="60/40 equity/bond"),hjust=-0.05, vjust=0.5) + 
+geom_text(aes(portdev[366],expectedreturns[366], 
+	label="80/20 equity/bond"),hjust=-0.05, vjust=0.5) + 
+geom_text(aes(sdrpunlevered,meanrpunlevered, 
+	label="Risk-parity unlevered"),hjust=-0.09, vjust=-0.5) +
+geom_point(aes(sdrplevered,meanrplevered)) + 
+geom_text(aes(sdrplevered,meanrplevered, 
+	label="Risk-parity levered"),hjust=-0.05, vjust=0.5) + ylab("Annualized expected returns (%)")+
+xlab("Annualized risk (%)") + 
+theme(legend.title = NULL,legend.position = c(0.70, 0.23), legend.background = element_rect(fill="lightblue", size=0.5,
+ linetype="solid"), 
+	plot.title = element_text(hjust = 0.5, face = "bold"),  axis.title=element_text(size=12))
 
 
 
-test <- seq(0.1,1,0.01)
-
-portrettest <- matrix(0L, ncol = length(test), nrow = length(daily_logret[,2]))
-
-for(i in 1:length(test)){
-
-	portrettest[,i] <- daily_logret[,2] * test[i]
-
-}
-
- devtest <- apply(portrettest, MARGIN = c(2), FUN = function(x) sd(x)) * sqrt(252)*100
-
-meantest <- colMeans(portrettest) * 252 * 100
 
 
-ts.plot(1+cumsum(daily_logret[,1]), col = "red") + lines(1+cumsum(daily_logret[,2]))
+
+
+
+
+
 
 
 
