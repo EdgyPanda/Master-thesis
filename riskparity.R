@@ -24,7 +24,15 @@ logdiff <- diff(logriskfreerate)
 
 
 riskparity_2dim <- function(matrix, risktarget, rt = F){
-  
+  #
+  #
+  #
+  #NOTE TO YOURSELF: Palomar uses non-sqrt portrisk, which gives 
+  #reasonable risk for the unlevered risk-parity portfolio. Using sqrt
+  #
+  #REMEMBER TO USE COV(),SD()  etc. FOR CLOSE-TO-CLOSE RETURNS, SINCE REALCOV OVERESTIMATES
+  #THE COVARIANCE FOR CLOSE-TO-CLOSE RETURNS
+
   bonds <- matrix[1,1]
   stocks <- matrix[2,2]
   
@@ -34,9 +42,9 @@ riskparity_2dim <- function(matrix, risktarget, rt = F){
   w <- matrix(c(w_1, w_2), ncol=1, nrow=2) #dimnames = list(c(), c("Bond", "Stock"))
   
   #Palomar uses portfolio variance as portfolio risk, thus no sqrt. 
-  portrisk <- as.numeric(t(w) %*% (matrix) %*% w)
+  portrisk <- as.numeric(sqrt(t(w) %*% (matrix) %*% w))
   
-  riskcont <-  portrisk/2
+  riskcont <-  w * (matrix %*% w)/portrisk
 
   relativeriskcont <- (w * (matrix %*% w)) / portrisk^2
 
@@ -48,7 +56,7 @@ riskparity_2dim <- function(matrix, risktarget, rt = F){
 
   	w_new <- matrix(c(w_new[1], w_new[2]), ncol=1, nrow=2)
   				#here is sqrt, while palomar uses variance, no sqrt.
-  	portrisk <-  as.numeric(sqrt(t(w_new) %*% matrix %*% w_new))  #gives marginal risk for each asset. 
+  	portrisk <-  as.numeric(sqrt((t(w_new) %*% matrix %*% w_new)))  #gives marginal risk for each asset. 
 
   	riskcont <- (w_new * (matrix %*% w_new)) / portrisk
 
@@ -71,7 +79,9 @@ riskparity_2dim <- function(matrix, risktarget, rt = F){
   
 }
 
+riskparity_2dim(cov(merged_ret))
 
+riskparity_2dim(calccov[[5]][[6]][,,1])$portrisk*sqrt(252)*100
 
 calccov <- readRDS("calculatedcovariances.rds")
 
@@ -99,7 +109,7 @@ for(i in 1:length(correlations)){
 
 	w2 <- riskparity_2dim(newcovariance,0,F)$w
 
-	portrisk2 <- riskparity_2dim(newcovariance,0,F)$portrisk
+	portrisk2 <- (riskparity_2dim(newcovariance,0,F)$portrisk)
 
 	sensitivity2[i] <-  (w2[1]*w2[2]*meanvolTLT*meanvolSPY)  /  (portrisk2)
 
@@ -113,7 +123,7 @@ library(ggplot2)
 #Shows the volatility's sensitivity to correlation for the unlevered risk-parity portfolio. In essence, 
 #upscaling and downscaling the portfolios using a leverage parameter only shifts the graph.
 
-ggplot() + geom_line(aes(correlations, sensitivity2*100), col = "red", lwd = 1) + 
+ggplot() + geom_line(aes(correlations, sensitivity2), col = "red", lwd = 1) + 
   scale_x_continuous(breaks = round(seq(-0.9,0.9, by = 0.1),1)) + ylab("portfolio volatility (%)")
 
 #-------------------------------weight distribution dependent on excess returns---------------------------------------
@@ -140,7 +150,7 @@ weightsfordistribution <- matrix(0L, ncol=2, nrow=length(stockvol))
 
 for(i in 1:length(stockvol)){
 
-	weightsfordistribution[i, ] <- riskparity_2dim(covs[,,i])$w
+	weightsfordistribution[i, ] <- riskparity_2dim(covs[,,i])$w[1:2]
 
 
 }
@@ -164,6 +174,11 @@ ggplot() + geom_line(aes(stockvol*1e5, weightsfordistribution[,2]))
 
 
 #data get and preparation: 
+
+#
+#
+#
+#USING CLOSE-TO-CLOSE RETURNS --> COV(), SD() AND NOT INTRADAY MEASURES (since they dont have proper scaling). 
 library(alphavantager)
 library(xts)
 
@@ -186,8 +201,7 @@ merged_ret <- cbind(returns_TLT, returns_SPY)
 ggplot() + geom_line(aes(index(returns_TLT), 1+cumsum(returns_TLT), col="TLT")) + 
 geom_line(aes(index(returns_TLT), 1+cumsum(returns_SPY), col="SPY")) 
 
-covlol <- realCov(merged_ret)
-
+covlol <- cov(merged_ret)
 
 colnames(covlol) <- c("TLT", "SPY")
 
@@ -202,7 +216,7 @@ w1 <- 1-w2
 
 w_synthetic <- matrix(cbind(w1,w2), ncol = 2, nrow = length(w1))
 
-portfolios <- matrix(0L, ncol = length(w1), nrow = length(daily_logret[,2]))
+portfolios <- matrix(0L, ncol = length(w1), nrow = length(merged_ret[,2]))
 
 for(i in 1:length(w1)){
 
@@ -219,7 +233,6 @@ portdev <- apply(portfolios, MARGIN = c(2), FUN = function(x) sd(x))* sqrt(252)*
 #portdev <- sort(portdev[1:58], decreasing = T)
 
 #unlevered risk-parity:
-
 
 rpunlevered <- riskparity_2dim(covlol)$w
 
@@ -248,9 +261,9 @@ meanrplevered <- mean(retrplevered) * 252 *100
 sdrplevered <- sd(retrplevered) * sqrt(252) * 100
 
 #Finding the levered risk parity portfolio with same standard deviation as 80/20 portfolio.
-uniroot(function(x)  sd(merged_ret %*% (rpunlevered %*% x))*sqrt(252)*100 - portdev[366], interval = c(0,100))$root
+root <- uniroot(function(x)  sd(merged_ret %*% (rpunlevered %*% x))*sqrt(252)*100 - portdev[366], interval = c(0,100))$root
 
-rplevered <- rpunlevered %*%  1.4641
+rplevered <- rpunlevered %*%  root
 
 retrplevered <- merged_ret %*% rplevered 
 
@@ -280,10 +293,6 @@ xlab("Annualized risk (%)") +
 theme(legend.title = NULL,legend.position = c(0.70, 0.23), legend.background = element_rect(fill="lightblue", size=0.5,
  linetype="solid"), 
 	plot.title = element_text(hjust = 0.5, face = "bold"),  axis.title=element_text(size=12))
-
-
-
-
 
 
 
