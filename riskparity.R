@@ -9,18 +9,6 @@ library(highfrequency)
 library(matlib)
 library(MCS)
 
-dtb3 <- read.csv("DTB3.csv", header =  F)
-
-dtb3[,2] <- as.numeric(levels(dtb3[,2]))[dtb3[,2]]
-
-dtb3 <- dtb3[!is.na(dtb3[,2]), ]
-
-ts.plot(dtb3[,2])
-
-logriskfreerate <- log(1 + dtb3[,2]/100) #daily
-
-logdiff <- diff(logriskfreerate)
-
 
 
 riskparity_2dim <- function(matrix, risktarget, rt = F){
