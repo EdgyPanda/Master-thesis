@@ -294,21 +294,38 @@ theme(legend.title = NULL,legend.position = c(0.70, 0.23), legend.background = e
 
 #------------------------------------CALCULATING VOL-SCALED PORTFOLIOS-------------------------------------
 
+TLT <- as.data.frame(av_get(symbol = "TLT", av_fun = "TIME_SERIES_DAILY", outputsize = "full"))
+rownames(TLT) <- TLT$timestamp
+SPY <- as.data.frame(av_get(symbol = "SPY", av_fun = "TIME_SERIES_DAILY", outputsize = "full"))
+rownames(SPY) <- SPY$timestamp
 
-varsmerged <- na.omit(rollapply(merged_ret, 20, function(x) cov(x), by.column = F, align = 'left')) * 252
+returns_TLT <- as.xts(diff(log(TLT[,4])), order.by = as.Date(TLT[,1], format='%d/%m/%Y')[-1])
+returns_SPY <- as.xts(diff(log(SPY[,4])), order.by = as.Date(SPY[,1])[-1])
+
+
+returns_TLT <-  returns_TLT[seq(from= as.Date('2003-01-02'), to = as.Date('2019-12-31'), by=1), ]
+returns_SPY <- returns_SPY[seq(from= as.Date('2003-01-02'), to = as.Date('2019-12-31'), by=1), ]
+
+
+
+merged_ret <- cbind(returns_TLT, returns_SPY)
+
+
+varsmerged <- na.omit(rollapply(merged_ret, 20, function(x) cov(x), by.column = T, align = 'left')) 
 
 stdTLT <- sqrt(varsmerged[,1]) 
-stdSPY <- sqrt(varsmerged[,4]) 
+stdSPY <- sqrt(varsmerged[,2]) 
 #target is in terms of var. That implies that you need to think: For what variance do I get 10% vol. 
 #Ie. sqrt(0.01)=0.1.NOPE
 
 #decimalnumbers
 
-target <- 0.25
+#annualized thus divided with sqrt(252)
+target <- 0.50
 
-scaledTLT <- (target/stdTLT^2)  *  returns_TLT *252
+scaledTLT <- (target/stdTLT^2)  *  returns_TLT 
 
-scaledSPY <- (target/stdSPY^2) * returns_SPY *252
+scaledSPY <- (target/stdSPY^2) * returns_SPY 
 
 riskfreealloc <- (target/stdTLT)  + (target/stdSPY)
 
@@ -332,22 +349,22 @@ ggplot() + geom_line(aes(index(returns_TLT)[-c(1:38)], rollingdevportret6040)) +
 
 calccov <- readRDS("calculatedcovariances.rds")
 
-total5minreturns <- do.call.rbind(mergedfrequencies[[7]])
+total5minreturns <- do.call.rbind(mergedfrequencies[[9]])
 
-varsmerged <- na.omit(rollapply(total5minreturns, 78*120, function(x) sqrt(realCov(x)), by.column = F, align = 'left')) * 252
+varsmerged <- na.omit(rollapply(total5minreturns, 13*30, function(x) (cov(x)), by.column = T, align = 'left'))
 
-fivemintlt <- sqrt(varsmerged[,1])
-fiveminspy <- sqrt(varsmerged[,4])
+fivemintlt <- sqrt(varsmerged[,1]) * sqrt(252)
+fiveminspy <- sqrt(varsmerged[,2]) * sqrt(252)
 
 
-scaled5mintlt <- (target/fivemintlt)  *  total5minreturns[,1] *252
-scaled5minspy <- (target/fivemintlt)  *  total5minreturns[,2] *252
+scaled5mintlt <- (target/fivemintlt)  *  total5minreturns[,1] * 252
+scaled5minspy <- (target/fiveminspy)  *  total5minreturns[,2] * 252
 
 fiveminport <- 0.6*scaled5minspy + scaled5mintlt * 0.4
 
-rollingdevportret6040 <- na.omit(rollapply(fiveminport, 60, function(x) sqrt(realCov(x)), by.column = F, align = 'left'))
+rollingdevportret6040 <- (na.omit(rollapply(fiveminport, 60, function(x) (sd(x)), by.column = F, align = 'left')))
 
-ggplot() + geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040)) + geom_hline(yintercept = target*100)
+ggplot() + geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040)) + geom_hline(yintercept = target)
 
 
 
