@@ -2,6 +2,7 @@
 
 
 source("functions.R")
+source("Previous functions/projectfunctions.R")
 library(riskParityPortfolio)
 library(matlib)
 library(xts)
@@ -170,6 +171,9 @@ ggplot() + geom_line(aes(stockvol*1e5, weightsfordistribution[,2]))
 library(alphavantager)
 library(xts)
 
+library(ggplot2)
+source("functions.R")
+
 av_api_key('0WXHEIY0O87LX4A3')
 
 TLT <- as.data.frame(av_get(symbol = "TLT", av_fun = "TIME_SERIES_DAILY", outputsize = "full"))
@@ -222,6 +226,8 @@ portdev <- apply(portfolios, MARGIN = c(2), FUN = function(x) sd(x))* sqrt(252)*
 #portdev <- sort(portdev[1:58], decreasing = T)
 
 #unlevered risk-parity:
+
+
 
 rpunlevered <- riskparity_2dim(covlol)$w
 
@@ -286,56 +292,63 @@ theme(legend.title = NULL,legend.position = c(0.70, 0.23), legend.background = e
 
 
 
+#------------------------------------CALCULATING VOL-SCALED PORTFOLIOS-------------------------------------
+
+
+varsmerged <- na.omit(rollapply(merged_ret, 20, function(x) cov(x), by.column = F, align = 'left')) * 252
+
+stdTLT <- sqrt(varsmerged[,1]) 
+stdSPY <- sqrt(varsmerged[,4]) 
+#target is in terms of var. That implies that you need to think: For what variance do I get 10% vol. 
+#Ie. sqrt(0.01)=0.1.NOPE
+
+#decimalnumbers
+
+target <- 0.25
+
+scaledTLT <- (target/stdTLT^2)  *  returns_TLT *252
+
+scaledSPY <- (target/stdSPY^2) * returns_SPY *252
+
+riskfreealloc <- (target/stdTLT)  + (target/stdSPY)
+
+
+#60/40 portfolio:
+
+
+
+portret6040 <- 0.6*scaledSPY + 0.4*scaledTLT
+
+
+rollingdevportret6040 <- na.omit(rollapply(portret6040, 20, function(x) sd(x), by.column = F, align = 'left'))
+
+ggplot() + geom_line(aes(index(returns_TLT)[-c(1:38)], rollingdevportret6040)) + geom_hline(yintercept = target*100)
 
 
 
 
+#intraday tryout:
+
+
+calccov <- readRDS("calculatedcovariances.rds")
+
+total5minreturns <- do.call.rbind(mergedfrequencies[[7]])
+
+varsmerged <- na.omit(rollapply(total5minreturns, 78*120, function(x) sqrt(realCov(x)), by.column = F, align = 'left')) * 252
+
+fivemintlt <- sqrt(varsmerged[,1])
+fiveminspy <- sqrt(varsmerged[,4])
+
+
+scaled5mintlt <- (target/fivemintlt)  *  total5minreturns[,1] *252
+scaled5minspy <- (target/fivemintlt)  *  total5minreturns[,2] *252
+
+fiveminport <- 0.6*scaled5minspy + scaled5mintlt * 0.4
+
+rollingdevportret6040 <- na.omit(rollapply(fiveminport, 60, function(x) sqrt(realCov(x)), by.column = F, align = 'left'))
+
+ggplot() + geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040)) + geom_hline(yintercept = target*100)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-#0.5 risk free asset? 
-
-#assume 1% each year. Then with a notional on 100, we have scale it out everyday:
-
-dailygains = (0.01*100)/252
-
-
-priceriskfree <- numeric(2515)
-
-priceriskfree[1] <- 100
-
-#this is not completely correct
-for(i in 2:2516){
-
-	priceriskfree[i] <- priceriskfree[i-1] + (0.01*priceriskfree[i-1])/252
-
-
-}
-
-
-riskfreereturns <- diff(log(priceriskfree))[-1]
-
-
-returns2 <-  cbind(lel[-c(1,2),], riskfreereturns)
-
-
-portret <- t(t(riskparity_2dim(newcovariance, 0.1,T)$w) %*% t(returns2))
-
-portret2 <- t(t(riskparity_2dim(newcovariance, 0.1,T)$w[1:2]) %*% t(lel))
-
-ts.plot(1+cumsum(portret)) + lines(1+cumsum(portret2), col="red")
-
-
-lel <- t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[,2])))
+mergedfrequencies[[7]]
