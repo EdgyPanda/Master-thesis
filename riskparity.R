@@ -358,7 +358,7 @@ mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
 total30minreturns <- do.call.rbind(mergedfrequencies[[9]])
 
-varsmerged2 <- na.omit(rollapply(total30minreturns, 12*60, function(x) (realCov(x)), by.column = T, 
+varsmerged2 <- na.omit(rollapply(total30minreturns, 12*30, function(x) (realCov(x)), by.column = T, 
 	align = 'right'))
 
 
@@ -372,7 +372,7 @@ scaled30minspy <- (target/thirtyminspy)  *  total30minreturns[-c(1:start), 2]
 
 thirtyminport <- 1*scaled30minspy + scaled30mintlt * 0
 
-rollingdevportret6040thirtymin <- (na.omit(rollapply(thirtyminport, 12*60, function(x) sqrt(realCov(x)), by.column = F, 
+rollingdevportret6040thirtymin <- (na.omit(rollapply(thirtyminport, 12*30, function(x) sqrt(realCov(x)), by.column = F, 
 	align = 'right', by = 12)))
 
 ggplot() + geom_line(aes(1:length(rollingdevportret6040thirtymin), rollingdevportret6040thirtymin, col="30 min")) + 
@@ -381,13 +381,13 @@ geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040, col="Daily
 
 
 
-#5min
+#-----------------------------------5min NOT SURE IF ANY OF THIS IS CORRECT THOUGH. 
 
 
 total5minreturns <- do.call.rbind(mergedfrequencies[[7]])
 
 varsmerged5min <- na.omit(rollapply(total5minreturns, 78*60, function(x) (realCov(x)), by.column = T, 
-	align = 'right'))
+	align = 'right', by = 75))
 
 
 fivemintlt <- sqrt(varsmerged5min[,1]) 
@@ -395,18 +395,34 @@ fiveminspy <- sqrt(varsmerged5min[,2])
 
 start <- length(total5minreturns[,1]) - length(varsmerged5min[,1])
 
-scaled5mintlt <- (target/fivemintlt)  *  total5minreturns[-c(1:start), 1] 
+scaled5mintlt <- list()
+
+for(i in 1:length(varsmerged5min[,1])){
+
+	scaled5mintlt[[i]] <- mergedfrequencies[[7]][60+i][[1]][,1] %*% as.numeric(target/fivemintlt[i])
+
+}
+
+scaled5mintlt <- do.call.rbind(scaled5mintlt)
+
+
+#scaled5mintlt <- lapply(mergedfrequencies[[7]][c(61:2516)], function(x) x %*% (target/fivemintlt))
+
+
+
+
 scaled5minspy <- (target/fiveminspy)  *  total5minreturns[-c(1:start), 2] 
 
-fiveminport <- 1*scaled5minspy + scaled5mintlt * 0
+fiveminport <-  xts(scaled5mintlt, order.by = as.Date(1:length(scaled5mintlt)))
 
-rollingdevportret6040fivemin <- (na.omit(rollapply(fiveminport, 78*60, function(x) sqrt(realCov(x)), by.column = F, 
-	align = 'right', by = 78)))
+rollingdevportret6040fivemin <- (na.omit(rollapply(fiveminport, 60*78, function(x) sqrt(realCov(x)), by.column = F, 
+	align = 'right', by = 74)))
 
-
-
-mergedfrequencies[[7]]
-
+ggplot() +  
+geom_hline(yintercept = target) + 
+geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040, col="Daily"))+
+geom_line(aes(1:length(rollingdevportret6040fivemin), rollingdevportret6040fivemin, col="5 min"))
+geom_line(aes(1:length(rollingdevportret6040thirtymin), rollingdevportret6040thirtymin, col="30 min")) 
 
 #------------------------------------------TRYING WITH SIM DATA---------------------------------
 
