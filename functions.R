@@ -56,7 +56,7 @@ return(covar)
 
 }
 
-ewma.filter2006 <- function(data, correlation = F, tau1 = NULL, rho = NULL){
+ewma.filter2006 <- function(data, correlation = F, realized = FALSE, tau1 = NULL, rho = NULL){
 
 	#Reference values found in RiskMetrics 2006:
 	#Rho and tau1 controls the half-life construction in the 1993 model. 
@@ -88,10 +88,15 @@ ewma.filter2006 <- function(data, correlation = F, tau1 = NULL, rho = NULL){
 	volk <- list()
 	weights <- numeric(kmax)
 
+	if(realized){
+
+		vol[,,1] <- realCov(data[1:100, ])
+	}
+
+	vol[,,1] <- cov(data[1:100, ])
 
 	for(k in 1:kmax){
 		#now it is initialized using sample covariance
-		vol[,,1] <- cov(data[1:100, ])
 		tau[k] <- tau1 * rho^(k-1)  
 		mu[k] <- exp(-dt/tau[k])
 		weights[k] <- 1-log(tau[k]/tau0)

@@ -173,8 +173,9 @@ library(xts)
 
 library(ggplot2)
 source("functions.R")
+source("APIKEY.R")
 
-av_api_key('0WXHEIY0O87LX4A3')
+av_api_key(apikey)
 
 TLT <- as.data.frame(av_get(symbol = "TLT", av_fun = "TIME_SERIES_DAILY", outputsize = "full"))
 rownames(TLT) <- TLT$timestamp
@@ -303,29 +304,34 @@ returns_TLT <- as.xts(diff(log(TLT[,4])), order.by = as.Date(TLT[,1], format='%d
 returns_SPY <- as.xts(diff(log(SPY[,4])), order.by = as.Date(SPY[,1])[-1])
 
 
-returns_TLT <-  returns_TLT[seq(from= as.Date('2003-01-02'), to = as.Date('2019-12-31'), by=1), ]
-returns_SPY <- returns_SPY[seq(from= as.Date('2003-01-02'), to = as.Date('2019-12-31'), by=1), ]
+returns_TLT <-  returns_TLT[seq(from= as.Date('2010-01-04'), to = as.Date('2019-12-31'), by=1), ]
+returns_SPY <- returns_SPY[seq(from= as.Date('2010-01-04'), to = as.Date('2019-12-31'), by=1), ]
 
 
 
 merged_ret <- cbind(returns_TLT, returns_SPY)
 
 
-varsmerged <- na.omit(rollapply(merged_ret, 20, function(x) cov(x), by.column = T, align = 'left')) 
+#KEY NOTE: IT IS IMPORTANT THAT BOTH ROLLING FORECASTS START WITH SAME FIXED WINDOW TO ACHIEVE CONSISTENCY.
+#OTHERWISE ROLLING VARS WILL BE UNDER/OVER ESTIMATED. 
 
-stdTLT <- sqrt(varsmerged[,1]) 
-stdSPY <- sqrt(varsmerged[,2]) 
+varsmerged <- na.omit(rollapply(merged_ret, 60, function(x) realCov(x), by.column = T, align = 'right', by = 1)) 
+
+stdTLT <- sqrt(varsmerged[,1]) #* sqrt(252)
+stdSPY <- sqrt(varsmerged[,2]) #* sqrt(252)
 #target is in terms of var. That implies that you need to think: For what variance do I get 10% vol. 
 #Ie. sqrt(0.01)=0.1.NOPE
 
 #decimalnumbers
 
-#annualized thus divided with sqrt(252)
-target <- 0.50
+#finds when first rolling sd.dev is calculated
+start <- length(returns_TLT) - length(varsmerged[,1])
 
-scaledTLT <- (target/stdTLT^2)  *  returns_TLT 
+target <- 0.10
 
-scaledSPY <- (target/stdSPY^2) * returns_SPY 
+scaledTLT <- (target/stdTLT)  *  returns_TLT[-c(1:start), ] #* 252
+
+scaledSPY <- (target/stdSPY) * returns_SPY[-c(1:start), ] #* 252
 
 riskfreealloc <- (target/stdTLT)  + (target/stdSPY)
 
@@ -334,38 +340,113 @@ riskfreealloc <- (target/stdTLT)  + (target/stdSPY)
 
 
 
-portret6040 <- 0.6*scaledSPY + 0.4*scaledTLT
+portret6040 <- 1*scaledSPY + 0*scaledTLT
 
 
-rollingdevportret6040 <- na.omit(rollapply(portret6040, 20, function(x) sd(x), by.column = F, align = 'left'))
+rollingdevportret6040 <- sqrt(na.omit(rollapply(portret6040, 60, function(x) realCov(x), by.column = F, align = 'right')))
 
-ggplot() + geom_line(aes(index(returns_TLT)[-c(1:38)], rollingdevportret6040)) + geom_hline(yintercept = target*100)
+ggplot() + geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040)) + geom_hline(yintercept = target)
 
 
 
 
 #intraday tryout:
 
-
 calccov <- readRDS("calculatedcovariances.rds")
 
-total5minreturns <- do.call.rbind(mergedfrequencies[[9]])
+mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
-varsmerged <- na.omit(rollapply(total5minreturns, 13*30, function(x) (cov(x)), by.column = T, align = 'left'))
+total30minreturns <- do.call.rbind(mergedfrequencies[[9]])
 
-fivemintlt <- sqrt(varsmerged[,1]) * sqrt(252)
-fiveminspy <- sqrt(varsmerged[,2]) * sqrt(252)
+varsmerged2 <- na.omit(rollapply(total30minreturns, 12*60, function(x) (realCov(x)), by.column = T, 
+	align = 'right'))
 
 
-scaled5mintlt <- (target/fivemintlt)  *  total5minreturns[,1] * 252
-scaled5minspy <- (target/fiveminspy)  *  total5minreturns[,2] * 252
+thirtymintlt <- sqrt(varsmerged2[,1]) 
+thirtyminspy <- sqrt(varsmerged2[,2]) 
 
-fiveminport <- 0.6*scaled5minspy + scaled5mintlt * 0.4
+start <- length(total30minreturns[,1]) - length(varsmerged2[,1])
 
-rollingdevportret6040 <- (na.omit(rollapply(fiveminport, 60, function(x) (sd(x)), by.column = F, align = 'left')))
+scaled30mintlt <- (target/thirtymintlt)  *  total30minreturns[-c(1:start), 1] 
+scaled30minspy <- (target/thirtyminspy)  *  total30minreturns[-c(1:start), 2] 
 
-ggplot() + geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040)) + geom_hline(yintercept = target)
+thirtyminport <- 1*scaled30minspy + scaled30mintlt * 0
+
+rollingdevportret6040thirtymin <- (na.omit(rollapply(thirtyminport, 12*60, function(x) sqrt(realCov(x)), by.column = F, 
+	align = 'right', by = 12)))
+
+ggplot() + geom_line(aes(1:length(rollingdevportret6040thirtymin), rollingdevportret6040thirtymin, col="30 min")) + 
+geom_hline(yintercept = target) + 
+geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040, col="Daily"))
+
+
+
+#5min
+
+
+total5minreturns <- do.call.rbind(mergedfrequencies[[7]])
+
+varsmerged5min <- na.omit(rollapply(total5minreturns, 78*60, function(x) (realCov(x)), by.column = T, 
+	align = 'right'))
+
+
+fivemintlt <- sqrt(varsmerged5min[,1]) 
+fiveminspy <- sqrt(varsmerged5min[,2]) 
+
+start <- length(total5minreturns[,1]) - length(varsmerged5min[,1])
+
+scaled5mintlt <- (target/fivemintlt)  *  total5minreturns[-c(1:start), 1] 
+scaled5minspy <- (target/fiveminspy)  *  total5minreturns[-c(1:start), 2] 
+
+fiveminport <- 1*scaled5minspy + scaled5mintlt * 0
+
+rollingdevportret6040fivemin <- (na.omit(rollapply(fiveminport, 78*60, function(x) sqrt(realCov(x)), by.column = F, 
+	align = 'right', by = 78)))
 
 
 
 mergedfrequencies[[7]]
+
+
+#------------------------------------------TRYING WITH SIM DATA---------------------------------
+
+#do ewma to figure it out. 
+
+# do variances instead. 
+
+brownian <- function(J, N, sigma, alpha, beta, gamma,rho ,time){ 
+
+
+simulations <- brownian(2,23400*2,10,0, 0, 1,0, 1)
+logretsims <- diff(log(simulations[,3]))[-1]
+logretsims2 <- diff(log(simulations[,4]))[-1]
+logretsims <- cbind(logretsims, logretsims2)
+
+
+logretsims <- xts(logretsims, order.by = as.Date(1:length(logretsims[,1])))
+
+sqrt(realCov(logretsims)) 
+
+sdlogret3 <- sqrt(na.omit(rollapply(logretsims[,1], 23400*2, function(x) (realCov(x)), by.column = F, align = 'left'))) #* sqrt(252)
+sdlogret4 <- (na.omit(rollapply(logretsims[,2], 23400*2, function(x) sqrt(realCov(x)), by.column = F, align = 'left'))) #* sqrt(252)
+
+#sdlogret3 <- ewma.filter2006((logretsims),F,T)
+
+#sdlogret32 <- apply(sdlogret3, MARGIN = c(3), FUN = function(x) x[1,1])
+
+#sdlogret3 <- sdlogret3 * sqrt(252)
+#sdlogret4 <- sdlogret4 * sqrt(252)
+
+
+scaledret3 <- logretsims[,1] * (0.1/sdlogret3) 
+sclaedret4 <- logretsims[-c(1:46799),2] * (10/sdlogret4) 
+
+
+scaledport <- scaledret3 * 1 
+
+sdport <-  ewma.filter2006((scaledport),F,F)  #sqrt(na.omit(rollapply(scaledport, 38400, function(x) (realCov(x)), by.column = F, align = 'left')))
+
+
+
+
+ts.plot(sdport)
