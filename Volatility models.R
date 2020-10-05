@@ -54,7 +54,11 @@ GARCHFilter <- function(vY, dOmega, dAlpha, dBeta) {
 #will target the unconditional realized covariance matrix accordingly, so it's a good idea
 #to specify what you're using. Start with open-to-close. And they should obviouslý have the same amount of days. 
 #if covariance is not null, then realized covariance estimations will  be bypassed. 
-BivarGARCHFilter <- function(lT, dailyret, covariance = NULL, dAlpha, dBeta){
+#
+#
+#
+#CURRENTLY IT IS MAXIMIZING LIKELIHOOD. YOU NEED TO NEGATE IT. 
+BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance = NULL){
 
 	days <- length(lT)
 
@@ -62,11 +66,11 @@ BivarGARCHFilter <- function(lT, dailyret, covariance = NULL, dAlpha, dBeta){
 
 	samplecov <- cov(dailyret)
 
-	if(covariance == NULL){
+	if(is.null(covariance)){
 
 		rcov <- array(0L, dim = c(2, 2, days))
 
-		for(1:days){
+		for(i in 1:days){
 
 			rcov[,,i] <- realCov(lT[[i]])
 
@@ -86,7 +90,7 @@ BivarGARCHFilter <- function(lT, dailyret, covariance = NULL, dAlpha, dBeta){
 		mSigma[,,1] <- samplercov
 
 		#compute first observation of log-likelihood:
-		dLLK <- -d/2 * log(2*pi) - log(det(mSigma[,,1])) - dailyret[1, , drop = F] %*% inv(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
+		dLLK <-  - log(det(mSigma[,,1])) - dailyret[1, , drop = F] %*% inv(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
 
 		for(i in 2:days){
 
@@ -94,14 +98,50 @@ BivarGARCHFilter <- function(lT, dailyret, covariance = NULL, dAlpha, dBeta){
 
 			mSigma[,,i] <- (1 - astar - dBeta) %*% samplecov + dBeta * mSigma[,,i-1] + dAlpha * rcov[,,i-1]
 
+			dLLK <- dLLK - det(mSigma[,,i]) - dailyret[i, , drop = F] %*% inv(mSigma[,,i]) %*% t(dailyret[i, , drop = F])
 
 		}
 
+		fulldLLK <- -days * d/2 * log(2*pi) + dLLK  
+
+		lOut <- list()
+
+		lOut[["fulldLLK"]] <- fulldLLK
+		lOut[["mSigma"]] <- mSigma
+
+		return(lOut)
 
 	}
 }
 
 
+dataTLT <- readRDS("dataTLT.rds")
+
+getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
+
+for(i in 1:length(getDates)){
+	getDates[i] <- strsplit(getDates, " ")[[i]][1]
+}
+
+
+
+
+
+
+dailyretotc <- xts(t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[,2]))), order.by = as.Date(getDates))
+
+colnames(dailyretotc) <- c("TLT", "SPY")
+
+lel <- BivarGARCHFilter(mergedfrequencies[[8]], dailyretotc, 0.02, 0.98)
+
+
+lel$fulldLLK
+
+
+another <- numeric()
+for(i in 1:2516){
+another[i] <- det(lel$mSigma[,,i])
+}
 
 
 test <- matrix(c(mean(calccov[[1]][[7]][1,1,]), mean(calccov[[1]][[7]][2,1,]), 
