@@ -8,7 +8,7 @@ library(xts)
 library(highfrequency)
 library(matlib)
 library(MCS)
-
+library(Rsolnp)
 
 
 calccov <- readRDS("calculatedcovariances.rds")
@@ -16,53 +16,23 @@ calccov <- readRDS("calculatedcovariances.rds")
 mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
 
-#The scalar bivariate GARCH model estimation
-
-
-GARCHFilter <- function(vY, dOmega, dAlpha, dBeta) {
-  
-  ## number of observations
-  iT = length(vY)
-  
-  ## initialize the variance
-  vSigma2 = numeric(iT)
-  
-  ## set the variance at time t = 1 to the empirical variance of the first 0.1 * iT observations
-  vSigma2[1] = var(vY[1:round(iT * 0.1)])
-  
-  # ## compute the log--likelihood of the first obs
-  dLLK = dnorm(vY[1], 0, sqrt(vSigma2[1]), log = TRUE)
-  # 
-  ## loop over iT
-  for (t in 2:iT) {
-    # update the volatility
-    vSigma2[t] = dOmega + dAlpha * vY[t-1]^2 + dBeta * vSigma2[t - 1]
-    # add the log-likelihood contribution at time t
-    dLLK = dLLK + dnorm(vY[t], 0, sqrt(vSigma2[t]), log = TRUE)
-  }
-  
-  lOut = list()
-  lOut[["dLLK"]] = dLLK
-  lOut[["vSigma2"]] = vSigma2
-  
-  return(lOut)
-  
-}
+#-----------------------------------The scalar bivariate GARCH model estimation---------------------------
 
 #lT is list of intraday returns as xts object with each list element being each day
 #dailyret is daily returns either open-to-close or close-to-close, however, the model
 #will target the unconditional realized covariance matrix accordingly, so it's a good idea
-#to specify what you're using. Start with open-to-close. And they should obviouslý have the same amount of days. 
+#to specify what you're using. Moreover, covariance needs to be an array with 3 dim being days.
+#Start with open-to-close. And they should obviouslý have the same amount of days. 
 #if covariance is not null, then realized covariance estimations will  be bypassed. 
+#Currently you need to source projectfunctions to make it work, however you can set it up with
+#highfrequency package. 
 #
 #
-#
-#CURRENTLY IT IS MAXIMIZING LIKELIHOOD. YOU NEED TO NEGATE IT. 
 BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance = NULL){
 
 	days <- length(lT)
 
-	d <- ncol(lT[[1]])
+	d <-  2 #being bivariate
 
 	samplecov <- cov(dailyret)
 
@@ -73,47 +43,146 @@ BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance = NULL){
 		for(i in 1:days){
 
 			rcov[,,i] <- realCov(lT[[i]])
-
 		}
-
-		samplercov <- matrix(
-			c(mean(rcov[1,1,]),
-			  mean(rcov[2,1,]),
-			  mean(rcov[2,1,]),
-			  mean(rcov[2,2,])),
-				ncol=2, nrow=2)
-
-		mSigma <- array(0L, dim = c(2, 2, days))
-
-		#initializing it with unconditional mean. 
-
-		mSigma[,,1] <- samplercov
-
-		#compute first observation of log-likelihood:
-		dLLK <-  - log(det(mSigma[,,1])) - dailyret[1, , drop = F] %*% inv(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
-
-		for(i in 2:days){
-
-			astar <- dAlpha * samplercov %*% inv(samplecov)
-
-			mSigma[,,i] <- (1 - astar - dBeta) %*% samplecov + dBeta * mSigma[,,i-1] + dAlpha * rcov[,,i-1]
-
-			dLLK <- dLLK - det(mSigma[,,i]) - dailyret[i, , drop = F] %*% inv(mSigma[,,i]) %*% t(dailyret[i, , drop = F])
-
-		}
-
-		fulldLLK <- -days * d/2 * log(2*pi) + dLLK  
-
-		lOut <- list()
-
-		lOut[["fulldLLK"]] <- fulldLLK
-		lOut[["mSigma"]] <- mSigma
-
-		return(lOut)
-
 	}
+
+	else{
+
+		rcov <- covariance 
+	}
+
+
+	samplercov <- matrix(
+		c(mean(rcov[1,1,]),
+		  mean(rcov[2,1,]),
+		  mean(rcov[2,1,]),
+		  mean(rcov[2,2,])),
+		  ncol=2, nrow=2)
+
+	mSigma <- array(0L, dim = c(2, 2, days))
+
+	#initializing  with unconditional mean. 
+
+	mSigma[,,1] <- samplecov
+
+	#compute first observation of log-likelihood (we are minizing neg-log-likelihood):
+	dLLK <-   log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
+
+	astar <- dAlpha * (samplercov * (samplecov)^(-1))
+
+	for(i in 2:days){
+
+		mSigma[,,i] <- samplecov * (1 - astar - dBeta)  + dBeta * mSigma[,,i-1] + dAlpha * rcov[,,i-1]
+
+		dLLK <- as.numeric(dLLK) + log(det(mSigma[,,i])) + 
+		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]) 
+
+		}
+
+	#+ days * d * log(2*pi)
+	fulldLLK <- -0.5 * days * d * log(2*pi) - 0.5 * dLLK  
+
+	lOut <- list()
+
+	lOut[["fulldLLK"]] <- fulldLLK
+	lOut[["mSigma"]] <- mSigma
+	lOut[["cov"]] <- astar
+
+	return(lOut)
+	
+	
 }
 
+
+
+#objective function specific for scalar Bivariate GARCH
+ObjFBivarGARCH <- function(vPar, lT, dailyret, covariance = NULL) {
+  
+  dAlpha = vPar[1]
+  dBeta  = vPar[2]
+  dLLK = BivarGARCHFilter(lT, dailyret, dAlpha, dBeta, covariance = NULL)$fulldLLK
+  
+  return(-as.numeric(dLLK))
+}
+
+#imposing strong stationarity as implied from the paper. This is generalized and can be used for other imposed models.
+
+ineqfun_GARCH_BIVAR <- function(vPar, ...) {
+  dAlpha = vPar[1]
+  dBeta  = vPar[2]
+  
+  return(dAlpha + dBeta)
+}
+
+#YOU NEED TO CALCULATE ROBUST STANDARD ERRORS. 
+EstimateBivarGARCH <- function(lT, dailyret, covariance=NULL, ineqfun_GARCH = ineqfun_GARCH_BIVAR, ineqLB = 0.00, ineqUB = 0.9999){
+  
+  # We set starting value for alpha equal to 0.05, dBeta = 0.94, and chose omega to target
+  # the empirical variance by targeting the unconditional variance of the 
+  # GARCH model
+  
+  dAlpha = 0.04 #
+  dBeta  = 0.94
+  
+  ## vector of starting parameters
+  vPar = c(dAlpha, dBeta)
+  
+  # have a look at help(solnp)
+  ##optimization step
+  optimizer = solnp(vPar, fun = ObjFBivarGARCH, lT = lT, dailyret = dailyret, covariance = covariance, 
+                    ineqfun = ineqfun_GARCH_BIVAR, #the inequality constraint
+                    ineqLB  = ineqLB, ## the inequality lower bound
+                    ineqUB = ineqUB, ## the inequality lower bound, i.e. 0.0 < alpha + beta < 0.9999
+                    ## lower and upper bounds for all parameters
+                    LB = c(0.0001, 0.0001), UB = c(0.999, 0.999)
+                    ) 
+  
+  ## extract estimated parameters
+  vPar = optimizer$pars
+  
+  ## extract the likelihood computed at its maximum
+  dLLK = -tail(optimizer$values, 1)
+
+  #gradient tryout,  finite difference:
+  #h <- 0.001
+
+  #grad_Lk <- (exp(ObjectiveFunction(c(vPar[1]+h,vPar[2],vPar[3]), vY)) -  
+  #exp(ObjectiveFunction(c(vPar[1],vPar[2],vPar[3]), vY)))/h
+
+  
+  ## compute filtered volatility
+  vSigma2 = BivarGARCHFilter(lT, dailyret, vPar[1], vPar[2])$mSigma
+  
+  ## Compute the daily Average BIC
+  iT = length(lT)
+  BIC = (-2 * dLLK + log(iT) * length(vPar))/iT
+  
+  ##Standard errors:
+  se <- solve(optimizer$hessian)
+  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
+  colnames(se) <- c("Alpha", "Beta")
+
+  ## return a list with estimated parameters, likelihood value and BIC
+  lOut = list()
+  lOut[["vPar"]] = vPar
+  lOut[["dLLK"]] = dLLK
+  lOut[["BIC"]] = BIC
+  lOut[["vSigma2"]] = vSigma2
+  lOut[["se"]] = se
+  lOut[["Hessian"]] = optimizer$hessian
+  #lOut[["grad"]] = grad_Lk
+  
+  return(lOut)
+}
+
+
+
+library(numDeriv)
+
+
+tt <- jacobian(ObjFBivarGARCH, x = lel2$vPar, lT = mergedfrequencies[[8]], dailyret = dailyretotc)
+
+t(tt) %*% ginv(lel2$Hessian) %*% tt
 
 dataTLT <- readRDS("dataTLT.rds")
 
@@ -132,20 +201,26 @@ dailyretotc <- xts(t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[
 
 colnames(dailyretotc) <- c("TLT", "SPY")
 
-lel <- BivarGARCHFilter(mergedfrequencies[[8]], dailyretotc, 0.02, 0.98)
+lel <- BivarGARCHFilter(mergedfrequencies[[8]], dailyretotc,0.02, 0.96390)
 
 
-lel$fulldLLK
 
 
-another <- numeric()
-for(i in 1:2516){
-another[i] <- det(lel$mSigma[,,i])
-}
+
+lel2 <- EstimateBivarGARCH(mergedfrequencies[[9]], merged_ret, calccov[[1]][[9]])
+
+
+lel2$BIC
+
+
+
 
 
 test <- matrix(c(mean(calccov[[1]][[7]][1,1,]), mean(calccov[[1]][[7]][2,1,]), 
 	mean(calccov[[1]][[7]][2,1,]), mean(calccov[[1]][[7]][2,2,])), ncol=2,nrow=2)
+
+determinant(test, F)$modulus[1]
+det(test)
 
 test[1, , drop = F]
 test
