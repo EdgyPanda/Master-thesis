@@ -350,7 +350,19 @@ ggplot() + geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040)
 
 
 
-#intraday tryout:
+
+dataTLT <- readRDS("dataTLT.rds")
+
+getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
+
+for(i in 1:length(getDates)){
+	getDates[i] <- strsplit(getDates, " ")[[i]][1]
+}
+
+
+
+
+#-----------------------------------------------intraday tryout:
 
 calccov <- readRDS("calculatedcovariances.rds")
 
@@ -358,7 +370,7 @@ mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
 total30minreturns <- do.call.rbind(mergedfrequencies[[9]])
 
-varsmerged2 <- na.omit(rollapply(total30minreturns, 12*30, function(x) (realCov(x)), by.column = T, 
+varsmerged2 <- na.omit(rollapply(total30minreturns, 12*60, function(x) (realCov(x)), by.column = T, 
 	align = 'right'))
 
 
@@ -372,7 +384,7 @@ scaled30minspy <- (target/thirtyminspy)  *  total30minreturns[-c(1:start), 2]
 
 thirtyminport <- 1*scaled30minspy + scaled30mintlt * 0
 
-rollingdevportret6040thirtymin <- (na.omit(rollapply(thirtyminport, 12*30, function(x) sqrt(realCov(x)), by.column = F, 
+rollingdevportret6040thirtymin <- (na.omit(rollapply(thirtyminport, 12*60, function(x) sqrt(realCov(x)), by.column = F, 
 	align = 'right', by = 12)))
 
 ggplot() + geom_line(aes(1:length(rollingdevportret6040thirtymin), rollingdevportret6040thirtymin, col="30 min")) + 
