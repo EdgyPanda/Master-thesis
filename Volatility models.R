@@ -9,6 +9,9 @@ library(highfrequency)
 library(matlib)
 library(MCS)
 library(Rsolnp)
+library(matrixcalc)
+library(MASS)
+library(Matrix)
 
 
 calccov <- readRDS("calculatedcovariances.rds")
@@ -28,7 +31,26 @@ mergedfrequencies <- readRDS("mergedfrequencies.rds")
 #highfrequency package. 
 #
 #
-BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance = NULL){
+#
+#CODE BELOW IS IF DID NOT PRE-CALCULATE YOUR COVARIANCES. HOWEVER IT MAKES THE OPTIMIZER SLOW.
+#IF YOU PRECALCULATE EXPECT 48SEC IF YOU DONT 98SEC. 
+#
+#if(is.null(covariance)){
+
+#		rcov <- array(0L, dim = c(2, 2, days))
+
+#		for(i in 1:days){
+
+#			rcov[,,i] <- realCov(lT[[i]])
+#		}
+#	}
+
+#	else{
+
+#		rcov <- covariance 
+#	}
+
+BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance){
 
 	days <- length(lT)
 
@@ -36,21 +58,7 @@ BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance = NULL){
 
 	samplecov <- cov(dailyret)
 
-	if(is.null(covariance)){
-
-		rcov <- array(0L, dim = c(2, 2, days))
-
-		for(i in 1:days){
-
-			rcov[,,i] <- realCov(lT[[i]])
-		}
-	}
-
-	else{
-
-		rcov <- covariance 
-	}
-
+	rcov <- array(covariance, dim = c(2,2,days))
 
 	samplercov <- matrix(
 		c(mean(rcov[1,1,]),
@@ -92,6 +100,11 @@ BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance = NULL){
 	
 	
 }
+
+leltest <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc, 0.33680, 0.66191, calccov[[1]][[8]])
+
+is.null(calccov[[1]][[8]][,,1])
+
 
 #covariance should be specified in a c() with three arrays.
 
@@ -162,6 +175,13 @@ BivarGARCHFilterContAsym <- function(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dB
 		mSigma[,,i] <- samplecov * (1 - astar - dBeta)  + dBeta * mSigma[,,i-1] + 
 		dAlphaP * P[,,i-1] + dAlphaN * N[,,i-1] + dAlphaM * M[,,i-1]
 
+
+		if(!is.positive.definite(mSigma[,,i])){
+
+			mSigma[,,i] <- matrix(nearPD(mSigma[,,i])$mat, ncol=2,nrow=2)
+
+		}
+
 		dLLK <- as.numeric(dLLK) + log(det(mSigma[,,i])) + 
 		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]) 
 
@@ -181,26 +201,38 @@ BivarGARCHFilterContAsym <- function(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dB
 	
 }
 
+lel <- BivarGARCHFilterContAsym(mergedfrequencies[[8]], dailyretotc, 0.01, 0.005, 0.04, 0.94)
+matrix(nearPD(lel$mSigma[,,87])$mat, ncol=2,nrow=2)
+
+lel$mSigma[,,87]
+
+
+test <- numeric()
+for(i in 1:2516){
+
+	test[i] <- !is.positive.definite(lel$mSigma[,,i])
+
+}
 
 
 
 #objective function specific for scalar Bivariate GARCH
-ObjFBivarGARCH <- function(vPar, lT, dailyret, covariance = NULL) {
+ObjFBivarGARCH <- function(vPar, lT, dailyret, covariance) {
   
   dAlpha = vPar[1]
   dBeta  = vPar[2]
-  dLLK = BivarGARCHFilter(lT, dailyret, dAlpha, dBeta, covariance = NULL)$fulldLLK
+  dLLK = BivarGARCHFilter(lT, dailyret, dAlpha, dBeta, covariance)$fulldLLK
   
   return(-as.numeric(dLLK))
 }
 
-ObjFBivarGARCHContAsym <- function(vPar, lT, dailyret, covariance = NULL) {
+ObjFBivarGARCHContAsym <- function(vPar, lT, dailyret, covariance) {
   
   dAlphaP = vPar[1]
   dAlphaN = vPar[2]
   dAlphaM = vPar[3]
   dBeta  = vPar[4]
-  dLLK = BivarGARCHFilterContAsym(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dBeta, covariance = NULL)$fulldLLK
+  dLLK = BivarGARCHFilterContAsym(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dBeta, covariance)$fulldLLK
   
   return(-as.numeric(dLLK))
 }
@@ -223,7 +255,7 @@ ineqfun_GARCH_BIVARContAsym <- function(vPar, ...) {
 }
 
 #YOU NEED TO CALCULATE ROBUST STANDARD ERRORS. 
-EstimateBivarGARCH <- function(lT, dailyret, covariance=NULL, ineqfun_GARCH = ineqfun_GARCH_BIVAR, ineqLB = 0.00, ineqUB = 0.9999){
+EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun_GARCH_BIVAR, ineqLB = 0.00, ineqUB = 0.9999){
   
   # We set starting value for alpha equal to 0.05, dBeta = 0.94, and chose omega to target
   # the empirical variance by targeting the unconditional variance of the 
@@ -259,7 +291,7 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance=NULL, ineqfun_GARCH = in
 
   
   ## compute filtered volatility
-  vSigma2 = BivarGARCHFilter(lT, dailyret, vPar[1], vPar[2])$mSigma
+  vSigma2 = BivarGARCHFilter(lT, dailyret, vPar[1], vPar[2], covariance)$mSigma
   
   ## Compute the daily Average BIC
   iT = length(lT)
@@ -332,7 +364,7 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance=NULL, ineqfun_GA
   ##Standard errors:
   se <- solve(optimizer$hessian)
   se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
-  colnames(se) <- c("Alpha", "Beta")
+  colnames(se) <- c("AlphaP", "AlphaN", "AlphaM", "Beta")
 
   ## return a list with estimated parameters, likelihood value and BIC
   lOut = list()
@@ -377,13 +409,17 @@ dailyretotc <- xts(t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[
 
 colnames(dailyretotc) <- c("TLT", "SPY")
 
-lel <- BivarGARCHFilter(mergedfrequencies[[8]], dailyretotc,0.02, 0.96390)
 
 
 
+library(tictoc)
+
+tic()
+lel2 <- EstimateBivarGARCH(mergedfrequencies[[8]], dailyretotc, calccov[[1]][[8]])
+toc()
 
 
-lel2 <- EstimateBivarGARCH(mergedfrequencies[[6]], dailyretotc, calccov[[1]][[6]])
+calccov[[1]][[8]][1,1,]
 
 
 lel3 <- EstimateBivarGARCHContAsym(mergedfrequencies[[9]], dailyretotc)
