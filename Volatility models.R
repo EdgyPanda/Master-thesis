@@ -133,6 +133,9 @@ is.null(calccov[[1]][[8]][,,1])
 #	}
 
 
+
+#NOW IT NEEDS SEMI-COVARIANCES SPECIFIED AS ARRAY WITH 3RD DIM BEING DAYS. THEN PUT THE 3 SEMI-COVARIANCES
+#INTO A LIST WITH REPSECTIVE ORDER P,N,M. 
 BivarGARCHFilterContAsym <- function(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dBeta, covariance){
 
 	days <- length(lT)
@@ -385,6 +388,190 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance, ineqfun_GARCH =
   
   return(lOut)
 }
+
+
+
+#------------------------------------realized DCC model (rDCC) --------------------------------------
+
+#mEta is the residuals from the univariate models. 
+
+DCCFilter <- function(mEta, dA, dB, mQ, covariance) {
+  
+  iN <- ncol(mEta)
+  iT <- nrow(mEta)
+  
+  # initialize the array for the correlations
+  aCor <- array(0, dim = c(iN, iN, iT))
+  # initialize the array for the Q matrices
+  aQ <- array(0, dim = c(iN, iN, iT))
+  
+  #compute the realized correlations
+
+  rcor <- array(0L, dim = c(iN, iN, iT))
+
+  for(i in 1:length(iT)){
+
+  	rcor[,,i] <- diag(sqrt(1/diag(covariance[,,i]))) %*% covariance[,,i] %*% diag(sqrt(1/diag(covariance[,,i])))
+
+  }
+  ## initialization at the unconditional cor
+  aCor[,, 1] <- mQ
+  aQ[,,1] <- mQ
+  
+  #Compute the first likelihood contribution
+  dLLK <- mEta[1, , drop = FALSE] %*% solve(aCor[,, 1]) %*% t(mEta[1, , drop = FALSE]) - 
+    mEta[1, , drop = FALSE]%*% t(mEta[1, , drop = FALSE]) + log(det(aCor[,, 1]))
+  
+  #main loop
+  for (t in 2:iT) {
+    #update the Q matrix
+    aQ[,, t] <- mQ * (1 - dA - dB) + dA * rcor[,,t - 1] + dB * aQ[,,t - 1]
+    
+    ## Compute the correlation as Q_tilde^{-1/2} Q Q_tilde^{-1/2} 
+    aCor[,, t] <- diag(sqrt(1/diag(aQ[,, t]))) %*% aQ[,, t] %*% diag(sqrt(1/diag(aQ[,, t]))) 
+    
+    #augment the likelihood value
+    dLLK <- dLLK + mEta[t, , drop = FALSE] %*% solve(aCor[,, t]) %*% t(mEta[t, , drop = FALSE]) - 
+      mEta[t, , drop = FALSE] %*% t(mEta[t, , drop = FALSE]) + log(det(aCor[,, t]))
+  }
+  
+  lOut <- list()
+  #remember to include the -1/2 term in the likelihood evaluation
+  #see the equations in the corresponding lecture
+  lOut[["dLLK"]] <- -0.5 * dLLK
+  lOut[["aCor"]] <- aCor
+  lOut[["rcor"]] <- rcor
+  
+  return(lOut)
+}
+
+
+lel4 <- DCCFilter(dailyretotc,0.1,0.2,cor(dailyretotc),calccov[[1]][[9]])
+
+
+
+0.1 * diag(sqrt(1/diag(calccov[[1]][[9]][,, 1]))) %*% calccov[[1]][[9]][,,1] %*% diag(sqrt(1/diag(calccov[[1]][[9]][,, 1])))
+
+matrix(c(diag[1],0,0,diag[2]), nrow=2,ncol=2)^(-0.5) %*% calccov[[1]][[9]][,,1] %*% 
+matrix(c(diag[1],0,0,diag[2]), nrow=2,ncol=2)^(-0.5)
+
+
+
+library(rugarch)
+spec <- ugarchspec(mean.model = list(armaOrder = c(0,0), include.mean = F),
+                               variance.model = list(model = "sGARCH", garchOrder = c(1,1)))
+
+mspec <- multispec( replicate(spec, n=2))
+
+residuals(mfit, standardize = T)
+
+data(spyreal)
+spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
+	list(model = 'realGARCH', garchOrder = c(1, 1)))
+mspec <- multispec( replicate(spec, n=2))
+
+iT <- nrow(dailyretotc)
+
+lfit = multifit(mspec, dailyretotc, solver = 'hybrid', realizedVol = 
+	xts(cbind(calccov[[1]][[9]][1,1,], calccov[[1]][[9]][2,2,]), order.by = as.Date(1:iT)))
+
+
+#testing with simple realGARCH(1,1) using rugarch package. 
+#you need getDates for fit function in rugarch to work. 
+#moreover the covariances you use in the DCC model is also used in the univariate models.
+Estimate_rDCC <- function(mY, covariance, getDates) {
+  
+  ## estimate the marginal models
+  require(Rsolnp)
+  require(rugarch) 
+ 
+  #Marginal garch specification. THIS WORKS ONLY IN BIVARIATE SETUP. 
+  
+  #list where marginal models are stored
+  spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
+	list(model = 'realGARCH', garchOrder = c(1, 1)))
+
+  mspec <- multispec( replicate(spec, n=2) )
+
+  lfit <- multifit(mspec, mY, solver = 'hybrid', realizedVol = 
+  xts(cbind(covariance[1,1,], covariance[2,2,]), order.by = as.Date(getDates)))
+  
+  mEta <- residuals(lfit, standardize = T)
+  ####################################################
+  
+  ## maximization of the DCC likelihood
+  
+  #initial parameters
+  vPar = c(0.04, 0.9)
+  
+  #unconditional correlation
+  mQ = cor(mEta)
+  
+  #maximize the DCC likelihood
+  optimizer = solnp(vPar, fun = function(vPar, mEta, mQ, covariance) {
+    
+    Filter = DCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
+    dNLLK = -as.numeric(Filter$dLLK)
+    return(dNLLK)
+    
+  }, ineqfun = function(vPar, ...) {
+    sum(vPar)
+  }, ineqLB = 1e-4, ineqUB = 0.999, 
+  LB = c(1e-4, 1e-4), UB = c(0.999, 0.999), 
+  mEta = mEta, mQ = mQ, covariance = covariance)
+  
+  #Extract the estimated parameters
+  vPar = optimizer$pars
+  
+  #Extract the likelihood of the correlation part
+  dLLK_C = -tail(optimizer$values, 1)
+  
+  #Filter the dynamic correlation using the estimated parameters
+  Filter = DCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
+
+  #extract univariate volatilities
+  mSigma = sigma(lfit)^2
+  
+  #extract univariate estimated parameters
+  mCoef = coef(lfit)
+
+  colnames(mCoef) <- colnames(mY)
+  
+  #compute the likelihood of the volatility  part
+  dLLK_V = sum(likelihood(lfit)) 
+  
+  
+  #compute the total likelihood
+  dLLK = dLLK_V + dLLK_C
+  
+  ## Compute z_t
+  aCor = Filter[["aCor"]]
+  iT = nrow(mY)
+  
+  mZ = matrix(0, iT, ncol(mY))
+  
+  for (t in 1:iT) {
+    mZ[t, ] = solve(chol(aCor[,,t])) %*% as.numeric(mEta[t, ])
+  }
+    
+  lOut = list()
+
+  #output the results
+  lOut[["dLLK"]] = dLLK
+  lOut[["mCoef"]] = mCoef
+  lOut[["vPar"]] = vPar
+  lOut[["mSigma"]] = mSigma
+  lOut[["aCor"]] = aCor
+  lOut[["mEta"]] = mEta
+  lOut[["mZ"]] = mZ
+  return(lOut)
+  
+}
+
+
+lel4 <- Estimate_rDCC(dailyretotc, calccov[[1]][[9]], getDates)
+
+
 
 
 
