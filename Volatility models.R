@@ -31,6 +31,9 @@ mergedfrequencies <- readRDS("mergedfrequencies.rds")
 #highfrequency package. 
 #
 #
+#IF STARTING VALS ARE CLOSE TO OPTIM PARAMETERS THEN THE ALGORITHM TAKES 10SEC! THEREFORE
+#FOR A ROLLING FORECAST, SET STARTING VALS AS LAST OPTIM VALS!
+#
 #
 #CODE BELOW IS IF DID NOT PRE-CALCULATE YOUR COVARIANCES. HOWEVER IT MAKES THE OPTIMIZER SLOW.
 #IF YOU PRECALCULATE EXPECT 48SEC IF YOU DONT 98SEC. 
@@ -108,7 +111,29 @@ is.null(calccov[[1]][[8]][,,1])
 
 #covariance should be specified in a c() with three arrays.
 
-BivarGARCHFilterContAsym <- function(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dBeta, covariance = NULL){
+#if(is.null(covariance)){
+#
+#		P <- array(0L, dim = c(2, 2, days))
+#		N <- array(0L, dim = c(2, 2, days))
+#		M <- array(0L, dim = c(2, 2, days))
+#
+#
+#		for(i in 1:days){
+#
+#			P[,,i] <- realsemicov(lT[[i]], "P")
+#			N[,,i] <- realsemicov(lT[[i]], "N")
+#			M[,,i] <- realsemicov(lT[[i]], "M")
+#		}
+#	}
+#	else{
+#
+#		P <- covariance[1]
+#		N <- covariance[2]
+#		M <- covariance[3] 
+#	}
+
+
+BivarGARCHFilterContAsym <- function(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dBeta, covariance){
 
 	days <- length(lT)
 
@@ -116,27 +141,9 @@ BivarGARCHFilterContAsym <- function(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dB
 
 	samplecov <- cov(dailyret)
 
-	if(is.null(covariance)){
-
-		P <- array(0L, dim = c(2, 2, days))
-		N <- array(0L, dim = c(2, 2, days))
-		M <- array(0L, dim = c(2, 2, days))
-
-
-		for(i in 1:days){
-
-			P[,,i] <- realsemicov(lT[[i]], "P")
-			N[,,i] <- realsemicov(lT[[i]], "N")
-			M[,,i] <- realsemicov(lT[[i]], "M")
-		}
-	}
-	else{
-
-		P <- covariance[1]
-		N <- covariance[2]
-		M <- covariance[3] 
-	}
-
+	P <- covariance[[1]]
+	N <- covariance[[2]]
+	M <- covariance[[3]]
 
 	sampleP <- matrix(
 		c(mean(P[1,1,]),
@@ -261,8 +268,8 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun
   # the empirical variance by targeting the unconditional variance of the 
   # GARCH model
   
-  dAlpha = 0.04 #
-  dBeta  = 0.94
+  dAlpha = 0.33680 #
+  dBeta  = 0.66190
   
   ## vector of starting parameters
   vPar = c(dAlpha, dBeta)
@@ -317,7 +324,7 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun
 
 
 #YOU NEED TO CALCULATE ROBUST STANDARD ERRORS. 
-EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance=NULL, ineqfun_GARCH = ineqfun_GARCH_BIVARContAsym, ineqLB = 0.00, ineqUB = 0.9999){
+EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun_GARCH_BIVARContAsym, ineqLB = 0.00, ineqUB = 0.9999){
   
   # We set starting value for alpha equal to 0.05, dBeta = 0.94, and chose omega to target
   # the empirical variance by targeting the unconditional variance of the 
@@ -355,7 +362,7 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance=NULL, ineqfun_GA
 
   
   ## compute filtered volatility
-  vSigma2 = BivarGARCHFilterContAsym(lT, dailyret, vPar[1], vPar[2], vPar[3], vPar[4])$mSigma
+  vSigma2 = BivarGARCHFilterContAsym(lT, dailyret, vPar[1], vPar[2], vPar[3], vPar[4], covariance)$mSigma
   
   ## Compute the daily Average BIC
   iT = length(lT)
@@ -422,8 +429,24 @@ toc()
 calccov[[1]][[8]][1,1,]
 
 
-lel3 <- EstimateBivarGARCHContAsym(mergedfrequencies[[9]], dailyretotc)
+#now you have to precalculate the realized semi-covariances
 
+P <- array(0L, c(2,2,2516))
+N <- array(0L, c(2,2,2516))
+M <- array(0L, c(2,2,2516))
+
+for(i in 1:2516){
+
+	P[,,i] <- realsemicov(mergedfrequencies[[9]][[i]], "P")
+	N[,,i] <- realsemicov(mergedfrequencies[[9]][[i]], "N")
+	M[,,i] <- realsemicov(mergedfrequencies[[9]][[i]], "M")
+
+}
+
+
+tic()
+lel3 <- EstimateBivarGARCHContAsym(mergedfrequencies[[9]], dailyretotc, list(P, N, M))
+toc()
 
 lel2$BIC
 
