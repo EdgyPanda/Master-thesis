@@ -569,6 +569,16 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
 }
 
 
+
+
+#---------------------------------realized continuous asymmetric DCC model (rcDCC)---------------------------
+
+
+
+
+
+
+
 lel4 <- Estimate_rDCC(dailyretotc, calccov[[1]][[9]], getDates)
 
 
