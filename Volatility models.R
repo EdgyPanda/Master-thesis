@@ -77,7 +77,7 @@ BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance){
 	mSigma[,,1] <- samplecov
 
 	#compute first observation of log-likelihood (we are minizing neg-log-likelihood):
-	dLLK <-   log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
+	dLLK <- log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
 
 	astar <- dAlpha * (samplercov * samplecov^(-1))
 
