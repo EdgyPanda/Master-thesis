@@ -473,7 +473,8 @@ mspec <- multispec( replicate(spec, n=2))
 iT <- nrow(dailyretotc)
 
 lfit = multifit(mspec, dailyretotc, solver = 'hybrid', realizedVol = 
-	xts(cbind(calccov[[1]][[9]][1,1,], calccov[[1]][[9]][2,2,]), order.by = as.Date(1:iT)))
+	xts(cbind(calccov[[1]][[9]][1,1,], calccov[[1]][[9]][2,2,]), order.by = as.Date(getDates)), 
+	fit.control = list(stationarity = 1, fixed.se = 1))
 
 
 #testing with simple realGARCH(1,1) using rugarch package. 
@@ -490,6 +491,12 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
   #list where marginal models are stored
   spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
 	list(model = 'realGARCH', garchOrder = c(1, 1)))
+
+  specforrobust1 <- ugarchfit(spec, dailyretotc[,1], solver = 'hybrid', realizedVol = 
+	xts(calccov[[1]][[9]][1,1,], order.by = as.Date(getDates)))
+
+  specforrobust2 <- ugarchfit(spec, dailyretotc[,2], solver = 'hybrid', realizedVol = 
+	xts(calccov[[1]][[9]][2,2,], order.by = as.Date(getDates)))
 
   mspec <- multispec( replicate(spec, n=2) )
 
@@ -529,6 +536,10 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
   #Filter the dynamic correlation using the estimated parameters
   Filter = DCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
 
+  #standard errors 
+  se <- solve(optimizer$hessian)
+  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
+
   #extract univariate volatilities
   mSigma = sigma(lfit)^2
   
@@ -564,6 +575,8 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
   lOut[["aCor"]] = aCor
   lOut[["mEta"]] = mEta
   lOut[["mZ"]] = mZ
+  lOut[["se"]] = se
+  lOut[["seeall"]] = list(show(specforrobust1), show(specforrobust2)) 
   return(lOut)
   
 }

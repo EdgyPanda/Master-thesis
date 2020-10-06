@@ -338,14 +338,29 @@ riskfreealloc <- (target/stdTLT)  + (target/stdSPY)
 
 #60/40 portfolio:
 
-
-
-portret6040 <- 1*scaledSPY + 0*scaledTLT
+portret6040 <- 0.6*scaledSPY + 0.4*scaledTLT
 
 
 rollingdevportret6040 <- sqrt(na.omit(rollapply(portret6040, 60, function(x) realCov(x), by.column = F, align = 'right')))
 
+
 ggplot() + geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040)) + geom_hline(yintercept = target)
+
+
+#leverage returns it to the risk-target
+
+
+levparam <- 0.1 / rollingdevportret6040
+
+portret6040lev <- levparam * 0.6 * scaledSPY + levparam * 0.4 * scaledTLT
+
+
+rollingdevportret6040levered <- sqrt(na.omit(rollapply(portret6040lev, 60, function(x) realCov(x), by.column = F, align = 'right')))
+
+ggplot() + geom_line(aes(1:length(rollingdevportret6040levered), rollingdevportret6040levered)) + geom_hline(yintercept = target)
+
+
+
 
 
 
