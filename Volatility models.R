@@ -409,7 +409,7 @@ rDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
 
   rcor <- array(0L, dim = c(iN, iN, iT))
 
-  for(i in 1:length(iT)){
+  for(i in 1:iT){
 
   	rcor[,,i] <- diag(sqrt(1/diag(covariance[,,i]))) %*% covariance[,,i] %*% diag(sqrt(1/diag(covariance[,,i])))
 
@@ -448,7 +448,7 @@ rDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
 #---------------------------------realized continuous asymmetric DCC model (rcDCC)---------------------------
 
 
-rcDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
+rcDCCFilter <- function(mEta, dAP, dAN, dAM , dB, mQ, covariance) {
   
   iN <- ncol(mEta)
   iT <- nrow(mEta)
@@ -491,7 +491,7 @@ rcDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
   Mcor <- array(0L, dim = c(2,2,iT))
 
 
-  for(i in 1:length(iT)){
+  for(i in 1:iT){
 
   	Pcor[,,i] <- diag(sqrt(1/diag(P[,,i]))) %*% P[,,i] %*% diag(sqrt(1/diag(P[,,i])))
   	Ncor[,,i] <- diag(sqrt(1/diag(N[,,i]))) %*% N[,,i] %*% diag(sqrt(1/diag(N[,,i])))
@@ -530,10 +530,12 @@ rcDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
   dLLK <- mEta[1, , drop = FALSE] %*% solve(aCor[,, 1]) %*% t(mEta[1, , drop = FALSE]) - 
     mEta[1, , drop = FALSE]%*% t(mEta[1, , drop = FALSE]) + log(det(aCor[,, 1]))
   
+
+  astar <- (dAP * sampleP + dAN * sampleN  + dAM * sampleM) * mQ^(-1)
   #main loop
   for (t in 2:iT) {
     #update the Q matrix
-    aQ[,, t] <- mQ * (1 - dA - dB) + dA * rcor[,,t - 1] + dB * aQ[,,t - 1]
+    aQ[,, t] <- mQ * (1 - astar - dB) + dAP * Pcor[,,t - 1] + dAN * Ncor[,,t - 1]  + dAM * Mcor[,,t - 1]  + dB * aQ[,,t - 1]
     
     ## Compute the correlation as Q_tilde^{-1/2} Q Q_tilde^{-1/2} 
     aCor[,, t] <- diag(sqrt(1/diag(aQ[,, t]))) %*% aQ[,, t] %*% diag(sqrt(1/diag(aQ[,, t]))) 
@@ -548,16 +550,35 @@ rcDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
   #see the equations in the corresponding lecture
   lOut[["dLLK"]] <- -0.5 * dLLK
   lOut[["aCor"]] <- aCor
-  lOut[["rcor"]] <- rcor
   
   return(lOut)
 }
 
+#finding realized semicovariances for test:
+
+P <- array(0L, dim =c(2,2,2516))
+N <- array(0L, dim =c(2,2,2516))
+M <- array(0L, dim =c(2,2,2516))
+
+for(i in 1:2516){
+
+	P[,,i] <- realsemicov(mergedfrequencies[[7]][[i]], "P")
+	N[,,i] <- realsemicov(mergedfrequencies[[7]][[i]], "N")
+	M[,,i] <- realsemicov(mergedfrequencies[[7]][[i]], "M")
 
 
-lel4 <- DCCFilter(dailyretotc,0.1,0.2,cor(dailyretotc),calccov[[1]][[9]])
+}
 
 
+covariance <- list(P, N, M)
+
+lel4 <- rcDCCFilter(dailyretotc,0.1,0.2,0.3,0.1,cor(dailyretotc), covariance)
+
+lel15 <- rDCCFilter(dailyretotc, 0.1, 0.2, cor(dailyretotc), calccov[[1]][[8]])
+
+ts.plot(lel15$aCor[2,1,])
+
+ts.plot(lel4$aCor[2,1,])
 
 0.1 * diag(sqrt(1/diag(calccov[[1]][[9]][,, 1]))) %*% calccov[[1]][[9]][,,1] %*% diag(sqrt(1/diag(calccov[[1]][[9]][,, 1])))
 
@@ -602,10 +623,10 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
 	list(model = 'realGARCH', garchOrder = c(1, 1)))
 
   specforrobust1 <- ugarchfit(spec, dailyretotc[,1], solver = 'hybrid', realizedVol = 
-	xts(calccov[[1]][[9]][1,1,], order.by = as.Date(getDates)))
+	xts(covariance[1,1,], order.by = as.Date(getDates)))
 
   specforrobust2 <- ugarchfit(spec, dailyretotc[,2], solver = 'hybrid', realizedVol = 
-	xts(calccov[[1]][[9]][2,2,], order.by = as.Date(getDates)))
+	xts(covariance[2,2,], order.by = as.Date(getDates)))
 
   mspec <- multispec( replicate(spec, n=2) )
 
@@ -689,6 +710,111 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
   return(lOut)
   
 }
+
+Estimate_rcDCC <- function(mY, covariance, getDates) {
+  
+  ## estimate the marginal models
+  require(Rsolnp)
+  require(rugarch) 
+ 
+  #Marginal garch specification. THIS WORKS ONLY IN BIVARIATE SETUP. 
+  
+  #list where marginal models are stored
+  spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
+	list(model = 'realGARCH', garchOrder = c(1, 1)))
+
+  specforrobust1 <- ugarchfit(spec, dailyretotc[,1], solver = 'hybrid', realizedVol = 
+	xts(covariance[1,1,], order.by = as.Date(getDates)))
+
+  specforrobust2 <- ugarchfit(spec, dailyretotc[,2], solver = 'hybrid', realizedVol = 
+	xts(covariance[2,2,], order.by = as.Date(getDates)))
+
+  mspec <- multispec( replicate(spec, n=2) )
+
+  lfit <- multifit(mspec, mY, solver = 'hybrid', realizedVol = 
+  xts(cbind(covariance[1,1,], covariance[2,2,]), order.by = as.Date(getDates)))
+  
+  mEta <- residuals(lfit, standardize = T)
+  ####################################################
+  
+  ## maximization of the DCC likelihood
+  
+  #initial parameters
+  vPar = c(0.04, 0.02, 0.01, 0.25)
+  
+  #unconditional correlation
+  mQ = cor(mEta)
+  
+  #maximize the DCC likelihood
+  optimizer = solnp(vPar, fun = function(vPar, mEta, mQ, covariance) {
+    
+    Filter = rDCCFilter(mEta, vPar[1], vPar[2], vPar[3], vPar[4], mQ, covariance)
+    dNLLK = -as.numeric(Filter$dLLK)
+    return(dNLLK)
+    
+  }, ineqfun = function(vPar, ...) {
+    sum(vPar)
+  }, ineqLB = 1e-4, ineqUB = 0.999, 
+  LB = c(1e-4, 1e-4), UB = c(0.999, 0.999), 
+  mEta = mEta, mQ = mQ, covariance = covariance)
+  
+  #Extract the estimated parameters
+  vPar = optimizer$pars
+  
+  #Extract the likelihood of the correlation part
+  dLLK_C = -tail(optimizer$values, 1)
+  
+  #Filter the dynamic correlation using the estimated parameters
+  Filter = rDCCFilter(mEta, vPar[1], vPar[2], vPar[3], vPar[4], mQ, covariance)
+
+  #standard errors 
+  se <- solve(optimizer$hessian)
+  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
+
+  #extract univariate volatilities
+  mSigma = sigma(lfit)^2
+  
+  #extract univariate estimated parameters
+  mCoef = coef(lfit)
+
+  colnames(mCoef) <- colnames(mY)
+  
+  #compute the likelihood of the volatility  part
+  dLLK_V = sum(likelihood(lfit)) 
+  
+  
+  #compute the total likelihood
+  dLLK = dLLK_V + dLLK_C
+  
+  ## Compute z_t
+  aCor = Filter[["aCor"]]
+  iT = nrow(mY)
+  
+  mZ = matrix(0, iT, ncol(mY))
+  
+  for (t in 1:iT) {
+    mZ[t, ] = solve(chol(aCor[,,t])) %*% as.numeric(mEta[t, ])
+  }
+    
+  lOut = list()
+
+  #output the results
+  lOut[["dLLK"]] = dLLK
+  lOut[["mCoef"]] = mCoef
+  lOut[["vPar"]] = vPar
+  lOut[["mSigma"]] = mSigma
+  lOut[["aCor"]] = aCor
+  lOut[["mEta"]] = mEta
+  lOut[["mZ"]] = mZ
+  lOut[["se"]] = se
+  lOut[["seeall"]] = list(show(specforrobust1), show(specforrobust2)) 
+  return(lOut)
+  
+}
+
+
+
+lel5 <- Estimate_rcDCC(dailyretotc, covariance, getDates)
 
 
 
