@@ -464,28 +464,6 @@ rcDCCFilter <- function(mEta, dAP, dAN, dAM , dB, mQ, covariance) {
   N <- covariance[[2]]
   M <- covariance[[3]]
 
-  sampleP <- matrix(
-	c(mean(P[1,1,]),
-	  mean(P[2,1,]),
-	  mean(P[2,1,]),
-	  mean(P[2,2,])),
-	  ncol=2, nrow=2)
-
-  sampleN <- matrix(
-	c(mean(N[1,1,]),
-	  mean(N[2,1,]),
-	  mean(N[2,1,]),
-	  mean(N[2,2,])),
-	  ncol=2, nrow=2)
-
-  sampleM <- matrix(
-	c(mean(M[1,1,]),
-	  mean(M[2,1,]),
-	  mean(M[2,1,]),
-	  mean(M[2,2,])),
-	  ncol=2, nrow=2)
-
-
   Pcor <- array(0L, dim = c(2,2,iT))
   Ncor <- array(0L, dim = c(2,2,iT))
   Mcor <- array(0L, dim = c(2,2,iT))
@@ -495,31 +473,37 @@ rcDCCFilter <- function(mEta, dAP, dAN, dAM , dB, mQ, covariance) {
 
   	Pcor[,,i] <- diag(sqrt(1/diag(P[,,i]))) %*% P[,,i] %*% diag(sqrt(1/diag(P[,,i])))
   	Ncor[,,i] <- diag(sqrt(1/diag(N[,,i]))) %*% N[,,i] %*% diag(sqrt(1/diag(N[,,i])))
-  	Mcor[,,i] <- diag(sqrt(1/diag(N[,,i] + P[,,i] + M[,,i]))) %*% M[,,i] %*% diag(sqrt(1/diag(N[,,i] + P[,,i] + M[,,i])))
+  	Mcor[,,i] <- diag(sqrt(1/diag(N[,,i] + P[,,i] + M[,,i]))) %*% M[,,i] %*% diag(sqrt(1/diag(N[,,i] + P[,,i] + M[,,i]))) + diag(iN)
+
+
+  	#ad-hog method for eliminating NaNs
+  	if(is.nan(Pcor[2,1,i])){ Pcor[,,i] <- Pcor[,,i-1]}
+  	if(is.nan(Ncor[2,1,i])){ Ncor[,,i] <- Ncor[,,i-1]}
+  	if(is.nan(Mcor[2,1,i])){ Mcor[,,i] <- Mcor[,,i-1]}
 
 
 
   }
 
   sampleP <- matrix(
-	c(mean(Pcor[1,1,]),
-	  mean(Pcor[2,1,]),
-	  mean(Pcor[2,1,]),
-	  mean(Pcor[2,2,])),
+	c(mean(Pcor[1,1,], na.rm = T),
+	  mean(Pcor[2,1,], na.rm = T),
+	  mean(Pcor[2,1,], na.rm = T),
+	  mean(Pcor[2,2,], na.rm = T)),
 	  ncol=2, nrow=2)
 
   sampleN <- matrix(
-	c(mean(Ncor[1,1,]),
-	  mean(Ncor[2,1,]),
-	  mean(Ncor[2,1,]),
-	  mean(Ncor[2,2,])),
+	c(mean(Ncor[1,1,], na.rm = T),
+	  mean(Ncor[2,1,], na.rm = T),
+	  mean(Ncor[2,1,], na.rm = T),
+	  mean(Ncor[2,2,], na.rm = T)),
 	  ncol=2, nrow=2)
 
   sampleM <- matrix(
-	c(mean(Mcor[1,1,]),
-	  mean(Mcor[2,1,]),
-	  mean(Mcor[2,1,]),
-	  mean(Mcor[2,2,])),
+	c(mean(Mcor[1,1,], na.rm = T),
+	  mean(Mcor[2,1,], na.rm = T),
+	  mean(Mcor[2,1,], na.rm = T),
+	  mean(Mcor[2,2,], na.rm = T)),
 	  ncol=2, nrow=2)
 
   ## initialization at the unconditional cor
@@ -550,6 +534,7 @@ rcDCCFilter <- function(mEta, dAP, dAN, dAM , dB, mQ, covariance) {
   #see the equations in the corresponding lecture
   lOut[["dLLK"]] <- -0.5 * dLLK
   lOut[["aCor"]] <- aCor
+  lOut[["astar"]] <- Pcor
   
   return(lOut)
 }
@@ -562,17 +547,28 @@ M <- array(0L, dim =c(2,2,2516))
 
 for(i in 1:2516){
 
-	P[,,i] <- realsemicov(mergedfrequencies[[7]][[i]], "P")
-	N[,,i] <- realsemicov(mergedfrequencies[[7]][[i]], "N")
-	M[,,i] <- realsemicov(mergedfrequencies[[7]][[i]], "M")
+	P[,,i] <- realsemicov(mergedfrequencies[[4]][[i]], "P")
+	N[,,i] <- realsemicov(mergedfrequencies[[4]][[i]], "N")
+	M[,,i] <- realsemicov(mergedfrequencies[[4]][[i]], "M")
 
 
 }
 
 
+
+
+N[,,1292]
+ts.plot(lel4$aCor[2,1,])
 covariance <- list(P, N, M)
 
-lel4 <- rcDCCFilter(dailyretotc,0.1,0.2,0.3,0.1,cor(dailyretotc), covariance)
+lel4 <- rcDCCFilter(dailyretotc,-0.06504, -0.05120,  0.25439,  0.86085,cor(dailyretotc), covariance)
+
+lel4$aCor[2,1,]
+
+
+mean(lel4$astar[2,1,])
+
+is.nan(lel4$astar[2,1,])
 
 lel15 <- rDCCFilter(dailyretotc, 0.1, 0.2, cor(dailyretotc), calccov[[1]][[8]])
 
@@ -719,20 +715,22 @@ Estimate_rcDCC <- function(mY, covariance, getDates) {
  
   #Marginal garch specification. THIS WORKS ONLY IN BIVARIATE SETUP. 
   
+  cov <- covariance[[1]] + covariance[[2]] + covariance[[3]]
+
   #list where marginal models are stored
   spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
 	list(model = 'realGARCH', garchOrder = c(1, 1)))
 
   specforrobust1 <- ugarchfit(spec, dailyretotc[,1], solver = 'hybrid', realizedVol = 
-	xts(covariance[1,1,], order.by = as.Date(getDates)))
+	xts(sqrt(cov[1,1,]), order.by = as.Date(getDates)))
 
   specforrobust2 <- ugarchfit(spec, dailyretotc[,2], solver = 'hybrid', realizedVol = 
-	xts(covariance[2,2,], order.by = as.Date(getDates)))
+	xts(sqrt(cov[2,2,]), order.by = as.Date(getDates)))
 
   mspec <- multispec( replicate(spec, n=2) )
 
   lfit <- multifit(mspec, mY, solver = 'hybrid', realizedVol = 
-  xts(cbind(covariance[1,1,], covariance[2,2,]), order.by = as.Date(getDates)))
+  xts(cbind(sqrt(cov[1,1,]), sqrt(cov[2,2,])), order.by = as.Date(getDates)))
   
   mEta <- residuals(lfit, standardize = T)
   ####################################################
@@ -740,7 +738,7 @@ Estimate_rcDCC <- function(mY, covariance, getDates) {
   ## maximization of the DCC likelihood
   
   #initial parameters
-  vPar = c(0.04, 0.02, 0.01, 0.25)
+  vPar = c(0.001, 0.001, 0.20, 0.80)
   
   #unconditional correlation
   mQ = cor(mEta)
@@ -748,14 +746,14 @@ Estimate_rcDCC <- function(mY, covariance, getDates) {
   #maximize the DCC likelihood
   optimizer = solnp(vPar, fun = function(vPar, mEta, mQ, covariance) {
     
-    Filter = rDCCFilter(mEta, vPar[1], vPar[2], vPar[3], vPar[4], mQ, covariance)
+    Filter = rcDCCFilter(mEta, vPar[1], vPar[2], vPar[3], vPar[4], mQ, covariance)
     dNLLK = -as.numeric(Filter$dLLK)
     return(dNLLK)
     
   }, ineqfun = function(vPar, ...) {
     sum(vPar)
-  }, ineqLB = 1e-4, ineqUB = 0.999, 
-  LB = c(1e-4, 1e-4), UB = c(0.999, 0.999), 
+  }, ineqLB = 1e-6, ineqUB = 0.999, 
+  LB = c(0, 0, 0, 0), UB = c(0.999, 0.999, 0.999, 0.999), 
   mEta = mEta, mQ = mQ, covariance = covariance)
   
   #Extract the estimated parameters
@@ -765,7 +763,7 @@ Estimate_rcDCC <- function(mY, covariance, getDates) {
   dLLK_C = -tail(optimizer$values, 1)
   
   #Filter the dynamic correlation using the estimated parameters
-  Filter = rDCCFilter(mEta, vPar[1], vPar[2], vPar[3], vPar[4], mQ, covariance)
+  Filter = rcDCCFilter(mEta, vPar[1], vPar[2], vPar[3], vPar[4], mQ, covariance)
 
   #standard errors 
   se <- solve(optimizer$hessian)
@@ -807,7 +805,7 @@ Estimate_rcDCC <- function(mY, covariance, getDates) {
   lOut[["mEta"]] = mEta
   lOut[["mZ"]] = mZ
   lOut[["se"]] = se
-  lOut[["seeall"]] = list(show(specforrobust1), show(specforrobust2)) 
+  lOut[["seeall"]] = list(specforrobust1, specforrobust2) 
   return(lOut)
   
 }
@@ -815,18 +813,6 @@ Estimate_rcDCC <- function(mY, covariance, getDates) {
 
 
 lel5 <- Estimate_rcDCC(dailyretotc, covariance, getDates)
-
-
-
-
-
-
-
-
-
-
-
-lel4 <- Estimate_rDCC(dailyretotc, calccov[[1]][[9]], getDates)
 
 
 
