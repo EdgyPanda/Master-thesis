@@ -395,7 +395,7 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance, ineqfun_GARCH =
 
 #mEta is the residuals from the univariate models. 
 
-DCCFilter <- function(mEta, dA, dB, mQ, covariance) {
+rDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
   
   iN <- ncol(mEta)
   iT <- nrow(mEta)
@@ -444,6 +444,115 @@ DCCFilter <- function(mEta, dA, dB, mQ, covariance) {
   
   return(lOut)
 }
+
+#---------------------------------realized continuous asymmetric DCC model (rcDCC)---------------------------
+
+
+rcDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
+  
+  iN <- ncol(mEta)
+  iT <- nrow(mEta)
+  
+  # initialize the array for the correlations
+  aCor <- array(0, dim = c(iN, iN, iT))
+  # initialize the array for the Q matrices
+  aQ <- array(0, dim = c(iN, iN, iT))
+  
+  #compute the realized correlations
+
+  P <- covariance[[1]]
+  N <- covariance[[2]]
+  M <- covariance[[3]]
+
+  sampleP <- matrix(
+	c(mean(P[1,1,]),
+	  mean(P[2,1,]),
+	  mean(P[2,1,]),
+	  mean(P[2,2,])),
+	  ncol=2, nrow=2)
+
+  sampleN <- matrix(
+	c(mean(N[1,1,]),
+	  mean(N[2,1,]),
+	  mean(N[2,1,]),
+	  mean(N[2,2,])),
+	  ncol=2, nrow=2)
+
+  sampleM <- matrix(
+	c(mean(M[1,1,]),
+	  mean(M[2,1,]),
+	  mean(M[2,1,]),
+	  mean(M[2,2,])),
+	  ncol=2, nrow=2)
+
+
+  Pcor <- array(0L, dim = c(2,2,iT))
+  Ncor <- array(0L, dim = c(2,2,iT))
+  Mcor <- array(0L, dim = c(2,2,iT))
+
+
+  for(i in 1:length(iT)){
+
+  	Pcor[,,i] <- diag(sqrt(1/diag(P[,,i]))) %*% P[,,i] %*% diag(sqrt(1/diag(P[,,i])))
+  	Ncor[,,i] <- diag(sqrt(1/diag(N[,,i]))) %*% N[,,i] %*% diag(sqrt(1/diag(N[,,i])))
+  	Mcor[,,i] <- diag(sqrt(1/diag(N[,,i] + P[,,i] + M[,,i]))) %*% M[,,i] %*% diag(sqrt(1/diag(N[,,i] + P[,,i] + M[,,i])))
+
+
+
+  }
+
+  sampleP <- matrix(
+	c(mean(Pcor[1,1,]),
+	  mean(Pcor[2,1,]),
+	  mean(Pcor[2,1,]),
+	  mean(Pcor[2,2,])),
+	  ncol=2, nrow=2)
+
+  sampleN <- matrix(
+	c(mean(Ncor[1,1,]),
+	  mean(Ncor[2,1,]),
+	  mean(Ncor[2,1,]),
+	  mean(Ncor[2,2,])),
+	  ncol=2, nrow=2)
+
+  sampleM <- matrix(
+	c(mean(Mcor[1,1,]),
+	  mean(Mcor[2,1,]),
+	  mean(Mcor[2,1,]),
+	  mean(Mcor[2,2,])),
+	  ncol=2, nrow=2)
+
+  ## initialization at the unconditional cor
+  aCor[,, 1] <- mQ
+  aQ[,,1] <- mQ
+  
+  #Compute the first likelihood contribution
+  dLLK <- mEta[1, , drop = FALSE] %*% solve(aCor[,, 1]) %*% t(mEta[1, , drop = FALSE]) - 
+    mEta[1, , drop = FALSE]%*% t(mEta[1, , drop = FALSE]) + log(det(aCor[,, 1]))
+  
+  #main loop
+  for (t in 2:iT) {
+    #update the Q matrix
+    aQ[,, t] <- mQ * (1 - dA - dB) + dA * rcor[,,t - 1] + dB * aQ[,,t - 1]
+    
+    ## Compute the correlation as Q_tilde^{-1/2} Q Q_tilde^{-1/2} 
+    aCor[,, t] <- diag(sqrt(1/diag(aQ[,, t]))) %*% aQ[,, t] %*% diag(sqrt(1/diag(aQ[,, t]))) 
+    
+    #augment the likelihood value
+    dLLK <- dLLK + mEta[t, , drop = FALSE] %*% solve(aCor[,, t]) %*% t(mEta[t, , drop = FALSE]) - 
+      mEta[t, , drop = FALSE] %*% t(mEta[t, , drop = FALSE]) + log(det(aCor[,, t]))
+  }
+  
+  lOut <- list()
+  #remember to include the -1/2 term in the likelihood evaluation
+  #see the equations in the corresponding lecture
+  lOut[["dLLK"]] <- -0.5 * dLLK
+  lOut[["aCor"]] <- aCor
+  lOut[["rcor"]] <- rcor
+  
+  return(lOut)
+}
+
 
 
 lel4 <- DCCFilter(dailyretotc,0.1,0.2,cor(dailyretotc),calccov[[1]][[9]])
@@ -517,7 +626,7 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
   #maximize the DCC likelihood
   optimizer = solnp(vPar, fun = function(vPar, mEta, mQ, covariance) {
     
-    Filter = DCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
+    Filter = rDCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
     dNLLK = -as.numeric(Filter$dLLK)
     return(dNLLK)
     
@@ -534,7 +643,7 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
   dLLK_C = -tail(optimizer$values, 1)
   
   #Filter the dynamic correlation using the estimated parameters
-  Filter = DCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
+  Filter = rDCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
 
   #standard errors 
   se <- solve(optimizer$hessian)
@@ -584,7 +693,6 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
 
 
 
-#---------------------------------realized continuous asymmetric DCC model (rcDCC)---------------------------
 
 
 
