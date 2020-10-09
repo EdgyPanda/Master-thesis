@@ -19,6 +19,23 @@ calccov <- readRDS("calculatedcovariances.rds")
 mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
 
+
+dataTLT <- readRDS("dataTLT.rds")
+
+getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
+
+for(i in 1:length(getDates)){
+	getDates[i] <- strsplit(getDates, " ")[[i]][1]
+}
+
+
+dailyretotc <- xts(t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[,2]))), order.by = as.Date(getDates))
+
+colnames(dailyretotc) <- c("TLT", "SPY")
+
+
+
+
 #-----------------------------------The scalar bivariate GARCH model estimation---------------------------
 
 #lT is list of intraday returns as xts object with each list element being each day
@@ -104,7 +121,24 @@ BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance){
 	
 }
 
-leltest <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc, 0.33680, 0.66191, calccov[[1]][[8]])
+
+#testing via simulation
+leltest <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc, 0.2, 0.8, calccov[[1]][[8]]) 
+
+set.seed(1234)
+for(i in 1:2516){
+	
+	retsim[i,] <-  mvrnorm(1, c(0,0), leltest$mSigma[,,i])
+
+}
+
+#it is okay, but could be better. It very much depend on the choice of randomness. However, it converges. 
+#it will converge better if you had more simulated data. 
+#How to do it: construct 2 dim return data 100.000 points eg, from some covariance matrix.
+#estimate 30 min covariance from 100.000/13 =7592 days. Split dataset and use endpoints as daily data. 
+#now put into filter algoritm. Construct returns following mvrnorm. See estimation method. 
+leltest2 <- EstimateBivarGARCH(mergedfrequencies[[8]],retsim, calccov[[1]][[8]])
+
 
 is.null(calccov[[1]][[8]][,,1])
 
@@ -284,7 +318,8 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun
                     ineqLB  = ineqLB, ## the inequality lower bound
                     ineqUB = ineqUB, ## the inequality lower bound, i.e. 0.0 < alpha + beta < 0.9999
                     ## lower and upper bounds for all parameters
-                    LB = c(0.0001, 0.0001), UB = c(0.999, 0.999)
+                    LB = c(0.0001, 0.0001), UB = c(0.999, 0.999),
+                    control = list(tol = 1e-14, outer.iter = 800, inner.iter = 1200, delta = 1e-14)
                     ) 
   
   ## extract estimated parameters
@@ -827,24 +862,6 @@ tt <- jacobian(ObjFBivarGARCH, x = lel2$vPar, lT = mergedfrequencies[[8]], daily
 
 t(tt) %*% ginv(lel2$Hessian)[2:3, 2:3] %*% (tt)
 
-
-
-dataTLT <- readRDS("dataTLT.rds")
-
-getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
-
-for(i in 1:length(getDates)){
-	getDates[i] <- strsplit(getDates, " ")[[i]][1]
-}
-
-
-
-
-
-
-dailyretotc <- xts(t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[,2]))), order.by = as.Date(getDates))
-
-colnames(dailyretotc) <- c("TLT", "SPY")
 
 
 
