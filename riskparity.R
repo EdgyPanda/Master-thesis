@@ -313,8 +313,20 @@ meanrplevered <- mean(retrplevered) * 252 *100
 
 sdrplevered <- sd(retrplevered) * sqrt(252) * 100
 
-#Sharpe portfolio:
+#CML:
 
+CML <- (expectedreturns - mean(logriskfreerate)*252*100)/portdev
+
+#leverageline computes the weights of the risky-assets and riskfree. 
+
+library(PerformanceAnalytics)
+
+CML <- CAPM.CML.slope(xts(minvarret, order.by=index(returns_TLT)), Rf = logriskfreerate)
+
+
+CML <- mean(logriskfreerate)*252*100 + leveragelinestds * CML
+
+ggplot() + geom_line(aes(portdev, CML))
 
 
 
@@ -383,7 +395,7 @@ stdSPY <- sqrt(varsmerged[2,2,]) #* sqrt(252)
 #finds when first rolling sd.dev is calculated
 start <- length(returns_TLT) - length(varsmerged[1,1,])
 
-target <- 0.10
+target <- 0.1
 
 scaledTLT <- (target/stdTLT)  *  returns_TLT #* 252
 
@@ -418,6 +430,27 @@ rollingdevportret6040levered <- xts(sqrt(rollingdevportret6040levered[1,1,]), or
 
 ggplot() + geom_line(aes(index(rollingdevportret6040levered), rollingdevportret6040levered)) + geom_hline(yintercept = target)
 
+
+#Scaled vs unscaled returns across assets: NOPE
+
+unscaledacross <- rowMeans(merged_ret)
+
+scaledacross <- rowMeans(cbind(scaledTLT, scaledSPY))
+
+#cumulative frequency. 
+ggplot() + geom_line(aes(index(merged_ret), 1+cumsum(unscaledacross), col = "Unscaled")) + 
+geom_line(aes(index(merged_ret), 1+cumsum(scaledacross)*(1/10), col = "Scaled")) 
+
+
+#1 year rolling returns: NOPE 
+
+unscaledrolling <- na.omit(rollapply(unscaledacross, 252, function(x) mean(x), by.column = F, 
+	align = 'right'))
+scaledrolling <- na.omit(rollapply(scaledacross, 252, function(x) mean(x), by.column = F, 
+	align = 'right'))
+
+ggplot() + geom_line(aes(index(merged_ret)[252:2516], unscaledrolling, col = "Unscaled")) + 
+geom_line(aes(index(merged_ret)[252:2516], scaledrolling, col = "Scaled"), alpha = 0.4) 
 
 
 
@@ -455,9 +488,17 @@ avgabsdev <- apply(rollingstd2, MARGIN = c(2), FUN = function(x) (0.1-mean(x)))
 leverageparams <- apply(rollingstd2, MARGIN = c(2), FUN = function(x) mean(0.1/x))
 
 
-ggplot() + geom_line(aes(weightTLT, avgabsdev, col = "Avg. dev from risk-target"))  +
-geom_line(aes(weightTLT, leverageparams/40, col = "Avg. leverage"))  +
-scale_y_continuous(sec.axis = sec_axis(~.*40))
+p4 <- ggplot() + geom_line(aes(weightTLT, avgabsdev, col = "Avg. dev from risk-target"), lwd = 1)  +
+geom_line(aes(weightTLT, (leverageparams-1)/40, col = "Avg. leverage"), lwd = 1)  +
+scale_y_continuous(sec.axis = sec_axis(~.*40+1, name = "Leverage")) + 
+theme(legend.justification=c(0,1), legend.position=c(0.67,0.97),
+	legend.background = element_rect(fill="lightblue",
+    size=0.5, linetype="solid", 
+    colour ="darkblue"), 
+    legend.text = element_text(colour="black", size=8, face="bold")) + xlab("Weight") + ylab("Deviation")
+
+ggsave(p4, file="weightandlev.eps", device = "eps")
+
 
 
 
