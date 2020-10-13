@@ -9,6 +9,7 @@ library(xts)
 library(highfrequency)
 library(matlib)
 library(MCS)
+library(PerformanceAnalytics)
 
 #Calculating the risk-free rate from a 3-month T-bill:
 #3month T-bill. Has no coupons 
@@ -101,7 +102,6 @@ riskparity_2dim(calccov[[5]][[6]][,,1])$portrisk*sqrt(252)*100
 calccov <- readRDS("calculatedcovariances.rds")
 
 mergedfrequencies <- readRDS("mergedfrequencies.rds")
-
 
 #-------------------------------portfolio volatility's sensitivity to correlation--------------------------
 

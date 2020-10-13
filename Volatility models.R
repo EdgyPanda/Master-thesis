@@ -52,25 +52,16 @@ colnames(dailyretotc) <- c("TLT", "SPY")
 #FOR A ROLLING FORECAST, SET STARTING VALS AS LAST OPTIM VALS!
 #
 #
-#CODE BELOW IS IF DID NOT PRE-CALCULATE YOUR COVARIANCES. HOWEVER IT MAKES THE OPTIMIZER SLOW.
-#IF YOU PRECALCULATE EXPECT 48SEC IF YOU DONT 98SEC. 
 #
-#if(is.null(covariance)){
+#
+#
+#
+#NOTE TO SELF! SOLVERS CONVERGE BETTER WHEN LOG-RETURNS ARE IN PERCENTAGE!
 
-#		rcov <- array(0L, dim = c(2, 2, days))
+BivarGARCHFilter <- function(lT, dailyret, params, covariance){
 
-#		for(i in 1:days){
-
-#			rcov[,,i] <- realCov(lT[[i]])
-#		}
-#	}
-
-#	else{
-
-#		rcov <- covariance 
-#	}
-
-BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance){
+	dAlpha <- params[1]
+	dBeta <- params[2]
 
 	days <- length(lT)
 
@@ -98,13 +89,17 @@ BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance){
 
 	astar <- dAlpha * (samplercov * samplecov^(-1))
 
+	dLLKs <- numeric()
+	dLLKs[1] <- dLLK
 	for(i in 2:days){
 
 		mSigma[,,i] <- samplecov * (1 - astar - dBeta)  + dBeta * mSigma[,,i-1] + dAlpha * rcov[,,i-1]
 
 		dLLK <- as.numeric(dLLK) + log(det(mSigma[,,i])) + 
 		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]) 
-
+		#neglog collection for score calculation
+		dLLKs[i] <- 0.5 * d* log(2*pi) + 0.5 * (log(det(mSigma[,,i])) + 
+		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]))
 		}
 
 	#+ days * d * log(2*pi)
@@ -115,15 +110,15 @@ BivarGARCHFilter <- function(lT, dailyret, dAlpha, dBeta, covariance){
 	lOut[["fulldLLK"]] <- fulldLLK
 	lOut[["mSigma"]] <- mSigma
 	lOut[["cov"]] <- astar
+	lOut[["dLLKs"]] <- dLLKs
 
 	return(lOut)
 	
 	
 }
 
-
 #testing via simulation
-leltest <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc, 0.2, 0.8, calccov[[1]][[8]]) 
+leltest <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc, c(0.2, 0.8), calccov[[1]][[8]]) 
 
 set.seed(1234)
 for(i in 1:2516){
@@ -265,7 +260,7 @@ ObjFBivarGARCH <- function(vPar, lT, dailyret, covariance) {
   
   dAlpha = vPar[1]
   dBeta  = vPar[2]
-  dLLK = BivarGARCHFilter(lT, dailyret, dAlpha, dBeta, covariance)$fulldLLK
+  dLLK = BivarGARCHFilter(lT, dailyret, c(dAlpha, dBeta), covariance)$fulldLLK
   
   return(-as.numeric(dLLK))
 }
@@ -305,8 +300,8 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun
   # the empirical variance by targeting the unconditional variance of the 
   # GARCH model
   
-  dAlpha = 0.33680 #
-  dBeta  = 0.66190
+  dAlpha = 0.33685 #
+  dBeta  = 0.66185
   
   ## vector of starting parameters
   vPar = c(dAlpha, dBeta)
@@ -336,7 +331,7 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun
 
   
   ## compute filtered volatility
-  vSigma2 = BivarGARCHFilter(lT, dailyret, vPar[1], vPar[2], covariance)$mSigma
+  vSigma2 = BivarGARCHFilter(lT, dailyret, c(vPar[1], vPar[2]), covariance)$mSigma
   
   ## Compute the daily Average BIC
   iT = length(lT)
@@ -359,6 +354,41 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun
   
   return(lOut)
 }
+
+tester <- EstimateBivarGARCH(mergedfrequencies[[8]], dailyretotc*100, calccov[[1]][[8]])
+
+
+fdscore <- function(lT, estimates){
+
+ 	options(digits=10)
+
+	scores <- matrix(0L, nrow=length(lT), ncol = length(estimates))
+
+	h <- 1e-8 * estimates 
+
+	for(i in 1:length(h)){
+
+		delta <- h[i]
+
+		loglikeminus <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc*100, estimates-delta, calccov[[1]][[8]])$dLLKs
+		loglikeplus <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc*100, estimates+delta, calccov[[1]][[8]])$dLLKs
+
+		scores[,i] <- (loglikeplus - loglikeminus)/(2*h[i])
+
+	}
+
+	J <- (t(scores) %*% scores)/length(lT)
+
+	return(list(J, scores))
+}
+
+t <- fdscore(mergedfrequencies[[8]], tester$vPar)
+
+I <- solve(tester$Hessian/2516)[-1 ,-1]
+
+ vars <- (I %*% t[[1]] %*% I)/2516
+
+sqrt(diag(vars))
 
 
 #YOU NEED TO CALCULATE ROBUST STANDARD ERRORS. 

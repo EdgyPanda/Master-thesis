@@ -13,10 +13,6 @@ dataTLT <- readRDS("dataTLT.rds")
 dataSPY <- readRDS("dataSPY.rds")
 
 
-
-
-
-
 #need sparse sampled data for bandwidth selection. 
 
 getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))

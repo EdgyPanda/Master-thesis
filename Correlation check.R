@@ -309,12 +309,13 @@ grid.arrange(p3, p7)
 #------------------------------------------------------------------------------------------------------------
 library(ggplot2)
 library(RColorBrewer)
-ewma.SPY <- ewma.filter2006(returns_SPY, F, 20, 1) 
+
+ewma.SPY <- ewma.filter2006(returns_SPY, F, 22) 
 ewma.SPY <- xts(as.vector(ewma.SPY), order.by = as.Date(index(returns_SPY)))
 
 retplot <- ggplot() +  geom_line(aes(index(returns_SPY),returns_SPY,col='Daily log-returns')) +
 xlab('Year') + ylab('Returns') + theme(plot.title = element_text(hjust = 0.5)) +   
-geom_line(aes(index(returns_SPY), ewma.SPY, col ="EWMA(20)"), size = 1) +
+geom_line(aes(index(returns_SPY), ewma.SPY, col ="EWMA(22)"), size = 1) +
 scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Variance")) +
 scale_color_manual(values=c("#56B4E9","darkslategrey")) + 
 theme(legend.title=element_blank(), legend.justification=c(0,1), legend.position=c(0.7,0.97),
@@ -331,6 +332,13 @@ retplot
 
 #-------------ACF plot---------------------------------------
 #logreturns:
+
+#fiveminreturns:
+mergedfrequencies <- readRDS("mergedfrequencies.rds")
+fiveminreturns <- do.call.rbind(mergedfrequencies[[7]])[,2]
+
+
+
 bacf <- acf(returns_SPY, plot = FALSE)
 bacfdf <- with(bacf, data.frame(lag, acf))
 ciline <- qnorm((1 - 0.95)/2)/sqrt(length(returns_SPY))
@@ -338,6 +346,18 @@ ciline <- qnorm((1 - 0.95)/2)/sqrt(length(returns_SPY))
 #squared logreturns:
 bacf2 <- acf(returns_SPY^2, plot = FALSE)
 bacfdf2 <- with(bacf2, data.frame(lag, acf))
+
+#squared logreturns intraday
+
+calccov <- readRDS("calculatedcovariances.rds")
+
+
+#fiveminrealizedvariances:
+fiveminrv <- calccov[[1]][[7]][2,2,]
+bacf2 <- acf(fiveminrv, plot = FALSE)
+bacfdf2 <- with(bacf2, data.frame(lag, acf))
+
+
 
 data2 <- data.frame(bacfdf, bacfdf2)
 
@@ -355,9 +375,11 @@ scale_fill_manual(name ='', values = c("blue", "red"))
 acf <- q + geom_point(aes(bacfdf[,1], bacfdf[,2]), col='black') + geom_point(aes(bacfdf2[,1], bacfdf2[,2]), col='red')
 acf
 
-grid.arrange(retplot, acf, ncol=2)
 
+library(gridExtra)
+tt <- grid.arrange(retplot, acf, ncol=2)
 
+ggsave(tt, file="introductiongraph.pdf", device = "pdf")
 
 
 #-----------------------previous tick vs interpolation ----------------
