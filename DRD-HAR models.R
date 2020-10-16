@@ -192,7 +192,7 @@ EstimatecorrHAR <- function(data, trace=1, ineqfun = ineqconstraint, ineqLB = 0.
                     ineqUB = ineqUB, ## the inequality lower bound, i.e. 0.0 <= a + b + c < 0.9999
                     ## lower and upper bounds for all parameters
                     LB = c(0, 0, 0), UB = c(0.9999, 0.9999, 0.9999),
-                    control = list(tol = 1e-18, outer.iter = 800, inner.iter = 1200, delta = 1e-14,
+                    control = list(tol = 1e-18, outer.iter = 800, inner.iter = 1200, delta = 1e-7,
                     trace = trace))
                     
 
@@ -200,28 +200,32 @@ EstimatecorrHAR <- function(data, trace=1, ineqfun = ineqconstraint, ineqLB = 0.
 
   min <- tail(optimizer$values, 1)
 
-  
-  scores <- matrix(0L, nrow=2494, ncol = length(vPar))
+  hessian <- optimizer$hessian
 
-  h <- 1e-5 * vPar
-  for(i in 1:length(h)){
+  scores <- matrix(0L, nrow=length(data[[1]]), ncol = 3)
 
-	delta <- h[i]
+  step <- 1e-5 * vPar
+
+  for(i in 1:length(step)){
+
+	h <- step[i]
+    delta <- rep(0, length(vPar))
+    delta[i] <- h
 																
 	loglikeminus <- minimizingfunc(data, vPar-delta)$minis
 	loglikeplus <- minimizingfunc(data, vPar+delta)$minis
 
-	scores[,i] <- (loglikeplus - loglikeminus)/(2*delta)
+	scores[,i] <- (loglikeplus - loglikeminus)/(2*h)
 
   }
 
-  J <- (t(scores) %*% scores)/2516
+  J <- (t(scores) %*% scores)/length(data[[1]])
 
-  I <- optimizer$hessian/2516
+  I <- optimizer$hessian/length(data[[1]])
 
   I <- solve(I)[-1 ,-1]
 
-  vars <- (I * J * I)/2516
+  vars <- (I * J * I)/length(data[[1]])
   
   rse <- sqrt(diag(vars))
 
@@ -236,17 +240,17 @@ EstimatecorrHAR <- function(data, trace=1, ineqfun = ineqconstraint, ineqLB = 0.
   lOut[["vPar"]] <- vPar
   lOut[["MSE"]] <- min/2516 
   lOut[["rse"]] <- rse
+  lOut[["hessian"]] <- hessian
 
   return(lOut)
 
  }
 
-tt <- EstimatecorrHAR(list(fivemincorr[23:2516], corrday[22:(2516-1)], corrweek[22:(2516-1)], corrmonth[22:(2516-1)]), 0)
+dta <- list(fivemincorr[23:2516], corrday[22:(2516-1)], corrweek[22:(2516-1)], corrmonth[22:(2516-1)])
 
-tt$vPar
-tt$MSE
+tt <- EstimatecorrHAR(dta, 0)
 
-tt$rse
+
 
 
 #when you get your intercept to be correct, then this is how you recover correlations. 
