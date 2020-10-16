@@ -82,29 +82,26 @@ BivarGARCHFilter <- function(lT, dailyret, params, covariance){
 
 	#initializing  with unconditional mean. 
 
-	mSigma[,,1] <- samplecov
+	astar <- dAlpha * (samplercov * samplecov^(-1))
+
+	mSigma[,,1] <- samplecov 
 
 	#compute first observation of log-likelihood (we are minizing neg-log-likelihood):
 	dLLK <- log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
 
-	astar <- dAlpha * (samplercov * samplecov^(-1))
 
 	dLLKs <- numeric()
-	dLLKs[1] <- dLLK
+	dLLKs[1] <-   dLLK
 	for(i in 2:days){
 
 		mSigma[,,i] <- samplecov * (1 - astar - dBeta)  + dBeta * mSigma[,,i-1] + dAlpha * rcov[,,i-1]
 
-		dLLK <- as.numeric(dLLK) + log(det(mSigma[,,i])) + 
-		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]) 
 		#neglog collection for score calculation
 		dLLKs[i] <- 0.5 * d* log(2*pi) + 0.5 * (log(det(mSigma[,,i])) + 
 		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]))
 		}
 
-	#+ days * d * log(2*pi)
-	fulldLLK <- -0.5 * days * d * log(2*pi) - 0.5 * dLLK  
-
+	fulldLLK <- - sum(dLLKs)
 	lOut <- list()
 
 	lOut[["fulldLLK"]] <- fulldLLK
@@ -120,7 +117,16 @@ BivarGARCHFilter <- function(lT, dailyret, params, covariance){
 #testing via simulation
 leltest <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc, c(0.2, 0.8), calccov[[1]][[8]]) 
 
+leltest$mSigma[,,1]
+
+
+sum(leltest$dLLKs)
+
+
+
+
 set.seed(1234)
+retsim <- matrix(0L, nrow=2516, ncol=2)
 for(i in 1:2516){
 	
 	retsim[i,] <-  mvrnorm(1, c(0,0), leltest$mSigma[,,i])
@@ -135,37 +141,14 @@ for(i in 1:2516){
 leltest2 <- EstimateBivarGARCH(mergedfrequencies[[8]],retsim, calccov[[1]][[8]])
 
 
-is.null(calccov[[1]][[8]][,,1])
-
-
-#covariance should be specified in a c() with three arrays.
-
-#if(is.null(covariance)){
-#
-#		P <- array(0L, dim = c(2, 2, days))
-#		N <- array(0L, dim = c(2, 2, days))
-#		M <- array(0L, dim = c(2, 2, days))
-#
-#
-#		for(i in 1:days){
-#
-#			P[,,i] <- realsemicov(lT[[i]], "P")
-#			N[,,i] <- realsemicov(lT[[i]], "N")
-#			M[,,i] <- realsemicov(lT[[i]], "M")
-#		}
-#	}
-#	else{
-#
-#		P <- covariance[1]
-#		N <- covariance[2]
-#		M <- covariance[3] 
-#	}
-
-
-
 #NOW IT NEEDS SEMI-COVARIANCES SPECIFIED AS ARRAY WITH 3RD DIM BEING DAYS. THEN PUT THE 3 SEMI-COVARIANCES
 #INTO A LIST WITH REPSECTIVE ORDER P,N,M. 
-BivarGARCHFilterContAsym <- function(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dBeta, covariance){
+BivarGARCHFilterContAsym <- function(lT, dailyret, params, covariance){
+
+	dAlphaP <- params[1]
+	dAlphaN <- params[2]
+	dAlphaM <- params[3]
+	dBeta  <- params[4]
 
 	days <- length(lT)
 
@@ -209,30 +192,39 @@ BivarGARCHFilterContAsym <- function(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dB
 
 	astar <- (dAlphaP * sampleP + dAlphaN * sampleN + dAlphaM * sampleM) * samplecov^(-1)
 
+	dLLKs <- numeric()
+
+	dLLKs[1] <-  dLLK
+
 	for(i in 2:days){
 
 		mSigma[,,i] <- samplecov * (1 - astar - dBeta)  + dBeta * mSigma[,,i-1] + 
 		dAlphaP * P[,,i-1] + dAlphaN * N[,,i-1] + dAlphaM * M[,,i-1]
 
 
-		if(!is.positive.definite(mSigma[,,i])){
+		#if(!is.positive.definite(mSigma[,,i])){
 
-			mSigma[,,i] <- matrix(nearPD(mSigma[,,i])$mat, ncol=2,nrow=2)
+		#	mSigma[,,i] <- matrix(nearPD(mSigma[,,i])$mat, ncol=2,nrow=2)
 
-		}
+		#}
 
-		dLLK <- as.numeric(dLLK) + log(det(mSigma[,,i])) + 
-		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]) 
+		#dLLK <- as.numeric(dLLK) + log(det(mSigma[,,i])) + 
+		#dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]) 
+		#full neg loglike
+		
+		dLLKs[i] <- 0.5 * d * log(2*pi) + 0.5 * as.numeric(log(det(mSigma[,,i])) + 
+		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]))
 
 		}
 
 	#+ days * d * log(2*pi)
-	fulldLLK <- -0.5 * days * d * log(2*pi) - 0.5 * dLLK  
+	fulldLLK <- - sum(dLLKs, na.rm=T)  
 
 	lOut <- list()
 
 	lOut[["fulldLLK"]] <- fulldLLK
 	lOut[["mSigma"]] <- mSigma
+	lOut[["dLLKs"]] <- dLLKs
 	lOut[["cov"]] <- astar
 
 	return(lOut)
@@ -240,18 +232,7 @@ BivarGARCHFilterContAsym <- function(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dB
 	
 }
 
-lel <- BivarGARCHFilterContAsym(mergedfrequencies[[8]], dailyretotc, 0.01, 0.005, 0.04, 0.94)
-matrix(nearPD(lel$mSigma[,,87])$mat, ncol=2,nrow=2)
-
-lel$mSigma[,,87]
-
-
-test <- numeric()
-for(i in 1:2516){
-
-	test[i] <- !is.positive.definite(lel$mSigma[,,i])
-
-}
+leltest3 <- BivarGARCHFilterContAsym(mergedfrequencies[[8]],dailyretotc, c(0.02,0.01,0.01,0.94), list(P, N, M))
 
 
 
@@ -271,7 +252,7 @@ ObjFBivarGARCHContAsym <- function(vPar, lT, dailyret, covariance) {
   dAlphaN = vPar[2]
   dAlphaM = vPar[3]
   dBeta  = vPar[4]
-  dLLK = BivarGARCHFilterContAsym(lT, dailyret, dAlphaP, dAlphaN, dAlphaM, dBeta, covariance)$fulldLLK
+  dLLK = BivarGARCHFilterContAsym(lT, dailyret, c(dAlphaP, dAlphaN, dAlphaM, dBeta), covariance)$fulldLLK
   
   return(-as.numeric(dLLK))
 }
@@ -288,7 +269,7 @@ ineqfun_GARCH_BIVAR <- function(vPar, ...) {
 
 ineqfun_GARCH_BIVARContAsym <- function(vPar, ...) {
   dAlpha = vPar[1] + vPar[2] + vPar[3]
-  dBeta  = vPar[2]
+  dBeta  = vPar[4]
   
   return(dAlpha + dBeta)
 }
@@ -300,16 +281,16 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun
   # the empirical variance by targeting the unconditional variance of the 
   # GARCH model
   
-  dAlpha = 0.33685 #
-  dBeta  = 0.66185
+  dAlpha = 0.05 #
+  dBeta  = 0.94185
   
   ## vector of starting parameters
   vPar = c(dAlpha, dBeta)
   
   # have a look at help(solnp)
-  ##optimization step
+  ##optimization step            
   optimizer = solnp(vPar, fun = ObjFBivarGARCH, lT = lT, dailyret = dailyret, covariance = covariance, 
-                    ineqfun = ineqfun_GARCH_BIVAR, #the inequality constraint
+                    ineqfun = ineqfun_GARCH, #the inequality constraint
                     ineqLB  = ineqLB, ## the inequality lower bound
                     ineqUB = ineqUB, ## the inequality lower bound, i.e. 0.0 < alpha + beta < 0.9999
                     ## lower and upper bounds for all parameters
@@ -323,13 +304,34 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun
   ## extract the likelihood computed at its maximum
   dLLK = -tail(optimizer$values, 1)
 
-  #gradient tryout,  finite difference:
-  #h <- 0.001
-
-  #grad_Lk <- (exp(ObjectiveFunction(c(vPar[1]+h,vPar[2],vPar[3]), vY)) -  
-  #exp(ObjectiveFunction(c(vPar[1],vPar[2],vPar[3]), vY)))/h
-
   
+  #CALCULATING ROBUST STD. ERRORS WHEN NO COVARIANCE TARGETING:
+
+  scores <- matrix(0L, nrow=length(lT), ncol = length(vPar))
+
+  h <- 1e-5 * vPar
+  # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
+  for(i in 1:length(h)){
+
+	delta <- h[i]
+																
+	loglikeminus <- BivarGARCHFilter(lT,dailyret*100, vPar-delta, covariance)$dLLKs
+	loglikeplus <- BivarGARCHFilter(lT,dailyret*100, vPar+delta, covariance)$dLLKs
+
+	scores[,i] <- (loglikeplus - loglikeminus)/(2*h[i])
+
+  }
+
+  J <- (t(scores) %*% scores)/length(lT)
+
+  I <- optimizer$hessian/length(lT)
+
+  I <- solve(I)[-1 ,-1]
+
+  vars <- (I * J * I)
+  
+  rse <- sqrt(diag(vars))
+
   ## compute filtered volatility
   vSigma2 = BivarGARCHFilter(lT, dailyret, c(vPar[1], vPar[2]), covariance)$mSigma
   
@@ -339,7 +341,7 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun
   
   ##Standard errors:
   se <- solve(optimizer$hessian)
-  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
+  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)/iT
   colnames(se) <- c("Alpha", "Beta")
 
   ## return a list with estimated parameters, likelihood value and BIC
@@ -350,12 +352,18 @@ EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun
   lOut[["vSigma2"]] = vSigma2
   lOut[["se"]] = se
   lOut[["Hessian"]] = optimizer$hessian
+  lOut[["rse"]] = rse
   #lOut[["grad"]] = grad_Lk
   
   return(lOut)
 }
 
-tester <- EstimateBivarGARCH(mergedfrequencies[[8]], dailyretotc*100, calccov[[1]][[8]])
+tester <- EstimateBivarGARCH(mergedfrequencies[[8]], dailyretotc, calccov[[1]][[8]])
+tester$rse
+
+
+realCov(mergedfrequencies[[8]][[1]]*100)
+
 
 
 fdscore <- function(lT, estimates){
@@ -364,14 +372,14 @@ fdscore <- function(lT, estimates){
 
 	scores <- matrix(0L, nrow=length(lT), ncol = length(estimates))
 
-	h <- 1e-8 * estimates 
+	h <- 1e-5 * estimates 
 
 	for(i in 1:length(h)){
 
 		delta <- h[i]
-
-		loglikeminus <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc*100, estimates-delta, calccov[[1]][[8]])$dLLKs
-		loglikeplus <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc*100, estimates+delta, calccov[[1]][[8]])$dLLKs
+																#*100*(24/6.5)
+		loglikeminus <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc*100, estimates-0.5*delta, calccov[[1]][[8]])$dLLKs
+		loglikeplus <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc*100, estimates+0.5*delta, calccov[[1]][[8]])$dLLKs
 
 		scores[,i] <- (loglikeplus - loglikeminus)/(2*h[i])
 
@@ -384,9 +392,9 @@ fdscore <- function(lT, estimates){
 
 t <- fdscore(mergedfrequencies[[8]], tester$vPar)
 
-I <- solve(tester$Hessian/2516)[-1 ,-1]
+I <- solve(tester$Hessian/(2516))[-1 ,-1]
 
- vars <- (I %*% t[[1]] %*% I)/2516
+ vars <- (I * t[[1]] * I)
 
 sqrt(diag(vars))
 
@@ -398,9 +406,9 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance, ineqfun_GARCH =
   # the empirical variance by targeting the unconditional variance of the 
   # GARCH model
   
-  dAlphaP = 0.02
-  dAlphaN = 0.01
-  dAlphaM = 0.01
+  dAlphaP = 0.01
+  dAlphaN = 0.02
+  dAlphaM = 0.02
   dBeta  = 0.94
   
   ## vector of starting parameters
@@ -409,11 +417,11 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance, ineqfun_GARCH =
   # have a look at help(solnp)
   ##optimization step
   optimizer = solnp(vPar, fun = ObjFBivarGARCHContAsym, lT = lT, dailyret = dailyret, covariance = covariance, 
-                    ineqfun = ineqfun_GARCH_BIVARContAsym, #the inequality constraint
+                    ineqfun = ineqfun_GARCH, #the inequality constraint
                     ineqLB  = ineqLB, ## the inequality lower bound
                     ineqUB = ineqUB, ## the inequality lower bound, i.e. 0.0 < alpha + beta < 0.9999
                     ## lower and upper bounds for all parameters
-                    LB = c(0.0001, 0.0001, -0.999, 0.0001), UB = c(0.999, 0.999, 0.999, 0.999)
+                    LB = c(0.0001, 0.0001, 0.0001, 0.0001), UB = c(0.999, 0.999, 0.999, 0.999)
                     ) 
   
   ## extract estimated parameters
@@ -422,15 +430,36 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance, ineqfun_GARCH =
   ## extract the likelihood computed at its maximum
   dLLK = -tail(optimizer$values, 1)
 
-  #gradient tryout,  finite difference:
-  #h <- 0.001
+  #CALCULATING ROBUST STD. ERRORS WHEN NO COVARIANCE TARGETING:
 
-  #grad_Lk <- (exp(ObjectiveFunction(c(vPar[1]+h,vPar[2],vPar[3]), vY)) -  
-  #exp(ObjectiveFunction(c(vPar[1],vPar[2],vPar[3]), vY)))/h
+  scores <- matrix(0L, nrow=length(lT), ncol = length(vPar))
+
+  h <- 1e-5 * vPar
+  # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
+  for(i in 1:length(h)){
+
+	delta <- h[i]
+																
+	loglikeminus <- BivarGARCHFilterContAsym(lT,dailyret*100, vPar-delta, covariance)$dLLKs
+	loglikeplus <- BivarGARCHFilterContAsym(lT,dailyret*100, vPar+delta, covariance)$dLLKs
+
+	scores[,i] <- (loglikeplus - loglikeminus)/(2*h[i])
+
+  }
+
+  J <- (t(scores) %*% scores)/length(lT)
+
+  I <- optimizer$hessian/length(lT)
+
+  I <- solve(I)[-1 ,-1]
+
+  vars <- (I * J * I)/length(lT)
+  
+  rse <- sqrt(diag(vars))
 
   
   ## compute filtered volatility
-  vSigma2 = BivarGARCHFilterContAsym(lT, dailyret, vPar[1], vPar[2], vPar[3], vPar[4], covariance)$mSigma
+  vSigma2 = BivarGARCHFilterContAsym(lT, dailyret, c(vPar[1], vPar[2], vPar[3], vPar[4]), covariance)$mSigma
   
   ## Compute the daily Average BIC
   iT = length(lT)
@@ -449,6 +478,7 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance, ineqfun_GARCH =
   lOut[["vSigma2"]] = vSigma2
   lOut[["se"]] = se
   lOut[["Hessian"]] = optimizer$hessian
+  lOut[["rse"]] = rse
   #lOut[["grad"]] = grad_Lk
   
   return(lOut)
@@ -456,6 +486,9 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance, ineqfun_GARCH =
 
 
 
+leltest4 <- EstimateBivarGARCHContAsym(mergedfrequencies[[8]], dailyretotc, list(P,N,M))
+
+leltest4$rse
 #------------------------------------realized DCC model (rDCC) --------------------------------------
 
 #mEta is the residuals from the univariate models. 
@@ -612,9 +645,9 @@ M <- array(0L, dim =c(2,2,2516))
 
 for(i in 1:2516){
 
-	P[,,i] <- realsemicov(mergedfrequencies[[4]][[i]], "P")
-	N[,,i] <- realsemicov(mergedfrequencies[[4]][[i]], "N")
-	M[,,i] <- realsemicov(mergedfrequencies[[4]][[i]], "M")
+	P[,,i] <- realsemicov(mergedfrequencies[[8]][[i]], "P")
+	N[,,i] <- realsemicov(mergedfrequencies[[8]][[i]], "N")
+	M[,,i] <- realsemicov(mergedfrequencies[[8]][[i]], "M")
 
 
 }
