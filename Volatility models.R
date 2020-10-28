@@ -34,7 +34,18 @@ dailyretotc <- xts(t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[
 colnames(dailyretotc) <- c("TLT", "SPY")
 
 
+P <- array(0L, dim =c(2,2,2516))
+N <- array(0L, dim =c(2,2,2516))
+M <- array(0L, dim =c(2,2,2516))
 
+for(i in 1:2516){
+
+	P[,,i] <- realsemicov(mergedfrequencies[[8]][[i]], "P")
+	N[,,i] <- realsemicov(mergedfrequencies[[8]][[i]], "N")
+	M[,,i] <- realsemicov(mergedfrequencies[[8]][[i]], "M")
+
+
+}
 
 #-----------------------------------The scalar bivariate GARCH model estimation---------------------------
 
@@ -58,16 +69,36 @@ colnames(dailyretotc) <- c("TLT", "SPY")
 #
 #NOTE TO SELF! SOLVERS CONVERGE BETTER WHEN LOG-RETURNS ARE IN PERCENTAGE!
 
-BivarGARCHFilter <- function(lT, dailyret, params, covariance){
+
+################################################################################################################
+#
+#
+#
+#									Realized Bivarite Scalar GARCH (rBG)
+#
+#
+#
+################################################################################################################
+
+BivarGARCHFilter <- function(dailyret, params, covariance, inference = F){
 
 	dAlpha <- params[1]
 	dBeta <- params[2]
 
-	days <- length(lT)
+	samplecov <- cov(dailyret)
+
+
+	if(inference){
+
+		dAlpha <- params[1]
+		dBeta <- params[2]
+		samplecov <- params[3]
+
+	}
+
+	days <- length(covariance[1,1,])
 
 	d <-  2 #being bivariate
-
-	samplecov <- cov(dailyret)
 
 	rcov <- array(covariance, dim = c(2,2,days))
 
@@ -101,20 +132,260 @@ BivarGARCHFilter <- function(lT, dailyret, params, covariance){
 		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]))
 		}
 
-	fulldLLK <- - sum(dLLKs)
+	fulldLLK <- - sum(dLLKs) #loglikelihood
+
 	lOut <- list()
 
 	lOut[["fulldLLK"]] <- fulldLLK
 	lOut[["mSigma"]] <- mSigma
 	lOut[["cov"]] <- astar
 	lOut[["dLLKs"]] <- dLLKs
+	lOut[["sampleH"]] <- samplecov
 
 	return(lOut)
 	
 	
 }
 
+#objective function specific for scalar Bivariate GARCH
+ObjFBivarGARCH <- function(vPar, dailyret, covariance) {
+  
+  dAlpha = vPar[1]
+  dBeta  = vPar[2]
+  dLLK = BivarGARCHFilter(dailyret, c(dAlpha, dBeta), covariance)$fulldLLK
+  
+  return(-as.numeric(dLLK))
+}
+
+ineqfun_GARCH_BIVAR <- function(vPar, ...) {
+  dAlpha = vPar[1]
+  dBeta  = vPar[2]
+  
+  return(dAlpha + dBeta)
+}
+
+EstimateBivarGARCH <- function(dailyret, covariance, nobootstrap = T, ineqfun_GARCH = ineqfun_GARCH_BIVAR, ineqLB = 0.00, ineqUB = 0.9999){
+  
+  # We set starting value for alpha equal to 0.05, dBeta = 0.94, and chose omega to target
+  # the empirical variance by targeting the unconditional variance of the 
+  # GARCH model
+  
+  dAlpha = 0.33684760685915 #
+  dBeta  = 0.66184440405967
+  
+  ## vector of starting parameters
+  vPar = c(dAlpha, dBeta)
+  
+  # have a look at help(solnp)   ObjFBivarGARCH
+  ##optimization step            
+  optimizer = solnp(vPar, fun = ObjFBivarGARCH, dailyret = dailyret, covariance = covariance, 
+                    ineqfun = ineqfun_GARCH, #the inequality constraint
+                    ineqLB  = ineqLB, ## the inequality lower bound
+                    ineqUB = ineqUB, ## the inequality lower bound, i.e. 0.0 < alpha + beta < 0.9999
+                    ## lower and upper bounds for all parameters
+                    LB = c(0.0001, 0.0001), UB = c(0.999, 0.999),
+                    control = list(tol = 1e-7, outer.iter = 800, inner.iter = 1200, delta = 1e-7)
+                    ) 
+  
+  ## extract estimated parameters
+  vPar = optimizer$pars
+  
+  ## extract the likelihood computed at its maximum
+  dLLK = -tail(optimizer$values, 1)
+
+  if(nobootstrap){
+  #CALCULATING ROBUST STD. ERRORS WHEN NO COVARIANCE TARGETING:
+
+  scores <- matrix(0L, nrow=length(lT), ncol = length(vPar))
+
+  step <- 1e-5 * vPar
+  # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
+  for(i in 1:length(step)){
+
+	h <- step[i]
+    delta <- rep(0, length(vPar))
+    delta[i] <- h
+																
+	loglikeminus <- BivarGARCHFilter(lT,dailyret, vPar-delta, covariance)$dLLKs
+	loglikeplus <- BivarGARCHFilter(lT,dailyret, vPar+delta, covariance,)$dLLKs
+
+	scores[,i] <- (loglikeplus - loglikeminus)/(2*h)
+
+  }
+
+  J <- (t(scores) %*% scores)/length(lT)
+
+  I <- optimizer$hessian/length(lT)
+
+  I <- solve(I)[-1 ,-1]
+
+  vars <- (I * J * I)/length(lT)
+  
+  rse <- sqrt(diag(vars))
+
+  ## compute filtered volatility
+  Filter <- BivarGARCHFilter(lT, dailyret, c(vPar[1], vPar[2]), covariance)
+
+  vSigma2 <- Filter$mSigma
+  
+  sampleH <- Filter$sampleH
+
+  ## Compute the daily Average BIC
+  iT = length(lT)
+  BIC = (-2 * dLLK + log(iT) * length(vPar))/iT
+  
+  ##Standard errors:
+  se <- solve(optimizer$hessian)
+  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)/iT
+  colnames(se) <- c("Alpha", "Beta")
+
+  ## return a list with estimated parameters, likelihood value and BIC
+  lOut = list()
+  lOut[["vPar"]] = vPar
+  lOut[["dLLK"]] = dLLK
+  lOut[["BIC"]] = BIC
+  lOut[["vSigma2"]] = vSigma2
+  lOut[["se"]] = se
+  lOut[["Hessian"]] = optimizer$hessian
+  lOut[["rse"]] = rse
+  lOut[["sampleH"]] = sampleH
+  lOut[["scores"]] = scores
+  #lOut[["grad"]] = grad_Lk
+    return(lOut)
+
+  }
+
+  return(vPar)
+  
+}
+
+#it does not matter whether you use percentage returns with realcov calculated on percentage returns or 
+#standard returns. 
+
+library(tictoc)
+tic()
+tester <- EstimateBivarGARCH(dailyretotc, calccov[[1]][[8]], nobootstrap = F)
+toc()
+
+
+#bootstrapping:
+
+library(boot)
+
+library(np)
+#uses the row to construct the block length. Therefore you should transpose it. 
+ll <- tsboot(dailyretotc, mean ,R = 1000, l = 10, sim = "fixed", endcorr = TRUE)
+indexation <- boot.array(ll)
+
+#rearranging calculated covariances: correct. 
+bs1 <- calccov[[1]][[8]][,,indexation[1, ]]
+
+
+
+tester$rse
+
+
+scoretest <- tester$scores
+
+
+tt <- array(0L, dim = c(2,2,2516))
+
+for(i in 1:2516){
+	tt[,,i] <- tester$vSigma2[,,i] -  (tester$sampleH)
+}
+
+tt2 <- matrix(unlist(tt), nrow = 2516*2, ncol = 2, byrow = T) 
+
+newscores <- rbind(scoretest, tt2)
+
+J <- (t(newscores) %*% newscores)/2516
+
+J2 <- (t(scoretest) %*% scoretest)/2516
+
+  I <- tester$Hessian/2516
+
+  I <- solve(I)[-1 ,-1]
+
+  vars <- (I * J * I)/2516
+  
+  sqrt(diag(vars))
+
+
+
+
+#Kevin sheppard 2 sided hessian function:
+
+hessian_2sided <- function(fun, theta, ...){
+
+	f <- fun(params = theta, ...)
+	h <- 1e-5 * abs(theta)
+	thetah <- theta + h
+
+	h <- thetah - theta 
+	k <- length(theta)
+	h <- diag(h)
+
+	fp <- numeric(k)
+	fm <- numeric(k)
+
+	for (i in 1:k){
+
+		fp[i] <- - fun(params =theta+h[i, ], ...)$fulldLLK #negating it since sum is
+		fm[i] <- - fun(params =theta-h[i, ], ...)$fulldLLK
+	}
+
+	fpp <- matrix(0L, nrow = k, ncol = k)
+	fmm <- matrix(0L, nrow = k, ncol = k)
+
+	for(i in 1:k){
+		for(j in i:k){
+			fpp[i,j] <- fun(params = theta + h[i, ] + h[j, ], ...)$fulldLLK
+			fpp[j,i] <- fpp[i,j]
+			fmm[i,j] <- fun(params = theta - h[i, ] - h[j, ], ...)$fulldLLK
+			fmm[j,i] <- fmm[i,j]
+
+		}
+	}
+
+
+	hh <- diag(h)
+	hh <- matrix(hh, nrow = k, ncol = 1)
+	hh <- hh %*% t(hh)
+
+	H <- matrix(0L, nrow = k, ncol = k)
+
+	for(i in 1:k){
+		for(j in i:k){
+			H[i,j] <- (fpp[i,j] - fp[i] - fp[j] + f$fulldLLK  +  f$fulldLLK - fm[i] - fm[j] + fmm[i,j])/hh[i,j]/2
+			H[j,i] <- H[i,j]
+		}
+	}
+
+	return(H)
+
+}
+
+
+tt3 <- hessian_2sided(BivarGARCHFilter, c(0.3368476, 0.6618444, tester$sampleH), lT = mergedfrequencies[[8]],
+ dailyret = dailyretotc, covariance = calccov[[1]][[8]],inference = T)
+
+
+
+
+tt4 <- (solve(tt3/2516) * J * solve(tt3/2516))/2516
+
+sqrt(diag(tt4))
+
+
+
+
+
+
+
+
+
 #testing via simulation
+
 leltest <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc, c(0.2, 0.8), calccov[[1]][[8]]) 
 
 leltest$mSigma[,,1]
@@ -141,6 +412,15 @@ for(i in 1:2516){
 leltest2 <- EstimateBivarGARCH(mergedfrequencies[[8]],retsim, calccov[[1]][[8]])
 
 
+
+################################################################################################################
+
+
+
+
+
+
+
 #NOW IT NEEDS SEMI-COVARIANCES SPECIFIED AS ARRAY WITH 3RD DIM BEING DAYS. THEN PUT THE 3 SEMI-COVARIANCES
 #INTO A LIST WITH REPSECTIVE ORDER P,N,M. 
 BivarGARCHFilterContAsym <- function(lT, dailyret, params, covariance){
@@ -151,6 +431,8 @@ BivarGARCHFilterContAsym <- function(lT, dailyret, params, covariance){
 	dBeta  <- params[4]
 
 	days <- length(lT)
+
+	dailyret <-  matrix(dailyret, ncol=2, nrow=days)
 
 	d <-  2 #being bivariate
 
@@ -232,19 +514,10 @@ BivarGARCHFilterContAsym <- function(lT, dailyret, params, covariance){
 	
 }
 
-leltest3 <- BivarGARCHFilterContAsym(mergedfrequencies[[8]],dailyretotc, c(0.02,0.01,0.01,0.94), list(P, N, M))
+leltest334 <- BivarGARCHFilterContAsym(mergedfrequencies[[8]],dailyretotc, c(0.02,0.01,0.01,0.94), list(P, N, M))
 
 
 
-#objective function specific for scalar Bivariate GARCH
-ObjFBivarGARCH <- function(vPar, lT, dailyret, covariance) {
-  
-  dAlpha = vPar[1]
-  dBeta  = vPar[2]
-  dLLK = BivarGARCHFilter(lT, dailyret, c(dAlpha, dBeta), covariance)$fulldLLK
-  
-  return(-as.numeric(dLLK))
-}
 
 ObjFBivarGARCHContAsym <- function(vPar, lT, dailyret, covariance) {
   
@@ -260,13 +533,6 @@ ObjFBivarGARCHContAsym <- function(vPar, lT, dailyret, covariance) {
 
 #imposing strong stationarity as implied from the paper. This is generalized and can be used for other imposed models.
 
-ineqfun_GARCH_BIVAR <- function(vPar, ...) {
-  dAlpha = vPar[1]
-  dBeta  = vPar[2]
-  
-  return(dAlpha + dBeta)
-}
-
 ineqfun_GARCH_BIVARContAsym <- function(vPar, ...) {
   dAlpha = vPar[1] + vPar[2] + vPar[3]
   dBeta  = vPar[4]
@@ -275,128 +541,10 @@ ineqfun_GARCH_BIVARContAsym <- function(vPar, ...) {
 }
 
 #YOU NEED TO CALCULATE ROBUST STANDARD ERRORS. 
-EstimateBivarGARCH <- function(lT, dailyret, covariance, ineqfun_GARCH = ineqfun_GARCH_BIVAR, ineqLB = 0.00, ineqUB = 0.9999){
-  
-  # We set starting value for alpha equal to 0.05, dBeta = 0.94, and chose omega to target
-  # the empirical variance by targeting the unconditional variance of the 
-  # GARCH model
-  
-  dAlpha = 0.05 #
-  dBeta  = 0.94185
-  
-  ## vector of starting parameters
-  vPar = c(dAlpha, dBeta)
-  
-  # have a look at help(solnp)
-  ##optimization step            
-  optimizer = solnp(vPar, fun = ObjFBivarGARCH, lT = lT, dailyret = dailyret, covariance = covariance, 
-                    ineqfun = ineqfun_GARCH, #the inequality constraint
-                    ineqLB  = ineqLB, ## the inequality lower bound
-                    ineqUB = ineqUB, ## the inequality lower bound, i.e. 0.0 < alpha + beta < 0.9999
-                    ## lower and upper bounds for all parameters
-                    LB = c(0.0001, 0.0001), UB = c(0.999, 0.999),
-                    control = list(tol = 1e-14, outer.iter = 800, inner.iter = 1200, delta = 1e-14)
-                    ) 
-  
-  ## extract estimated parameters
-  vPar = optimizer$pars
-  
-  ## extract the likelihood computed at its maximum
-  dLLK = -tail(optimizer$values, 1)
-
-  
-  #CALCULATING ROBUST STD. ERRORS WHEN NO COVARIANCE TARGETING:
-
-  scores <- matrix(0L, nrow=length(lT), ncol = length(vPar))
-
-  h <- 1e-5 * vPar
-  # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
-  for(i in 1:length(h)){
-
-	delta <- h[i]
-																
-	loglikeminus <- BivarGARCHFilter(lT,dailyret*100, vPar-delta, covariance)$dLLKs
-	loglikeplus <- BivarGARCHFilter(lT,dailyret*100, vPar+delta, covariance)$dLLKs
-
-	scores[,i] <- (loglikeplus - loglikeminus)/(2*h[i])
-
-  }
-
-  J <- (t(scores) %*% scores)/length(lT)
-
-  I <- optimizer$hessian/length(lT)
-
-  I <- solve(I)[-1 ,-1]
-
-  vars <- (I * J * I)
-  
-  rse <- sqrt(diag(vars))
-
-  ## compute filtered volatility
-  vSigma2 = BivarGARCHFilter(lT, dailyret, c(vPar[1], vPar[2]), covariance)$mSigma
-  
-  ## Compute the daily Average BIC
-  iT = length(lT)
-  BIC = (-2 * dLLK + log(iT) * length(vPar))/iT
-  
-  ##Standard errors:
-  se <- solve(optimizer$hessian)
-  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)/iT
-  colnames(se) <- c("Alpha", "Beta")
-
-  ## return a list with estimated parameters, likelihood value and BIC
-  lOut = list()
-  lOut[["vPar"]] = vPar
-  lOut[["dLLK"]] = dLLK
-  lOut[["BIC"]] = BIC
-  lOut[["vSigma2"]] = vSigma2
-  lOut[["se"]] = se
-  lOut[["Hessian"]] = optimizer$hessian
-  lOut[["rse"]] = rse
-  #lOut[["grad"]] = grad_Lk
-  
-  return(lOut)
-}
-
-tester <- EstimateBivarGARCH(mergedfrequencies[[8]], dailyretotc, calccov[[1]][[8]])
-tester$rse
-
-
-realCov(mergedfrequencies[[8]][[1]]*100)
 
 
 
-fdscore <- function(lT, estimates){
 
- 	options(digits=10)
-
-	scores <- matrix(0L, nrow=length(lT), ncol = length(estimates))
-
-	h <- 1e-5 * estimates 
-
-	for(i in 1:length(h)){
-
-		delta <- h[i]
-																#*100*(24/6.5)
-		loglikeminus <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc*100, estimates-0.5*delta, calccov[[1]][[8]])$dLLKs
-		loglikeplus <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc*100, estimates+0.5*delta, calccov[[1]][[8]])$dLLKs
-
-		scores[,i] <- (loglikeplus - loglikeminus)/(2*h[i])
-
-	}
-
-	J <- (t(scores) %*% scores)/length(lT)
-
-	return(list(J, scores))
-}
-
-t <- fdscore(mergedfrequencies[[8]], tester$vPar)
-
-I <- solve(tester$Hessian/(2516))[-1 ,-1]
-
- vars <- (I * t[[1]] * I)
-
-sqrt(diag(vars))
 
 
 #YOU NEED TO CALCULATE ROBUST STANDARD ERRORS. 
@@ -434,26 +582,28 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance, ineqfun_GARCH =
 
   scores <- matrix(0L, nrow=length(lT), ncol = length(vPar))
 
-  h <- 1e-5 * vPar
+  step <- 1e-5 * vPar
   # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
-  for(i in 1:length(h)){
+  for(i in 1:length(step)){
 
-	delta <- h[i]
+	h <- step[i]
+    delta <- rep(0, length(vPar))
+    delta[i] <- h
 																
-	loglikeminus <- BivarGARCHFilterContAsym(lT,dailyret*100, vPar-delta, covariance)$dLLKs
-	loglikeplus <- BivarGARCHFilterContAsym(lT,dailyret*100, vPar+delta, covariance)$dLLKs
+	loglikeminus <- BivarGARCHFilterContAsym(lT,dailyret, vPar-delta, covariance)$dLLKs
+	loglikeplus <- BivarGARCHFilterContAsym(lT,dailyret, vPar+delta, covariance)$dLLKs
 
-	scores[,i] <- (loglikeplus - loglikeminus)/(2*h[i])
+	scores[,i] <- (loglikeplus - loglikeminus)/(2*h)
 
   }
 
-  J <- (t(scores) %*% scores)/length(lT)
+  J <- (t(scores) %*% scores)/(length(lT))
 
-  I <- optimizer$hessian/length(lT)
+  I <- optimizer$hessian/(length(lT))
 
   I <- solve(I)[-1 ,-1]
 
-  vars <- (I * J * I)/length(lT)
+  vars <- (I * J * I)/(length(lT))
   
   rse <- sqrt(diag(vars))
 
@@ -483,7 +633,6 @@ EstimateBivarGARCHContAsym <- function(lT, dailyret, covariance, ineqfun_GARCH =
   
   return(lOut)
 }
-
 
 
 leltest4 <- EstimateBivarGARCHContAsym(mergedfrequencies[[8]], dailyretotc, list(P,N,M))
@@ -637,20 +786,7 @@ rcDCCFilter <- function(mEta, dAP, dAN, dAM , dB, mQ, covariance) {
   return(lOut)
 }
 
-#finding realized semicovariances for test:
 
-P <- array(0L, dim =c(2,2,2516))
-N <- array(0L, dim =c(2,2,2516))
-M <- array(0L, dim =c(2,2,2516))
-
-for(i in 1:2516){
-
-	P[,,i] <- realsemicov(mergedfrequencies[[8]][[i]], "P")
-	N[,,i] <- realsemicov(mergedfrequencies[[8]][[i]], "N")
-	M[,,i] <- realsemicov(mergedfrequencies[[8]][[i]], "M")
-
-
-}
 
 
 
