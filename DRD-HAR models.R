@@ -230,7 +230,7 @@ EstimatecorrHAR <- function(data, trace=1, ineqfun = ineqconstraint, ineqLB = 0.
   rse <- sqrt(diag(vars))
 
 
-
+  t.stat <- vPar/rse
 
 
 
@@ -241,6 +241,7 @@ EstimatecorrHAR <- function(data, trace=1, ineqfun = ineqconstraint, ineqLB = 0.
   lOut[["MSE"]] <- min/2516 
   lOut[["rse"]] <- rse
   lOut[["hessian"]] <- hessian
+  lOut[["Tstats"]] <- t.stat
 
   return(lOut)
 
@@ -260,21 +261,8 @@ corrHAR <- cbind(intercept[22:2515], corrday[22:2515], corrweek[22:2515], corrmo
 
 (1-coef(tester)[2]-coef(tester)[3]-coef(tester)[4]) 
 
-#in essence, you only have a bivariate framework, so the vech operator can be reduced to a single, univariate 
-#har model for the correlations. 
-#but you don't get the covariance targeting approach 
 
 
 
-FitHAR = harModel(data = fivemincorr, periods = c(1,5,22), inputType = "RM")
 
-haha <- HAREstimate(RM = fivemincorr, periods = c(1,5,22))
-
-summary(haha)
-
-
-
-summary(FitHAR)
-
-show(FitHAR)
 
