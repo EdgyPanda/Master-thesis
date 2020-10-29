@@ -825,18 +825,20 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
   setbounds(spec)<-list(alpha2=c(-1,1))
 
   #spec1 <- ugarchfit(spec, mY[,1], solver = 'hybrid', realizedVol = 
-   #xts(cov1, order.by = as.Date(getDates)), 
-	#fit.control = list(stationarity = 1, fixed.se = 1))
+  # xts(cov1, order.by = as.Date(getDates)), 
+#	fit.control = list(stationarity = 1, fixed.se = 1))
 
-  #spec2 <- ugarchfit(spec, mY[,2], solver = 'hybrid', realizedVol = 
-	#xts(cov2, order.by = as.Date(getDates)), 
-	#fit.control = list(stationarity = 1, fixed.se = 1))
+ # spec2 <- ugarchfit(spec, mY[,2], solver = 'hybrid', realizedVol = 
+#	xts(cov2, order.by = as.Date(getDates)), 
+#	fit.control = list(stationarity = 1, fixed.se = 1))
 
   mspec <- multispec( replicate(spec, n=2) )
-
+  						 #only used percentage log-returns, since it seems to converge better. 
   lfit <- multifit(mspec, mY * 100, solver = 'hybrid', realizedVol = 
-  xts(cbind(cov1, cov2), order.by = as.Date(getDates)))
+  xts(cbind(cov1, cov2), order.by = as.Date(getDates)), fit.control = list(stationarity = 1, fixed.se = 1))
 
+  #res1 <- residuals(spec1, standardize = T)
+  #res2 <- residuals(spec2, standardize = T)
 
   mEta <- residuals(lfit, standardize = T)
   ####################################################
@@ -844,7 +846,7 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
   ## maximization of the DCC likelihood
   
   #initial parameters
-  vPar = c(0.19, 0.79)
+  vPar = c(0.1974634, 0.8015366)
   
   #unconditional correlation
   mQ = cor(mEta)
@@ -918,12 +920,68 @@ Estimate_rDCC <- function(mY, covariance, getDates) {
 }
 
 
+#------------------------------------------bootstrapping----------------------------------------------
+
+library(boot)
+
+library(np)
+
+#see patton "does anything beat rv5 min" says that the block length is driven by the persistence in the
+# variable we are interested in testing. 
+
+
+#optimal blockk length:
+b.star(calccov[[1]][[7]][2,1, ]/sqrt(calccov[[1]][[7]][1,1,  ] * calccov[[1]][[7]][2,2, ]))
+
+
+
+		#correlation models are very persistent and therefore needs bigger block length. 
+		#if a too small block length is chosen it can destroy the dependency in the data, also leading
+		#to non-invertible hessians in the rugarch package. 
+ll <- tsboot(dailyretotc[,1], mean ,R = 1000, l = 89, sim = "fixed", endcorr = TRUE)
+indexation <- boot.array(ll)
+
+
+
+estimates_5min_rDCC <- matrix(0L, nrow = 1000, ncol = 2)
+
+
+BS_dailyretotc <- matrix(dailyretotc, nrow=2516, ncol = 2)
+
+BS_dailyretotc_l <- list()
+
+for(i in 1:1000){
+
+BS_dailyretotc_l[[i]] <- BS_dailyretotc[indexation[i, ], ]
+
+}
+
+
+for(j in 1:2){
+	
+	BS_calccov_rDCC <- calccov[[1]][[7]][,,indexation[j, ]]
+
+	BS_dailyretotc <- xts(BS_dailyretotc_l[[j]], order.by = as.Date(getDates)) 
+
+	estimates_5min_rDCC[j, ] <- Estimate_rDCC(BS_dailyretotc, BS_calccov_rDCC, getDates)$vPar
+	print(sprintf("Bootstrap %s", j))
+	
+
+}
+
+#managed to get 872. 
+#saveRDS(bootstrap5min_est_complete, "bootstapestimates_5min_rDCC.rds")
+
+bootstapestimates_5min_rDCC <- readRDS("bootstapestimates_5min_rDCC.rds")
+
+
+bootstrap_stderror_5min_rDCC <- apply(bootstapestimates_5min_rDCC, MARGIN = c(2), FUN = function(x) sd(x))
 
 
 
 
 
-lel5 <- Estimate_rDCC(dailyretotc, calccov[[1]][[7]], getDates)
+
 
 #------------------------------------------------realGARCH 5min estimates and standard errors--------------------
 
@@ -951,6 +1009,8 @@ lfit2 = ugarchfit(spec, dailyretotc[,1] * 100, solver = 'hybrid', realizedVol =
 	xts(sqrt(calccov[[1]][[7]][1,1,]) * 100, order.by = as.Date(getDates)), 
 	fit.control = list(stationarity = 1, fixed.se = 1))
 
+
+test2 <- sigma(lfit2)
 
 rugarch.LL = c('logL' = sum(-lfit2@fit$log.likelihoods), 'pLogL' = sum(-lfit2@fit$partial.log.likelihoods))
 sum(rugarch.LL)
@@ -981,7 +1041,7 @@ for(i in 1:10){
 
 	tlt.loglike[i, ] <- c('logL' = sum(-tlt@fit$log.likelihoods), 'pLogL' = sum(-tlt@fit$partial.log.likelihoods))
 	#SPY
-	spy.loglike <- c(sum(-spy@fit$log.likelihoods), sum(-spy@fit$partial.log.likelihoods))
+	spy.loglike[i, ] <- c(sum(-spy@fit$log.likelihoods), sum(-spy@fit$partial.log.likelihoods))
 	estimatesacross_SPY[i, ] <- coef(spy)
 
 }
@@ -1004,12 +1064,21 @@ estimatesacross_TLT[10, ] <- daily_TLT
 estimatesacross_SPY[10, ] <- daily_SPY
 
 estimatesacross_TLT_mean <- colMeans(estimatesacross_TLT[-10, ])
-estimatesacross_SPY_mean <- colMeans(estimatesacross_SPY)
+estimatesacross_SPY_mean <- colMeans(estimatesacross_SPY[-10, ])
 
 TLT_90percentquantile <- apply(estimatesacross_TLT, MARGIN = c(2), FUN = function(x) quantile(x, 0.9, na.rm=TRUE))
 TLT_10percentquantile <- apply(estimatesacross_TLT, MARGIN = c(2), FUN = function(x) quantile(x, 0.1, na.rm=TRUE))
 
+SPY_90percentquantile <- apply(estimatesacross_SPY[-10, ], MARGIN = c(2), FUN = function(x) quantile(x, 0.9, na.rm=TRUE))
+SPY_10percentquantile <- apply(estimatesacross_SPY[-10, ], MARGIN = c(2), FUN = function(x) quantile(x, 0.1, na.rm=TRUE))
+
+
+
 TLT_stats <- rbind(estimatesacross_TLT_mean, TLT_10percentquantile, TLT_90percentquantile)
+SPY_stats <- rbind(estimatesacross_SPY_mean, SPY_10percentquantile, SPY_90percentquantile)
+
+
+
 
 colMeans(tlt.loglike, na.rm = T)
 quantile(tlt.loglike[,2], 0.9, na.rm = T)
@@ -1019,6 +1088,17 @@ tlt.completeloglike <- rowSums(tlt.loglike)
 mean(tlt.completeloglike, na.rm = T)
 quantile(tlt.completeloglike, 0.9, na.rm = T)
 quantile(tlt.completeloglike, 0.1, na.rm = T)
+
+
+colMeans(spy.loglike, na.rm = T)
+quantile(spy.loglike[,2], 0.9, na.rm = T)
+quantile(spy.loglike[,2], 0.1, na.rm = T)
+
+spy.completeloglike <- rowSums(spy.loglike)
+mean(spy.completeloglike, na.rm = T)
+quantile(spy.completeloglike, 0.9, na.rm = T)
+quantile(spy.completeloglike, 0.1, na.rm = T)
+
 
 
 

@@ -264,5 +264,42 @@ corrHAR <- cbind(intercept[22:2515], corrday[22:2515], corrweek[22:2515], corrmo
 
 
 
+#########################################################################################################
+#
+#
+#							HAR models estimations 5min with standard errors
+#
+#
+#########################################################################################################
 
 
+#can be estimated using package for time efficiency:
+
+library(HARModel)
+
+
+HAREstimate(RM, BPV = NULL, RQ = NULL, periods = c(1,5,22),
+periodsJ = NULL, periodsRQ = NULL, type = "HAR",
+insanityFilter = TRUE, h = 1)
+
+
+HAR_5min_TLT <- HAREstimate(sqrt(calccov[[1]][[7]][1,1,]))
+
+
+fiveminvol <- matrix(sqrt(calccov[[1]][[7]][1,1,]))
+volday <- fiveminvol
+volweek <- rowMeans(cbind(fiveminvol, mlag(fiveminvol,4,mean(fiveminvol))))
+volmonth <- rowMeans(cbind(fiveminvol, mlag(fiveminvol,21,mean(fiveminvol))))
+
+
+#needs 23 data points to initialize. This is in agreement with HARestimate from HARmodel library when removing intercept part.
+tester <- lm(fiveminvol[23:2516] ~    
+	volday[22:(2516-1)] + volweek[22:(2516-1)] + volmonth[22:(2516-1)])
+
+summary(tester)
+
+
+
+t(mergedfrequencies[[5]][[8]] * 100) %*% mergedfrequencies[[5]][[8]] * 100
+
+lll <- t(mergedfrequencies[[5]][[8]]) %*% mergedfrequencies[[5]][[8]]
