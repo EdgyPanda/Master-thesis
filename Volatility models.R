@@ -47,6 +47,50 @@ for(i in 1:2516){
 
 }
 
+#----------check if dailyretotc can be better by taking 5 minute price scheme instead--------:
+#it is not
+#it's almost the same. 
+#library(highfrequency)
+#dataTLT <- readRDS("dataTLT.rds")
+#dataSPY <- readRDS("dataSPY.rds")
+
+#opentocloseTLT <- list()
+#opentocloseSPY <- list()
+
+#for(i in 1:length(dataTLT)){
+
+#  opentocloseTLT[[i]] <- aggregatets(dataTLT[[i]], on = "seconds", k = 1)
+#  opentocloseSPY[[i]] <- aggregatets(dataSPY[[i]], on = "seconds", k = 1)
+#}
+
+#for(i in 1:length(opentocloseTLT)){
+
+#  opentocloseTLT[[i]] <- opentocloseTLT[[i]][c(1,length(opentocloseTLT[[i]]))]
+#  opentocloseSPY[[i]] <- opentocloseSPY[[i]][c(1,length(opentocloseSPY[[i]]))]
+#}
+
+#for(i in 1:length(dataTLT)){
+
+#  opentocloseTLT[[i]] <- diff(log(opentocloseTLT[[i]]))[-1] 
+#  opentocloseSPY[[i]] <- diff(log(opentocloseSPY[[i]]))[-1] 
+
+#}
+
+#mergedopentoclose <- list()
+
+#for(i in 1:length(dataTLT)){
+                            #removing nans using colsums
+ # mergedopentoclose[[i]] <- matrix(colSums(cbind(opentocloseTLT[[i]], opentocloseSPY[[i]]), na.rm=T),ncol=2)
+
+#}
+
+#dailyretotc2 <- xts(t(sapply(mergedopentoclose, function(x) cbind(x[,1], x[,2]))), order.by = as.Date(getDates))
+
+
+
+
+#---------------------------------------------------------------------------------------
+
 #-----------------------------------The scalar bivariate GARCH model estimation---------------------------
 
 #lT is list of intraday returns as xts object with each list element being each day
@@ -113,12 +157,12 @@ BivarGARCHFilter <- function(dailyret, params, covariance, inference = F){
 
 	#initializing  with unconditional mean. 
 
-	astar <- dAlpha * (samplercov * samplecov^(-1))
+	astar <- samplecov^(-1) *  (dAlpha * samplercov)  #  samplecov^(-1)
 
 	mSigma[,,1] <- samplecov 
 
 	#compute first observation of log-likelihood (we are minizing neg-log-likelihood):
-	dLLK <- log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
+	dLLK <-  d* log(2*pi) + log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
 
 
 	dLLKs <- numeric()
@@ -128,11 +172,11 @@ BivarGARCHFilter <- function(dailyret, params, covariance, inference = F){
 		mSigma[,,i] <- samplecov * (1 - astar - dBeta)  + dBeta * mSigma[,,i-1] + dAlpha * rcov[,,i-1]
 
 		#neglog collection for score calculation
-		dLLKs[i] <- 0.5 * d* log(2*pi) + 0.5 * (log(det(mSigma[,,i])) + 
+		dLLKs[i] <-   d* log(2*pi) +   (log(det(mSigma[,,i])) +  
 		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]))
 		}
 
-	fulldLLK <- - sum(dLLKs) #loglikelihood
+	fulldLLK <-  - 0.5 * sum(dLLKs) #loglikelihood
 
 	lOut <- list()
 
@@ -164,7 +208,7 @@ ineqfun_GARCH_BIVAR <- function(vPar, ...) {
   return(dAlpha + dBeta)
 }
 
-EstimateBivarGARCH <- function(dailyret, covariance, nobootstrap = T, vPar=NULL, ineqfun_GARCH = ineqfun_GARCH_BIVAR, ineqLB = 0.00, ineqUB = 0.9999){
+EstimateBivarGARCH <- function(dailyret, covariance, bootstrap = FALSE, vPar=NULL, ineqfun_GARCH = ineqfun_GARCH_BIVAR, ineqLB = 0.00, ineqUB = 0.9999){
   
   # We set starting value for alpha equal to 0.05, dBeta = 0.94, and chose omega to target
   # the empirical variance by targeting the unconditional variance of the 
@@ -194,10 +238,10 @@ EstimateBivarGARCH <- function(dailyret, covariance, nobootstrap = T, vPar=NULL,
   ## extract the likelihood computed at its maximum
   dLLK = -tail(optimizer$values, 1)
 
-  if(nobootstrap){
+  if(!bootstrap){
   #CALCULATING ROBUST STD. ERRORS WHEN NO COVARIANCE TARGETING:
 
-  scores <- matrix(0L, nrow=length(lT), ncol = length(vPar))
+  scores <- matrix(0L, nrow=length(dailyret[,1]), ncol = length(vPar))
 
   step <- 1e-5 * vPar
   # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
@@ -207,32 +251,32 @@ EstimateBivarGARCH <- function(dailyret, covariance, nobootstrap = T, vPar=NULL,
     delta <- rep(0, length(vPar))
     delta[i] <- h
 																
-	loglikeminus <- BivarGARCHFilter(lT,dailyret, vPar-delta, covariance)$dLLKs
-	loglikeplus <- BivarGARCHFilter(lT,dailyret, vPar+delta, covariance,)$dLLKs
+	loglikeminus <- BivarGARCHFilter(dailyret, vPar-delta, covariance)$dLLKs
+	loglikeplus <- BivarGARCHFilter(dailyret, vPar+delta, covariance,)$dLLKs
 
 	scores[,i] <- (loglikeplus - loglikeminus)/(2*h)
 
   }
 
-  J <- (t(scores) %*% scores)/length(lT)
+  J <- (t(scores) %*% scores)/length(dailyret[,1])
 
-  I <- optimizer$hessian/length(lT)
+  I <- optimizer$hessian/length(dailyret[,1])
 
   I <- solve(I)[-1 ,-1]
 
-  vars <- (I * J * I)/length(lT)
+  vars <- (I * J * I)/length(dailyret[,1])
   
   rse <- sqrt(diag(vars))
 
   ## compute filtered volatility
-  Filter <- BivarGARCHFilter(lT, dailyret, c(vPar[1], vPar[2]), covariance)
+  Filter <- BivarGARCHFilter(dailyret, c(vPar[1], vPar[2]), covariance)
 
   vSigma2 <- Filter$mSigma
   
   sampleH <- Filter$sampleH
 
   ## Compute the daily Average BIC
-  iT = length(lT)
+  iT = length(dailyret[,1])
   BIC = (-2 * dLLK + log(iT) * length(vPar))/iT
   
   ##Standard errors:
@@ -255,20 +299,60 @@ EstimateBivarGARCH <- function(dailyret, covariance, nobootstrap = T, vPar=NULL,
     return(lOut)
 
   }
-
-  return(vPar)
   
 }
 
 #it does not matter whether you use percentage returns with realcov calculated on percentage returns or 
-#standard returns. 
+#standard returns. but if you want the loglike you should not use percentage returns. 
 
-library(tictoc)
-tic()
-tester <- EstimateBivarGARCH(dailyretotc, calccov[[1]][[7]], nobootstrap = F)
-toc()
+tester <- EstimateBivarGARCH(dailyretotc * 100, calccov[[1]][[7]]*10000)
 
 
+qlikes_rBG <- numeric()
+
+for(i in 2:2516){
+  qlikes_rBG[i] <-  QLIKE(tester$vSigma2[,,i-1],calccov[[1]][[7]][,,i]*10000, 2)
+}
+
+mean(qlikes_rBG, na.rm = T)
+
+estacrossfreq_rBG <- list()
+
+#should be done under reasonable sampling frequencies. 
+for(i in 6:10){
+
+  estacrossfreq_rBG[[i]] <- EstimateBivarGARCH(dailyretotc * 100, calccov[[1]][[i]] * 10000)
+
+}
+
+params <- matrix(unlist(lapply(estacrossfreq_rBG, function(x) x$vPar)), ncol = 2, byrow = T)
+
+colMeans(params)
+quantile(params[,1], 0.1)
+quantile(params[,1], 0.9)
+quantile(params[,2], 0.1)
+quantile(params[,2], 0.9)
+
+avgloglike <- mean(unlist(sapply(estacrossfreq_rBG, function(x) x$dLLK)))
+
+avgavgbic <- mean(unlist(sapply(estacrossfreq_rBG, function(x) x$BIC)))
+
+#calc QLIKES: 
+
+sigmas_rBG <- lapply(estacrossfreq_rBG, function(x) x$vSigma2)
+
+Qlikes <- matrix(0L, ncol = 10, nrow = 2516)
+
+for(i in 6:10){
+  for(j in 2:2516){
+    Qlikes[j, i] <- QLIKE(sigmas_rBG[[i]][,,j-1],calccov[[1]][[7]][,,j]*10000, 2)
+  }
+}
+mean(colMeans(Qlikes, na.rm = T)[6:10])
+
+library(ggplot2)
+
+ggplot() + geom_line(aes(as.Date(getDates), sigmas_rBG[[10]][2,2,])) + geom_line(aes(as.Date(getDates), calccov[[1]][[10]][2,2,]*10000))
 #------------------------------------------bootstrapping----------------------------------------------
 #
 #
@@ -309,10 +393,11 @@ for(j in 1:1000){
 	print(sprintf("bootstrap %s",j))
 }
 
-saveRDS(estimates_5min_rBG, "bootstrapestimates_5min_rBG.rds")
+#saveRDS(estimates_5min_rBG, "bootstrapestimates_5min_rBG.rds")
 
+bootstraps_stimates_5min_rBG <- readRDS("bootstrapestimates_5min_rBG.rds") 
 
-bootstrap_stderror_5min_rBG <- apply(estimates_5min_rBG, MARGIN = c(2), FUN = function(x) sd(x))
+bootstrap_stderror_5min_rBG <- apply(bootstraps_stimates_5min_rBG, MARGIN = c(2), FUN = function(x) sd(x))
 
 
 
@@ -450,9 +535,6 @@ BivarGARCHFilterContAsym <- function(dailyret, params, covariance){
 	
 }
 
-leltest334 <- BivarGARCHFilterContAsym(mergedfrequencies[[8]],dailyretotc, c(0.02,0.01,0.01,0.94), list(P, N, M))
-
-
 
 
 ObjFBivarGARCHContAsym <- function(vPar, dailyret, covariance) {
@@ -502,7 +584,7 @@ EstimateBivarGARCHContAsym <- function(dailyret, covariance, ineqfun_GARCH = ine
                     ineqUB = ineqUB, ## the inequality lower bound, i.e. 0.0 < alpha + beta < 0.9999
                     ## lower and upper bounds for all parameters
                     LB = c(0.0001, 0.0001, 0.0001, 0.0001), UB = c(0.999, 0.999, 0.999, 0.999)
-                    ) 
+                    ) #0.0001
   
   ## extract estimated parameters
   vPar = optimizer$pars
@@ -567,8 +649,90 @@ EstimateBivarGARCHContAsym <- function(dailyret, covariance, ineqfun_GARCH = ine
 }
 
 
-#5min frequency stemming from P, N, M. 
-leltest4 <- EstimateBivarGARCHContAsym(dailyretotc, list(P,N,M))
+#5min frequency stemming from P, N, M.  I havent scaled in the estimator
+leltest4 <- EstimateBivarGARCHContAsym(dailyretotc*100, list(P*10000,N*10000,M*10000))
+
+
+
+qlikes_crBG <- numeric()
+
+for(i in 2:2516){
+  qlikes_crBG[i] <-  QLIKE(leltest4$vSigma2[,,i-1],calccov[[1]][[7]][,,i]*10000, 2)
+}
+
+mean(qlikes_crBG, na.rm = T)
+
+#constructing semicovs from entire sampling frequency:
+if(FALSE){
+ptemp <- array(0L, dim =c(2,2,2516)) 
+ntemp <- array(0L, dim =c(2,2,2516)) 
+mtemp <- array(0L, dim =c(2,2,2516)) 
+
+Pfreq <- list()
+Nfreq <- list()
+Mfreq <- list()
+
+for(j in 1:10){
+  for(i in 1:2516){
+
+    ptemp[,,i] <- realsemicov(mergedfrequencies[[j]][[i]], "P")
+    ntemp[,,i] <- realsemicov(mergedfrequencies[[j]][[i]], "N")
+    mtemp[,,i] <- realsemicov(mergedfrequencies[[j]][[i]], "M")
+    print(sprintf("%s", i))
+  }
+
+  Pfreq[[j]] <- ptemp 
+  Nfreq[[j]] <- ntemp 
+  Mfreq[[j]] <- mtemp 
+  print(sprintf("%s", j))
+}
+}
+#--------------------
+
+semicov_acrossfreq <- list(Pfreq, Nfreq, Mfreq)
+
+#saveRDS(semicov_acrossfreq, "semicov_acrossfreq.rds")
+
+semicovs <- readRDS("semicov_acrossfreq.rds")
+
+Pfreq <- semicovs[[1]]
+Nfreq <- semicovs[[2]]
+Mfreq <- semicovs[[3]]
+
+estacrossfreq_crBG <- list()
+
+for(i in 6:10){
+
+  estacrossfreq_crBG[[i]] <- EstimateBivarGARCHContAsym(dailyretotc * 100, 
+    list(Pfreq[[i]]*10000,Nfreq[[i]]*10000,Mfreq[[i]]*10000))
+
+}
+
+params <- matrix(unlist(lapply(estacrossfreq_crBG, function(x) x$vPar)), ncol = 4, byrow = T)
+
+colMeans(params)
+apply(params, MARGIN = c(2), FUN =function(x) quantile(x, 0.1))
+apply(params, MARGIN = c(2), FUN =function(x) quantile(x, 0.9))
+
+
+avgloglike <- mean(unlist(sapply(estacrossfreq_crBG, function(x) x$dLLK)))
+
+avgavgbic <- mean(unlist(sapply(estacrossfreq_crBG, function(x) x$BIC)))
+
+#calc QLIKES: 
+
+sigmas_crBG <- lapply(estacrossfreq_crBG, function(x) x$vSigma2)
+
+Qlikes <- matrix(0L, ncol = 10, nrow = 2516)
+
+for(i in 6:10){
+  for(j in 2:2516){
+    Qlikes[j, i] <- QLIKE(sigmas_crBG[[i]][,,j-1],calccov[[1]][[7]][,,j]*10000, 2)
+  }
+}
+mean(colMeans(Qlikes, na.rm = T)[6:10])
+
+
 
 
 #------------------------------------------bootstrapping----------------------------------------------
@@ -609,17 +773,30 @@ for(j in 1:1000){
 
 	BS_dailyretotc <- BS_dailyretotc_l[[j]]
 
-	estimates_5min_crBG[j, ] <- EstimateBivarGARCHContAsym(BS_dailyretotc, list(BS_P_crBG, BS_N_crBG, BS_M_crBG))$vPar
+	estimates_5min_crBG[j, ] <- EstimateBivarGARCHContAsym(BS_dailyretotc * 100, list(BS_P_crBG*10000, BS_N_crBG*10000, BS_M_crBG*10000))$vPar
 	print(sprintf("Bootstrap %s", j))
 	
 
 }
 
-saveRDS(estimates_5min_crBG, "bootstapestimates_5min_crBG.rds")
+#saveRDS(estimates_5min_crBG, "bootstapestimates_5min_crBG.rds")
 
 
+
+estimates_5min_crBG <- readRDS("bootstapestimates_5min_crBG.rds")
+
+#removing spurious results. 
+rem1 <- which(estimates_5min_crBG[,2]<0.2)
+rem2 <- which(estimates_5min_crBG[,4]<0.2)
+rem3 <- which(estimates_5min_crBG[,3]>0.15)
+rem4 <- which(estimates_5min_crBG[,1]>0.3)
+
+removed <- unique(c(rem1, rem2, rem3, rem4))
+
+estimates_5min_crBG <- estimates_5min_crBG[-c(removed), ]
 
 bootstrap_stderror_5min_crBG <- apply(estimates_5min_crBG, MARGIN = c(2), FUN = function(x) sd(x))
+
 
 
 
@@ -678,8 +855,487 @@ rDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
   return(lOut)
 }
 
-#---------------------------------realized continuous asymmetric DCC model (rcDCC)---------------------------
 
+#testing with simple realGARCH(1,1) using rugarch package. 
+#you need getDates for fit function in rugarch to work. 
+#moreover the covariances you use in the DCC model is also used in the univariate models.
+Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = NULL) {
+  
+  ## estimate the marginal models
+  require(Rsolnp)
+  require(rugarch) 
+ 
+  #Marginal garch specification. THIS WORKS ONLY IN BIVARIATE SETUP. 
+  
+  #list where marginal models are stored
+  #to get covariances from percentage log-returns you need to multiply by 10000 (DONE OUTSIDE ESTIMATOR)
+  if(!bootstrap){
+    cov1 <- (covariance[1,1,])
+    cov2 <- (covariance[2,2,]) 
+
+    spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
+  	list(model = 'realGARCH', garchOrder = c(2, 1)))
+
+    setbounds(spec)<-list(alpha2=c(-1,1))
+
+
+    spec1 <- ugarchfit(spec, mY[,1], solver = 'hybrid', realizedVol = 
+    xts(cov1, order.by = as.Date(getDates)), 
+    fit.control = list(stationarity = 1, fixed.se = 1))
+
+    spec2 <- ugarchfit(spec, mY[,2], solver = 'hybrid', realizedVol = 
+    xts(cov2, order.by = as.Date(getDates)), 
+    fit.control = list(stationarity = 1, fixed.se = 1))
+
+    #mspec <- multispec( replicate(spec, n=2) )
+    						 #only used percentage log-returns, since it seems to converge better. 
+    #lfit <- multifit(mspec, mY, solver = 'hybrid', realizedVol = 
+    #xts(cbind(cov1, cov2), order.by = as.Date(getDates)), fit.control = list(stationarity = 1, fixed.se = 1))
+
+    res1 <- residuals(spec1, standardize = T)
+    res2 <- residuals(spec2, standardize = T)
+
+    mEta <- cbind(res1, res2) #residuals(lfit, standardize = T)
+  }else{mEta <- residuals}
+  ####################################################
+  
+  ## maximization of the DCC likelihood
+  
+  #initial parameters
+  vPar = c(0.1974634, 0.8015366)
+  
+  #unconditional correlation
+  mQ = cor(mEta)
+  
+  #maximize the DCC likelihood
+  optimizer = solnp(vPar, fun = function(vPar, mEta, mQ, covariance) {
+    
+    Filter = rDCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
+    dNLLK = -as.numeric(Filter$dLLK)
+    return(dNLLK)
+    
+  }, ineqfun = function(vPar, ...) {
+    sum(vPar)
+  }, ineqLB = 1e-4, ineqUB = 0.999, 
+  LB = c(1e-4, 1e-4), UB = c(0.999, 0.999), 
+  mEta = mEta, mQ = mQ, covariance = covariance)
+  
+  #Extract the estimated parameters
+  vPar = optimizer$pars
+  
+  #Extract the likelihood of the correlation part
+  dLLK_C = -tail(optimizer$values, 1)
+  
+  #Filter the dynamic correlation using the estimated parameters
+  Filter = rDCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
+
+  if(bootstrap){
+
+    return(vPar)
+  
+  }
+  #standard errors 
+  se <- solve(optimizer$hessian)
+  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
+
+  #extract univariate variances
+  mSigma = cbind(sigma(spec1)^2, sigma(spec2)^2)
+  
+
+
+  #extract univariate estimated parameters
+  mCoef = cbind(coef(spec1), coef(spec2))
+
+  colnames(mCoef) <- colnames(mY)
+  
+  #compute the likelihood of the volatility  part
+  dLLK_V = sum(-spec1@fit$partial.log.likelihoods) +sum(-spec2@fit$partial.log.likelihoods)
+  
+  dLLK_V2 = sum(likelihood(spec1)) + sum(likelihood(spec2))
+
+  #compute the total likelihood
+  dLLK = dLLK_V2 + dLLK_C
+  
+  ## Compute z_t
+  aCor = Filter[["aCor"]]
+  covs = sigma(spec1) * sigma(spec2) *  aCor[2,1,]
+  
+
+  iT = nrow(mY)
+  
+  mZ = matrix(0, iT, ncol(mY))
+  
+  for (t in 1:iT) {
+    mZ[t, ] = solve(chol(aCor[,,t])) %*% as.numeric(mEta[t, ])
+  }
+    
+  #compute estimated covariances:
+  vSigma2 <- array(0L, dim = c(2,2, 2516))
+
+  for(i in 1:length(mY[,1])){
+
+    vSigma2[,,i] <- matrix(c(mSigma[i,1], covs[i], covs[i], mSigma[i,2]))
+
+  }
+
+  lOut = list()
+
+   ## Compute the daily Average BIC
+  iT = 2516
+  BIC = (-2 * dLLK + log(iT) * (length(vPar) + length(coef(spec1)) + length(coef(spec2))))/iT
+  
+  #output the results
+  lOut[["dLLK"]] = dLLK
+  lOut[["dLLKV"]] = dLLK_V
+  lOut[["BIC"]] = BIC
+  lOut[["mCoef"]] = mCoef
+  lOut[["vPar"]] = vPar
+  lOut[["mSigma"]] = mSigma
+  lOut[["aCor"]] = aCor
+  lOut[["mEta"]] = mEta
+  lOut[["mZ"]] = mZ
+  lOut[["se"]] = se
+  lOut[["dLLK_C"]] = dLLK_C
+  lOut[["vSigma2"]] = vSigma2
+  lOut[["covs"]] = covs
+
+  return(lOut)
+  
+}
+
+
+#solnp can (rarely) give an error, try and run all functions one more time and retry
+rDCCests <- Estimate_rDCC(dailyretotc*100, calccov[[1]][[7]]*10000, getDates)
+
+
+qlikes_rDCC <- numeric()
+
+for(i in 2:2516){
+  qlikes_rDCC[i] <-  QLIKE(rDCCests$vSigma2[,,i-1],calccov[[1]][[7]][,,i]*10000, 2)
+}
+
+mean(qlikes_rDCC, na.rm = T)
+
+
+estacrossfreq_rDCC <- list()
+
+for(i in 6:10){
+
+  estacrossfreq_rDCC[[i]] <- Estimate_rDCC(dailyretotc * 100, calccov[[1]][[i]]*10000, getDates)
+
+}
+
+
+params <- matrix(unlist(lapply(estacrossfreq_rDCC, function(x) x$vPar)), ncol = 2, byrow = T)
+
+colMeans(params)
+apply(params, MARGIN = c(2), FUN =function(x) quantile(x, 0.1))
+apply(params, MARGIN = c(2), FUN =function(x) quantile(x, 0.9))
+
+
+avgloglike <- mean(unlist(sapply(estacrossfreq_rDCC, function(x) x$dLLK)))
+
+avgavgbic <- mean(unlist(sapply(estacrossfreq_rDCC, function(x) x$BIC)))
+
+#calc QLIKES: 
+
+sigmas_rDCC <- lapply(estacrossfreq_rDCC, function(x) x$vSigma2)
+
+Qlikes <- matrix(0L, ncol = 10, nrow = 2516)
+
+for(i in 6:9){
+  for(j in 2:2516){
+    Qlikes[j, i] <- QLIKE(sigmas_rDCC[[i]][,,j-1],calccov[[1]][[7]][,,j]*10000, 2)
+  }
+}
+mean(colMeans(Qlikes, na.rm = T)[6:9])
+
+
+
+
+
+
+
+
+
+#------------------------testing if dcc likelihood is positive for my data following proper coded dcc model -----
+
+# it is. 
+
+
+
+library(rmgarch)
+
+xspec <- ugarchspec()
+xspec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
+  list(model = 'realGARCH', garchOrder = c(2,1))) #he changed the order in the code see starch. 
+
+setbounds(xspec)<-list(alpha2=c(-1,1))
+
+uspec <- multispec(replicate(2, xspec))
+
+spec1 = dccspec(uspec = uspec, dccOrder = c(1, 1), distribution = 'mvnorm')
+
+fit <- dccfit(spec1, data = dailyretotc*100) #realizedVol = tt143)
+
+tt143 <- xts(cbind(sqrt(calccov[[1]][[7]][1,1,]*10000), sqrt(calccov[[1]][[7]][2,2,]*10000)), 
+order.by = as.Date(1:2516))
+
+tt12 <- ugarchfit(xspec, data = dailyretotc[,1] * 100)
+tt13 <-  ugarchfit(xspec, data = dailyretotc[,2] * 100)
+
+likelihood(tt12) + likelihood(tt13)
+
+#implies that the optimizer values are negative in your case which is correct!
+dcc.likelihood <-  likelihood(fit) - (likelihood(tt12) + likelihood(tt13))
+
+
+#------------------------------------------bootstrapping----------------------------------------------
+
+library(boot)
+
+library(np)
+
+#see patton "does anything beat rv5 min" says that the block length is driven by the persistence in the
+# variable we are interested in testing. 
+
+
+spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
+  list(model = 'realGARCH', garchOrder = c(2, 1)))
+
+setbounds(spec)<-list(alpha2=c(-1,1))
+
+
+spec1 <- ugarchfit(spec, dailyretotc[,1] * 100, solver = 'hybrid', realizedVol = 
+xts(sqrt(calccov[[1]][[7]][1,1,] * 10000), order.by = as.Date(getDates)), 
+fit.control = list(stationarity = 1, fixed.se = 1))
+
+spec2 <- ugarchfit(spec, dailyretotc[,2] * 100, solver = 'hybrid', realizedVol = 
+xts(sqrt(calccov[[1]][[7]][2,2,] * 10000), order.by = as.Date(getDates)), 
+fit.control = list(stationarity = 1, fixed.se = 1))
+
+
+mEta <- matrix(c(residuals(spec1, standardize = T), residuals(spec2, standardize = T)), ncol=2, byrow = T)
+
+head(mEta)
+#optimal blockk length:
+b.star(calccov[[1]][[7]][2,1, ]/sqrt(calccov[[1]][[7]][1,1,  ] * calccov[[1]][[7]][2,2, ]))
+
+
+
+		#correlation models are very persistent and therefore needs bigger block length. 
+		#if a too small block length is chosen it can destroy the dependency in the data, also leading
+		#to non-invertible hessians in the rugarch package. 
+ll <- tsboot(dailyretotc[,1], mean ,R = 1000, l = 97, sim = "fixed", endcorr = TRUE)
+indexation <- boot.array(ll)
+
+
+
+estimates_5min_rDCC <- matrix(0L, nrow = 1000, ncol = 2)
+
+
+BS_dailyretotc <- matrix(dailyretotc, nrow=2516, ncol = 2)
+
+BS_dailyretotc_l <- list()
+
+mEta_l <- list()
+
+for(i in 1:1000){
+
+BS_dailyretotc_l[[i]] <- xts(BS_dailyretotc[indexation[i, ], ], order.by = as.Date(getDates))
+mEta_l[[i]] <- mEta[indexation[i, ], ]
+}
+
+head(mEta_l[[1]])
+head(indexation[1, ])
+head(mEta[1852: 1857, ])
+
+#bootstrapping wrt residuals does not work at all. 
+
+for(j in 1:1000){
+	
+	BS_calccov_rDCC <- calccov[[1]][[7]][,,indexation[j, ]]
+
+	BS_dailyretotc <- BS_dailyretotc_l[[j]]
+
+  mEta <- mEta_l[[j]]
+
+	estimates_5min_rDCC[j, ] <- Estimate_rDCC(NULL, BS_calccov_rDCC*10000, getDates, TRUE, residuals = mEta)
+	print(sprintf("Bootstrap %s", j))
+	
+
+}
+
+#check
+ts.plot(estimates_5min_rDCC[1:421,2])
+
+
+ts.plot(estimates_5min_rDCC[-c(which(estimates_5min_rDCC[1:421,1]<0.01)),1])
+estimates
+
+#saveRDS(estimates_5min_rDCC, "bootstrapestimates_5min_rDCC_residuals.rds")
+
+#saveRDS(bootstrap5min_est_complete, "bootstapestimates_5min_rDCC.rds")
+
+bootstapestimates_5min_rDCC <- readRDS("bootstrapestimates_5min_rDCC_residuals.rds")
+
+
+rem1 <- which(bootstapestimates_5min_rDCC[,1]<0.1 | bootstapestimates_5min_rDCC[,1]>0.4)
+rem2 <- which(bootstapestimates_5min_rDCC[,2]<0.55)
+
+rem <- unique(c(rem1,rem2))
+
+bootstapestimates_5min_rDCC <- bootstapestimates_5min_rDCC[-c(rem), ]
+
+
+bootstrap_stderror_5min_rDCC <- apply(bootstapestimates_5min_rDCC, MARGIN = c(2), FUN = function(x) sd(x))
+
+
+
+#------------------------------------------------realGARCH 5min estimates and standard errors--------------------
+
+library(rugarch)
+
+
+
+spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
+	list(model = 'realGARCH', garchOrder = c(2,1))) #he changed the order in the code see starch. 
+
+setbounds(spec)<-list(alpha2=c(-1,1)) #you need to reset the bounds for alpha2 otherwise it will be zero since it 
+#originally is set between (0,1). 
+
+
+#TLT
+lfit2 = ugarchfit(spec, dailyretotc[,1]*100, solver = 'hybrid', realizedVol = 
+	xts((calccov[[1]][[7]][1,1,]*10000), order.by = as.Date(getDates)), 
+	fit.control = list(stationarity = 1, fixed.se = 0))
+
+
+test2 <- sigma(lfit2)
+
+rugarch.LL = c('logL' = sum(-lfit2@fit$log.likelihoods), 'pLogL' = sum(-lfit2@fit$partial.log.likelihoods))
+sum(rugarch.LL)
+
+
+#estimating across frequencies:
+tt14 <- coef(lfit2)
+
+estimatesacross_TLT <- matrix(0L, ncol = 9, nrow = 10)
+estimatesacross_SPY <- matrix(0L, ncol = 9, nrow = 10)
+tlt.loglike <- matrix(0L, ncol = 2, nrow = 10)
+spy.loglike <- matrix(0L, ncol = 2, nrow = 10)
+
+
+
+for(i in 1:10){
+	#TLT
+
+	tlt <-  ugarchfit(spec, dailyretotc[,1] * 100, solver = 'hybrid', realizedVol = 
+	xts((calccov[[1]][[i]][1,1,]*10000), order.by = as.Date(getDates)), 
+	fit.control = list(stationarity = 1, fixed.se = 1))
+
+	spy <- ugarchfit(spec, dailyretotc[,2] * 100, solver = 'hybrid', realizedVol = 
+	xts((calccov[[1]][[i]][2,2,]*10000), order.by = as.Date(getDates)), 
+	fit.control = list(stationarity = 1, fixed.se = 1))
+
+	estimatesacross_TLT[i, ] <- coef(tlt)
+
+	tlt.loglike[i, ] <- c('logL' = sum(-(tlt@fit$log.likelihoods)), 'pLogL' = sum(-tlt@fit$partial.log.likelihoods))
+	#SPY
+	spy.loglike[i, ] <- c(sum(-(spy@fit$log.likelihoods)), sum(-spy@fit$partial.log.likelihoods))
+	estimatesacross_SPY[i, ] <- coef(spy)
+
+}
+
+
+colnames(estimatesacross_TLT) <- names(coef(lfit2))
+rownames(estimatesacross_TLT) <- c("1sec", "5sec", "15sec", "20sec", "30sec", "1min", "5min", "15min", "30min", "daily")
+colnames(estimatesacross_SPY) <- colnames(estimatesacross_TLT)
+rownames(estimatesacross_SPY) <- rownames(estimatesacross_TLT)
+colnames(tlt.loglike) <- c("logL", "pLogL")
+colnames(spy.loglike) <- colnames(tlt.loglike)
+
+#needed to smooth out the daily scheme to ensure consistency
+daily_SPY <- coef(ugarchfit(spec, dailyretotc[,2] * 100, solver = 'hybrid', realizedVol = 
+	xts(sqrt(smooth(calccov[[1]][[10]][2,2,])) * 100, order.by = as.Date(getDates)), 
+	fit.control = list(stationarity = 1, fixed.se = 1)))
+daily_TLT <- coef(ugarchfit(spec, dailyretotc[,1] * 100, solver = 'hybrid', realizedVol = 
+	xts(sqrt(smooth(calccov[[1]][[10]][1,1,])) * 100, order.by = as.Date(getDates)), 
+	fit.control = list(stationarity = 1, fixed.se = 1)))
+
+estimatesacross_TLT[10, ] <- daily_TLT
+estimatesacross_SPY[10, ] <- daily_SPY
+
+estimatesacross_TLT_mean <- colMeans(estimatesacross_TLT[-10, ])
+estimatesacross_SPY_mean <- colMeans(estimatesacross_SPY[-10, ])
+
+TLT_90percentquantile <- apply(estimatesacross_TLT, MARGIN = c(2), FUN = function(x) quantile(x, 0.9, na.rm=TRUE))
+TLT_10percentquantile <- apply(estimatesacross_TLT, MARGIN = c(2), FUN = function(x) quantile(x, 0.1, na.rm=TRUE))
+
+SPY_90percentquantile <- apply(estimatesacross_SPY[-10, ], MARGIN = c(2), FUN = function(x) quantile(x, 0.9, na.rm=TRUE))
+SPY_10percentquantile <- apply(estimatesacross_SPY[-10, ], MARGIN = c(2), FUN = function(x) quantile(x, 0.1, na.rm=TRUE))
+
+
+
+TLT_stats <- rbind(estimatesacross_TLT_mean, TLT_10percentquantile, TLT_90percentquantile)
+SPY_stats <- rbind(estimatesacross_SPY_mean, SPY_10percentquantile, SPY_90percentquantile)
+
+
+
+
+colMeans(tlt.loglike, na.rm = T)
+quantile(tlt.loglike[,2], 0.9, na.rm = T)
+quantile(tlt.loglike[,2], 0.1, na.rm = T)
+
+mean(tlt.loglike[,1], na.rm = T)
+quantile(tlt.loglike[,1], 0.9, na.rm = T)
+quantile(tlt.loglike[,1], 0.1, na.rm = T)
+
+
+colMeans(spy.loglike, na.rm = T)
+quantile(spy.loglike[,2], 0.9, na.rm = T)
+quantile(spy.loglike[,2], 0.1, na.rm = T)
+
+mean(spy.loglike, na.rm = T)
+quantile(spy.loglike[,1], 0.9, na.rm = T)
+quantile(spy.loglike[,1], 0.1, na.rm = T)
+
+
+
+
+#SPY
+lfit = ugarchfit(spec, dailyretotc[,2] * 100, solver = 'hybrid', realizedVol = 
+	(xts((calccov[[1]][[6]][2,2,]* 10000), order.by = as.Date(getDates))), 
+	fit.control = list(stationarity = 0, fixed.se = 0))
+
+
+rugarch.LL = c('logL' = sum(-lfit@fit$log.likelihoods), 'pLogL' = sum(-lfit@fit$partial.log.likelihoods))
+
+
+
+lfit <- ugarchfit(spec, spyreal[,1] , solver = 'hybrid', realizedVol = 
+	spyreal[,2] , 
+	fit.control = list(stationarity = 1, fixed.se = 1))
+
+
+spec = ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = list(model = 'realGARCH', garchOrder = c(2, 1)))
+
+
+fit = ugarchfit(spec, spyreal[, 1] * 100, solver = 'hybrid', realizedVol = spyreal[,2] * 100)
+
+rugarch.LL = c('logL' = sum(-fit@fit$log.likelihoods[1:1492]), 'pLogL' = sum(-fit@fit$partial.log.likelihoods[1:1492]))
+
+sum(rugarch.LL)
+
+
+data(spyreal)
+head(spyreal)
+
+ts.plot(spyreal[,2])
+ts.plot((calccov[[8]][[7]][2,2,]))
+sqrt(head(calccov[[1]][[7]][2,2,]))
+
+#---------------------------------realized continuous asymmetric DCC model (rcDCC)---------------------------
 
 rcDCCFilter <- function(mEta, dAP, dAN, dAM , dB, mQ, covariance) {
   
@@ -774,399 +1430,52 @@ rcDCCFilter <- function(mEta, dAP, dAN, dAM , dB, mQ, covariance) {
 
 
 
-
-
-
-N[,,1292]
-ts.plot(lel4$aCor[2,1,])
-covariance <- list(P, N, M)
-
-lel4 <- rcDCCFilter(dailyretotc,-0.06504, -0.05120,  0.25439,  0.86085,cor(dailyretotc), covariance)
-
-lel4$aCor[2,1,]
-
-
-mean(lel4$astar[2,1,])
-
-is.nan(lel4$astar[2,1,])
-
-lel15 <- rDCCFilter(dailyretotc, 0.1, 0.2, cor(dailyretotc), calccov[[1]][[8]])
-
-ts.plot(lel15$aCor[2,1,])
-
-ts.plot(lel4$aCor[2,1,])
-
-0.1 * diag(sqrt(1/diag(calccov[[1]][[9]][,, 1]))) %*% calccov[[1]][[9]][,,1] %*% diag(sqrt(1/diag(calccov[[1]][[9]][,, 1])))
-
-matrix(c(diag[1],0,0,diag[2]), nrow=2,ncol=2)^(-0.5) %*% calccov[[1]][[9]][,,1] %*% 
-matrix(c(diag[1],0,0,diag[2]), nrow=2,ncol=2)^(-0.5)
-
-
-
-#testing with simple realGARCH(1,1) using rugarch package. 
-#you need getDates for fit function in rugarch to work. 
-#moreover the covariances you use in the DCC model is also used in the univariate models.
-Estimate_rDCC <- function(mY, covariance, getDates) {
+Estimate_rcDCC <- function(mY, covariance, cov2 = NULL, getDates, bootstrap = F, residuals = NULL){
   
   ## estimate the marginal models
   require(Rsolnp)
   require(rugarch) 
  
   #Marginal garch specification. THIS WORKS ONLY IN BIVARIATE SETUP. 
-  
-  #list where marginal models are stored
-
-  cov1 <- sqrt(covariance[1,1,]) * 100
-  cov2 <- sqrt(covariance[2,2,]) * 100
-
-  spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
+  if(!bootstrap){
+  	
+    #theres some minor inconsistencies (e-15) and thus I used true covariance instead.
+    #inconsistencies is enough to make the likelihood rough and thus end in a hole -133000. 
+    if(is.null(cov2)){
+      cov2 <- (covariance[[1]] + covariance[[2]] + covariance[[3]]) 
+    }
+  	#list where marginal models are stored
+  	spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
 	list(model = 'realGARCH', garchOrder = c(2, 1)))
+  	
+    setbounds(spec)<-list(alpha2=c(-1,1))
 
-  setbounds(spec)<-list(alpha2=c(-1,1))
 
-  #spec1 <- ugarchfit(spec, mY[,1], solver = 'hybrid', realizedVol = 
-  # xts(cov1, order.by = as.Date(getDates)), 
-#	fit.control = list(stationarity = 1, fixed.se = 1))
+    specforrobust1 <- ugarchfit(spec, mY[,1], solver = 'hybrid', realizedVol = 
+  xts((cov2[1,1,]), order.by = as.Date(getDates)), fit.control = list(stationarity = 1, fixed.se = 0))
 
- # spec2 <- ugarchfit(spec, mY[,2], solver = 'hybrid', realizedVol = 
-#	xts(cov2, order.by = as.Date(getDates)), 
-#	fit.control = list(stationarity = 1, fixed.se = 1))
+  	#specforrobust1 <- ugarchfit(spec, mY[ ,1], solver = 'solnp', realizedVol = 
+	#xts(sqrt(cov[1,1,]), order.by = as.Date(getDates)), fit.control = list(stationarity = 1, 
+    #fixed.se = 0))
 
-  mspec <- multispec( replicate(spec, n=2) )
-  						 #only used percentage log-returns, since it seems to converge better. 
-  lfit <- multifit(mspec, mY * 100, solver = 'hybrid', realizedVol = 
-  xts(cbind(cov1, cov2), order.by = as.Date(getDates)), fit.control = list(stationarity = 1, fixed.se = 1))
+  	specforrobust2 <- ugarchfit(spec, mY[ ,2], solver = 'hybrid', realizedVol = 
+	xts((cov2[2,2,]), order.by = as.Date(getDates)), fit.control = list(stationarity = 1, fixed.se = 0))
 
-  #res1 <- residuals(spec1, standardize = T)
-  #res2 <- residuals(spec2, standardize = T)
+  	#mspec <- multispec( replicate(spec, n=2) )
 
-  mEta <- residuals(lfit, standardize = T)
-  ####################################################
+  	#theres some issues with the multifit procedure regarding parameter estimations
+  	#lfit <- multifit(mspec, mY , solver = 'hybrid', realizedVol = 
+  	#xts(cbind(sqrt(cov[1,1,]), sqrt(cov[2,2,])), order.by = as.Date(getDates), fit.control = list(stationarity = 1, fixed.se = 1)))
   
-  ## maximization of the DCC likelihood
-  
-  #initial parameters
-  vPar = c(0.1974634, 0.8015366)
-  
-  #unconditional correlation
-  mQ = cor(mEta)
-  
-  #maximize the DCC likelihood
-  optimizer = solnp(vPar, fun = function(vPar, mEta, mQ, covariance) {
-    
-    Filter = rDCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
-    dNLLK = -as.numeric(Filter$dLLK)
-    return(dNLLK)
-    
-  }, ineqfun = function(vPar, ...) {
-    sum(vPar)
-  }, ineqLB = 1e-4, ineqUB = 0.999, 
-  LB = c(1e-4, 1e-4), UB = c(0.999, 0.999), 
-  mEta = mEta, mQ = mQ, covariance = covariance)
-  
-  #Extract the estimated parameters
-  vPar = optimizer$pars
-  
-  #Extract the likelihood of the correlation part
-  dLLK_C = -tail(optimizer$values, 1)
-  
-  #Filter the dynamic correlation using the estimated parameters
-  Filter = rDCCFilter(mEta, vPar[1], vPar[2], mQ, covariance)
-
-  #standard errors 
-  se <- solve(optimizer$hessian)
-  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
-
-  #extract univariate volatilities
-  mSigma = sigma(lfit)^2
-  
-  #extract univariate estimated parameters
-  mCoef = coef(lfit)
-
-  colnames(mCoef) <- colnames(mY)
-  
-  #compute the likelihood of the volatility  part
-  dLLK_V = sum(likelihood(lfit)) 
-  
-  
-  #compute the total likelihood
-  dLLK = dLLK_V + dLLK_C
-  
-  ## Compute z_t
-  aCor = Filter[["aCor"]]
-  iT = nrow(mY)
-  
-  mZ = matrix(0, iT, ncol(mY))
-  
-  for (t in 1:iT) {
-    mZ[t, ] = solve(chol(aCor[,,t])) %*% as.numeric(mEta[t, ])
+  	mEta <- cbind(residuals(specforrobust1, standardize = T), residuals(specforrobust2, standardize = T))   #residuals(lfit, standardize = T)
   }
-    
-  lOut = list()
-
-  #output the results
-  lOut[["dLLK"]] = dLLK
-  lOut[["mCoef"]] = mCoef
-  lOut[["vPar"]] = vPar
-  lOut[["mSigma"]] = mSigma
-  lOut[["aCor"]] = aCor
-  lOut[["mEta"]] = mEta
-  lOut[["mZ"]] = mZ
-  lOut[["se"]] = se
-  lOut[["seeall"]] = coef(lfit)
-  #you can get standard errors for GARCH model by fitting each univariately
-  return(lOut)
-  
-}
-
-
-#------------------------------------------bootstrapping----------------------------------------------
-
-library(boot)
-
-library(np)
-
-#see patton "does anything beat rv5 min" says that the block length is driven by the persistence in the
-# variable we are interested in testing. 
-
-
-#optimal blockk length:
-b.star(calccov[[1]][[7]][2,1, ]/sqrt(calccov[[1]][[7]][1,1,  ] * calccov[[1]][[7]][2,2, ]))
-
-
-
-		#correlation models are very persistent and therefore needs bigger block length. 
-		#if a too small block length is chosen it can destroy the dependency in the data, also leading
-		#to non-invertible hessians in the rugarch package. 
-ll <- tsboot(dailyretotc[,1], mean ,R = 1000, l = 89, sim = "fixed", endcorr = TRUE)
-indexation <- boot.array(ll)
-
-
-
-estimates_5min_rDCC <- matrix(0L, nrow = 1000, ncol = 2)
-
-
-BS_dailyretotc <- matrix(dailyretotc, nrow=2516, ncol = 2)
-
-BS_dailyretotc_l <- list()
-
-for(i in 1:1000){
-
-BS_dailyretotc_l[[i]] <- BS_dailyretotc[indexation[i, ], ]
-
-}
-
-
-for(j in 1:2){
-	
-	BS_calccov_rDCC <- calccov[[1]][[7]][,,indexation[j, ]]
-
-	BS_dailyretotc <- xts(BS_dailyretotc_l[[j]], order.by = as.Date(getDates)) 
-
-	estimates_5min_rDCC[j, ] <- Estimate_rDCC(BS_dailyretotc, BS_calccov_rDCC, getDates)$vPar
-	print(sprintf("Bootstrap %s", j))
-	
-
-}
-
-#managed to get 872. 
-#saveRDS(bootstrap5min_est_complete, "bootstapestimates_5min_rDCC.rds")
-
-bootstapestimates_5min_rDCC <- readRDS("bootstapestimates_5min_rDCC.rds")
-
-
-bootstrap_stderror_5min_rDCC <- apply(bootstapestimates_5min_rDCC, MARGIN = c(2), FUN = function(x) sd(x))
-
-
-
-
-
-
-
-#------------------------------------------------realGARCH 5min estimates and standard errors--------------------
-
-library(rugarch)
-
-spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
-	list(model = 'realGARCH', garchOrder = c(2,1))) #he changed the order in the code see starch. 
-
-setbounds(spec)<-list(alpha2=c(-1,1)) #you need to reset the bounds for alpha2 otherwise it will be zero since it 
-#originally is set between (0,1). 
-
-
-mspec <- multispec(replicate(spec, n=2))
-
-setbounds(mspec)<-replicate(list(alpha2=c(-1,1)), n=2)
-
-lfit <- multifit(mspec, dailyretotc, solver = 'hybrid', realizedVol = 
-  xts(cbind(sqrt(calccov[[1]][[7]][1,1,]), sqrt(calccov[[1]][[7]][2,2,])), order.by = as.Date(getDates)))
-
-coef(lfit)
-
-
-#TLT
-lfit2 = ugarchfit(spec, dailyretotc[,1] * 100, solver = 'hybrid', realizedVol = 
-	xts(sqrt(calccov[[1]][[7]][1,1,]) * 100, order.by = as.Date(getDates)), 
-	fit.control = list(stationarity = 1, fixed.se = 1))
-
-
-test2 <- sigma(lfit2)
-
-rugarch.LL = c('logL' = sum(-lfit2@fit$log.likelihoods), 'pLogL' = sum(-lfit2@fit$partial.log.likelihoods))
-sum(rugarch.LL)
-
-
-#estimating across frequencies:
-tt14 <- coef(lfit2)
-
-estimatesacross_TLT <- matrix(0L, ncol = 9, nrow = 10)
-estimatesacross_SPY <- matrix(0L, ncol = 9, nrow = 10)
-tlt.loglike <- matrix(0L, ncol = 2, nrow = 10)
-spy.loglike <- matrix(0L, ncol = 2, nrow = 10)
-
-
-
-for(i in 1:10){
-	#TLT
-
-	tlt <-  ugarchfit(spec, dailyretotc[,1] * 100, solver = 'hybrid', realizedVol = 
-	xts(sqrt(calccov[[1]][[i]][1,1,]) * 100, order.by = as.Date(getDates)), 
-	fit.control = list(stationarity = 1, fixed.se = 1))
-
-	spy <- ugarchfit(spec, dailyretotc[,2] * 100, solver = 'hybrid', realizedVol = 
-	xts(sqrt(calccov[[1]][[i]][2,2,]) * 100, order.by = as.Date(getDates)), 
-	fit.control = list(stationarity = 1, fixed.se = 1))
-
-	estimatesacross_TLT[i, ] <- coef(tlt)
-
-	tlt.loglike[i, ] <- c('logL' = sum(-tlt@fit$log.likelihoods), 'pLogL' = sum(-tlt@fit$partial.log.likelihoods))
-	#SPY
-	spy.loglike[i, ] <- c(sum(-spy@fit$log.likelihoods), sum(-spy@fit$partial.log.likelihoods))
-	estimatesacross_SPY[i, ] <- coef(spy)
-
-}
-colnames(estimatesacross_TLT) <- names(coef(lfit2))
-rownames(estimatesacross_TLT) <- c("1sec", "5sec", "15sec", "20sec", "30sec", "1min", "5min", "15min", "30min", "daily")
-colnames(estimatesacross_SPY) <- colnames(estimatesacross_TLT)
-rownames(estimatesacross_SPY) <- rownames(estimatesacross_TLT)
-colnames(tlt.loglike) <- c("logL", "pLogL")
-colnames(spy.loglike) <- colnames(tlt.loglike)
-
-#needed to smooth out the daily scheme to ensure consistency
-daily_SPY <- coef(ugarchfit(spec, dailyretotc[,2] * 100, solver = 'hybrid', realizedVol = 
-	xts(sqrt(smooth(calccov[[1]][[10]][2,2,])) * 100, order.by = as.Date(getDates)), 
-	fit.control = list(stationarity = 1, fixed.se = 1)))
-daily_TLT <- coef(ugarchfit(spec, dailyretotc[,1] * 100, solver = 'hybrid', realizedVol = 
-	xts(sqrt(smooth(calccov[[1]][[10]][1,1,])) * 100, order.by = as.Date(getDates)), 
-	fit.control = list(stationarity = 1, fixed.se = 1)))
-
-estimatesacross_TLT[10, ] <- daily_TLT
-estimatesacross_SPY[10, ] <- daily_SPY
-
-estimatesacross_TLT_mean <- colMeans(estimatesacross_TLT[-10, ])
-estimatesacross_SPY_mean <- colMeans(estimatesacross_SPY[-10, ])
-
-TLT_90percentquantile <- apply(estimatesacross_TLT, MARGIN = c(2), FUN = function(x) quantile(x, 0.9, na.rm=TRUE))
-TLT_10percentquantile <- apply(estimatesacross_TLT, MARGIN = c(2), FUN = function(x) quantile(x, 0.1, na.rm=TRUE))
-
-SPY_90percentquantile <- apply(estimatesacross_SPY[-10, ], MARGIN = c(2), FUN = function(x) quantile(x, 0.9, na.rm=TRUE))
-SPY_10percentquantile <- apply(estimatesacross_SPY[-10, ], MARGIN = c(2), FUN = function(x) quantile(x, 0.1, na.rm=TRUE))
-
-
-
-TLT_stats <- rbind(estimatesacross_TLT_mean, TLT_10percentquantile, TLT_90percentquantile)
-SPY_stats <- rbind(estimatesacross_SPY_mean, SPY_10percentquantile, SPY_90percentquantile)
-
-
-
-
-colMeans(tlt.loglike, na.rm = T)
-quantile(tlt.loglike[,2], 0.9, na.rm = T)
-quantile(tlt.loglike[,2], 0.1, na.rm = T)
-
-tlt.completeloglike <- rowSums(tlt.loglike)
-mean(tlt.completeloglike, na.rm = T)
-quantile(tlt.completeloglike, 0.9, na.rm = T)
-quantile(tlt.completeloglike, 0.1, na.rm = T)
-
-
-colMeans(spy.loglike, na.rm = T)
-quantile(spy.loglike[,2], 0.9, na.rm = T)
-quantile(spy.loglike[,2], 0.1, na.rm = T)
-
-spy.completeloglike <- rowSums(spy.loglike)
-mean(spy.completeloglike, na.rm = T)
-quantile(spy.completeloglike, 0.9, na.rm = T)
-quantile(spy.completeloglike, 0.1, na.rm = T)
-
-
-
-
-#SPY
-lfit = ugarchfit(spec, dailyretotc[,2] * 100, solver = 'hybrid', realizedVol = 
-	(xts(sqrt(calccov[[1]][[7]][2,2,]), order.by = as.Date(getDates))) * 100, 
-	fit.control = list(stationarity = 1, fixed.se = 1))
-
-
-rugarch.LL = c('logL' = sum(-lfit@fit$log.likelihoods), 'pLogL' = sum(-lfit@fit$partial.log.likelihoods))
-
-
-
-lfit <- ugarchfit(spec, spyreal[,1] , solver = 'hybrid', realizedVol = 
-	spyreal[,2] , 
-	fit.control = list(stationarity = 1, fixed.se = 1))
-
-
-spec = ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = list(model = 'realGARCH', garchOrder = c(2, 1)))
-
-
-fit = ugarchfit(spec, spyreal[, 1] * 100, solver = 'hybrid', realizedVol = spyreal[,2] * 100)
-
-rugarch.LL = c('logL' = sum(-fit@fit$log.likelihoods[1:1492]), 'pLogL' = sum(-fit@fit$partial.log.likelihoods[1:1492]))
-
-sum(rugarch.LL)
-
-
-data(spyreal)
-head(spyreal)
-
-sqrt(head(calccov[[1]][[7]][2,2,]))
-
-#------------------------------------------------------------------------------------------------------------------
-
-
-Estimate_rcDCC <- function(mY, covariance, getDates) {
-  
-  ## estimate the marginal models
-  require(Rsolnp)
-  require(rugarch) 
- 
-  #Marginal garch specification. THIS WORKS ONLY IN BIVARIATE SETUP. 
-  
-  cov <- covariance[[1]] + covariance[[2]] + covariance[[3]]
-
-  #list where marginal models are stored
-  spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
-	list(model = 'realGARCH', garchOrder = c(2, 1)))
-
-  specforrobust1 <- ugarchfit(spec, dailyretotc[,1], solver = 'hybrid', realizedVol = 
-	xts(sqrt(cov[1,1,]), order.by = as.Date(getDates)))
-
-  specforrobust2 <- ugarchfit(spec, dailyretotc[,2], solver = 'hybrid', realizedVol = 
-	xts(sqrt(cov[2,2,]), order.by = as.Date(getDates)))
-
-  mspec <- multispec( replicate(spec, n=2) )
-
-  lfit <- multifit(mspec, mY, solver = 'hybrid', realizedVol = 
-  xts(cbind(sqrt(cov[1,1,]), sqrt(cov[2,2,])), order.by = as.Date(getDates)))
-  
-  mEta <- residuals(lfit, standardize = T)
+  else{mEta <- residuals}
   ####################################################
   
   ## maximization of the DCC likelihood
   
   #initial parameters
-  vPar = c(0.001, 0.001, 0.20, 0.80)
+  vPar = c(0.00000001384, 0.00000013727, 0.08197776333, 0.91702207742)
   
   #unconditional correlation
   mQ = cor(mEta)
@@ -1187,33 +1496,35 @@ Estimate_rcDCC <- function(mY, covariance, getDates) {
   #Extract the estimated parameters
   vPar = optimizer$pars
   
+  if(bootstrap){return(vPar)}
+
   #Extract the likelihood of the correlation part
   dLLK_C = -tail(optimizer$values, 1)
   
   #Filter the dynamic correlation using the estimated parameters
   Filter = rcDCCFilter(mEta, vPar[1], vPar[2], vPar[3], vPar[4], mQ, covariance)
 
-  #standard errors 
-  se <- solve(optimizer$hessian)
-  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
-
   #extract univariate volatilities
-  mSigma = sigma(lfit)^2
+  mSigma = cbind(sigma(specforrobust1)^2, sigma(specforrobust2)^2)
   
   #extract univariate estimated parameters
-  mCoef = coef(lfit)
+  mCoef = cbind(coef(specforrobust1), coef(specforrobust2))
 
   colnames(mCoef) <- colnames(mY)
   
   #compute the likelihood of the volatility  part
-  dLLK_V = sum(likelihood(lfit)) 
-  
+
+  dLLK_V = sum(-specforrobust1@fit$partial.log.likelihoods) +sum(-specforrobust2@fit$partial.log.likelihoods)
+  dLLK_V2 <- sum(likelihood(specforrobust1)) + sum(likelihood(specforrobust2))
   
   #compute the total likelihood
-  dLLK = dLLK_V + dLLK_C
+  dLLK = dLLK_V2 + dLLK_C
   
   ## Compute z_t
   aCor = Filter[["aCor"]]
+  covs = sigma(specforrobust1) * sigma(specforrobust2) *  aCor[2,1,]
+  
+
   iT = nrow(mY)
   
   mZ = matrix(0, iT, ncol(mY))
@@ -1222,22 +1533,93 @@ Estimate_rcDCC <- function(mY, covariance, getDates) {
     mZ[t, ] = solve(chol(aCor[,,t])) %*% as.numeric(mEta[t, ])
   }
     
+  #compute estimated covariances:
+  vSigma2 <- array(0L, dim = c(2,2, 2516))
+
+  for(i in 1:length(mY[,1])){
+
+    vSigma2[,,i] <- matrix(c(mSigma[i,1], covs[i], covs[i], mSigma[i,2]))
+
+  }
+
+  lOut = list()
+  allpars <- length(vPar) + length(coef(specforrobust1)) + (coef(specforrobust2))
+   ## Compute the daily Average BIC
+  iT = 2516
+  BIC = (-2 * dLLK + log(iT) * (length(vPar) + length(coef(specforrobust1)) + length(coef(specforrobust2))))/iT
   lOut = list()
 
   #output the results
-  lOut[["dLLK"]] = dLLK
+  lOut[["dLLK"]] = dLLK #can become unstable due to rugarch loglikes. should be around -4555 ish. 
   lOut[["mCoef"]] = mCoef
   lOut[["vPar"]] = vPar
   lOut[["mSigma"]] = mSigma
   lOut[["aCor"]] = aCor
   lOut[["mEta"]] = mEta
   lOut[["mZ"]] = mZ
-  lOut[["se"]] = se
   lOut[["seeall"]] = list(specforrobust1, specforrobust2) 
+  lOut[["vSigma2"]] = vSigma2
+  lOut[["BIC"]] = BIC
   return(lOut)
   
 }
 
+#I have not scaled inside the estimator. 
+crDCCests <- Estimate_rcDCC(dailyretotc * 100, list(P * 10000, N * 10000, M * 10000), calccov[[1]][[7]]*10000, getDates, F)
+
+
+qlikes_crDCC <- numeric()
+
+for(i in 2:2516){
+  qlikes_crDCC[i] <-  QLIKE(crDCCests$vSigma2[,,i-1],calccov[[1]][[7]][,,i]*10000, 2)
+}
+
+mean(qlikes_crDCC, na.rm = T)
+
+semicovs <- readRDS("semicov_acrossfreq.rds")
+
+Pfreq <- semicovs[[1]]
+Nfreq <- semicovs[[2]]
+Mfreq <- semicovs[[3]]
+
+estacrossfreq_crDCC <- list()
+
+#cannot do daily returns. 
+for(i in 6:9){
+
+  estacrossfreq_crDCC[[i]] <- Estimate_rcDCC(dailyretotc * 100, 
+    list(Pfreq[[i]]*10000,Nfreq[[i]]*10000,Mfreq[[i]]*10000), NULL, getDates)
+
+}
+
+params <- matrix(unlist(lapply(estacrossfreq_crDCC, function(x) x$vPar)), ncol = 4, byrow = T)
+
+options(digits = 6)
+colMeans(params)
+apply(params[-2, ], MARGIN = c(2), FUN =function(x) quantile(x, 0.1))
+apply(params[-2, ], MARGIN = c(2), FUN =function(x) quantile(x, 0.9))
+
+
+avgloglike <- mean(unlist(sapply(estacrossfreq_crDCC, function(x) x$dLLK))[-2])
+
+avgavgbic <- mean(unlist(sapply(estacrossfreq_crDCC, function(x) x$BIC))[-2])
+
+#calc QLIKES: 
+
+sigmas_crDCC <- lapply(estacrossfreq_crDCC, function(x) x$vSigma2)
+
+Qlikes <- matrix(0L, ncol = 10, nrow = 2516)
+
+for(i in 6:9){
+  for(j in 2:2516){
+    Qlikes[j, i] <- QLIKE(sigmas_crDCC[[i]][,,j-1],calccov[[1]][[7]][,,j]*10000, 2)
+  }
+}
+
+qlikes <- colMeans(Qlikes, na.rm = T)[6:9]
+
+qlikes[2] <- mean(qlikes_crDCC, na.rm = T)
+mean(qlikes, na.rm = T)
 
 
 
@@ -1246,65 +1628,382 @@ Estimate_rcDCC <- function(mY, covariance, getDates) {
 
 
 
+#------------------------------------------bootstrapping----------------------------------------------
 
-library(numDeriv, MASS)
-library(MASS)
+library(boot)
 
-tt <- jacobian(ObjFBivarGARCH, x = lel2$vPar, lT = mergedfrequencies[[8]], dailyret = dailyretotc)
+library(np)
+#uses the row to construct the block length. Therefore you should transpose it. 
+ll <- tsboot(dailyretotc[,1], mean ,R = 1000, l = 97, sim = "fixed", endcorr = TRUE)
+indexation <- boot.array(ll)
 
-t(tt) %*% ginv(lel2$Hessian)[2:3, 2:3] %*% (tt)
-
-
-
-
-
-library(tictoc)
-
-tic()
-lel2 <- EstimateBivarGARCH(mergedfrequencies[[8]], dailyretotc, calccov[[1]][[8]])
-toc()
+#rearranging calculated covariances: correct. 
 
 
-calccov[[1]][[8]][1,1,]
+
+#If we bootstrap the standardized residuals:
+spec <- ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = 
+	list(model = 'realGARCH', garchOrder = c(2, 1)))
+setbounds(spec)<-list(alpha2=c(-1,1))
+
+lfittlt <- ugarchfit(spec, dailyretotc[,1]*100, solver = 'hybrid', realizedVol = xts(sqrt(calccov[[1]][[7]][1,1,]*10000), order.by = as.Date(getDates)))
+
+lfitspy <- ugarchfit(spec, dailyretotc[,2]*100, solver = 'hybrid', realizedVol = 
+  xts(sqrt(calccov[[1]][[7]][2,2,]*10000), order.by = as.Date(getDates)))
 
 
-#now you have to precalculate the realized semi-covariances
+residuals <- matrix(cbind(residuals(lfittlt, standardize = T), residuals(lfitspy, standardize = T)), ncol=2)
 
-P <- array(0L, c(2,2,2516))
-N <- array(0L, c(2,2,2516))
-M <- array(0L, c(2,2,2516))
+hist(residuals[,2] ,breaks=50)
 
-for(i in 1:2516){
+cor(residuals)
 
-	P[,,i] <- realsemicov(mergedfrequencies[[9]][[i]], "P")
-	N[,,i] <- realsemicov(mergedfrequencies[[9]][[i]], "N")
-	M[,,i] <- realsemicov(mergedfrequencies[[9]][[i]], "M")
+b.star(M[2,1,])
+
+residualstest <- residuals[indexation[1, ], ]
+
+head(residuals[indexation[1, ], ])
+
+
+estimates_5min_crDCC <- matrix(0L, nrow = 1000, ncol = 4)
+
+
+BS_dailyretotc <- matrix(dailyretotc, nrow=2516, ncol = 2)
+
+BS_dailyretotc_l <- list()
+
+resid <- list()
+
+for(i in 1:1000){
+
+BS_dailyretotc_l[[i]] <- BS_dailyretotc[indexation[i, ], ] 
+resid[[i]] <- xts(residuals[indexation[i, ], ], order.by = as.Date(getDates))
+}
+
+head(resid[[1]])
+
+#do it without bootstrapping standardized residuals first. 
+for(j in 1:1000){
+						#5min_covariances
+	BS_P_crDCC <- P[,,indexation[j, ]] * 10000
+	BS_N_crDCC <- N[,,indexation[j, ]] * 10000
+	BS_M_crDCC <- M[,,indexation[j, ]] * 10000
+
+  #ccc <- calccov[[1]][[7]][,,indexation[j, ]] * 10000
+	BS_dailyretotc <- BS_dailyretotc_l[[j]] * 100
+
+	estimates_5min_crDCC[j, ] <- Estimate_rcDCC(BS_dailyretotc, list(BS_P_crDCC, BS_N_crDCC, BS_M_crDCC),cov2 = NULL, 1:2516, T, resid[[j]])
+	print(sprintf("Bootstrap %s", j))
+	
 
 }
 
 
-tic()
-lel3 <- EstimateBivarGARCHContAsym(mergedfrequencies[[9]], dailyretotc, list(P, N, M))
-toc()
-
-lel2$BIC
+#saveRDS(estimates_5min_crDCC, "bootstapestimates_5min_crDCC_stdresidualbootstrap.rds")
 
 
 
 
 
-test <- matrix(c(mean(calccov[[1]][[7]][1,1,]), mean(calccov[[1]][[7]][2,1,]), 
-	mean(calccov[[1]][[7]][2,1,]), mean(calccov[[1]][[7]][2,2,])), ncol=2,nrow=2)
-
-determinant(test, F)$modulus[1]
-det(test)
-
-test[1, , drop = F]
-test
-
-(mergedfrequencies[[7]][[1]][1, , drop = F]) %*% solve(test) %*% t(mergedfrequencies[[7]][[1]][1, , drop = F])
+estimates_5min_crDCC_bootstraps <- readRDS("bootstapestimates_5min_crDCC_stdresidualbootstrap.rds")
 
 
-test2 <- array(rnorm(100), c(2,2,25))
+rem1 <- which(estimates_5min_crDCC_bootstraps[,1] > 2.00067363e-08)
+rem2 <- which(estimates_5min_crDCC_bootstraps[,2] > 0.00005)
+rem3 <- which(estimates_5min_crDCC_bootstraps[,3] < 0.003)
+rem4 <- which(estimates_5min_crDCC_bootstraps[,3]>0.65)
+rem5 <- which(estimates_5min_crDCC_bootstraps[,4]<0.2)
 
-test2[1, , , drop = F]
+inconsist <- unique(c(rem1, rem2, rem3, rem4, rem5))
+
+estimates_5min_crDCC_bootstraps <- estimates_5min_crDCC_bootstraps[-inconsist, ]
+
+demeanedbootstraps <- cbind(rep(crDCCests$vPar[1], 999), rep(crDCCests$vPar[2], 999),
+  rep(crDCCests$vPar[3], 999), rep(crDCCests$vPar[4], 999))
+
+
+demeanedbootstraps <- demeanedbootstraps - estimates_5min_crDCC_bootstraps
+
+apply(demeanedbootstraps, MARGIN = c(2), FUN = function(x) sd(x))
+
+bootstrap_stderror_5min_crDCC <- apply(estimates_5min_crDCC_bootstraps, MARGIN = c(2), FUN = function(x) sd(x))
+
+bootstrap_stderror_5min_crDCC
+
+mean(estimates_5min_crDCC[,3])
+mean(estimates_5min_crDCC[,4])
+
+
+tstat <- (crDCCests$vPar[1]/bootstrap_stderror_5min_crDCC[1])
+lefttail <- 1-pnorm(abs(tstat))
+righttail <- pnorm(-abs(tstat))
+pobs <- lefttail + righttail
+pobs #forkaster nul hypotesen om parameteren a^P er statistisk insignifikant ergo. H0: B = 0.
+
+tstat <- (crDCCests$vPar[2]/bootstrap_stderror_5min_crDCC[2])
+lefttail <- 1-pnorm(abs(tstat))
+righttail <- pnorm(-abs(tstat))
+pobs <- lefttail + righttail
+pobs #accepterer hypotesen og a^N er statistisk insignificant
+
+tstat <- (crDCCests$vPar[3]/bootstrap_stderror_5min_crDCC[3])
+lefttail <- 1-pnorm(abs(tstat))
+righttail <- pnorm(-abs(tstat))
+pobs <- lefttail + righttail
+pobs #forkaster hypotesen og a^M er statistisk significant
+
+tstat <- (crDCCests$vPar[4]/bootstrap_stderror_5min_crDCC[4])
+lefttail <- 1-pnorm(abs(tstat))
+righttail <- pnorm(-abs(tstat))
+pobs <- lefttail + righttail
+pobs #forkaster hypotesen og b er statistisk significant
+
+
+
+#---------------------------------------------------------------------------------------------------------------
+
+
+#--------------------------SIMULATION TO SEE IF THE VOLATILITIES CONVERGES TOWARDS TRUE DATA------------------
+#
+#
+#SIMULATION IS BIVARIATE WITH NO NOISE:
+
+
+J <- 1
+#sampling every 10 seconds within 6.5 trading hours for 20 days. 
+
+time <- 2515
+
+#5min sampling
+intradayticks <- (12 * 6.5)
+
+N <- intradayticks * time
+
+#vol
+sigma <- 0.01 / time 
+sigma2 <- 0.98 / time 
+#drift
+alpha <- 0
+beta <- 0
+
+#squareroot process
+gamma <- 1
+rho <- -0.8
+
+simulation_prices <- brownian(J, N, sigma, sigma2, alpha, beta, gamma,rho, time)
+
+dt <- length(simulation_prices[,1])/time
+
+
+intodays <- list()
+
+seq1 <- seq(0, length(simulation_prices[,1]), intradayticks)[-1]
+
+intodays[[1]] <- cbind(simulation_prices[1:(intradayticks-1),1], simulation_prices[1:(intradayticks-1),2])
+
+
+for(i in 2:(time-1)){
+
+
+	intodays[[i]] <- cbind(simulation_prices[seq1[i]:seq1[i+1],1], simulation_prices[seq1[i]:seq1[i+1],2])
+
+}
+
+makesimret <- list()
+
+for(i in 1:(time-1)){
+
+	makesimret[[i]] <- cbind(diff(log(intodays[[i]][,1]))[-1] * 100, diff(log(intodays[[i]][,2]))[-1] * 100)
+
+}
+
+dailysimrets <- matrix(0L, nrow = time-1, ncol = 2)
+
+
+for(i in 1:(time-1)){
+
+	dailysimrets[i, ] <- cbind(log(intodays[[i]][1,1]) - log(intodays[[i]][length(intodays[[i]][,1]), 1]), log(intodays[[i]][1,2]) - log(intodays[[i]][length(intodays[[i]][,2]), 2])) * 100
+
+
+}
+
+rcovpos <- array(dim = c(2,2,time-1))
+rcovneg <- array(dim = c(2,2,time-1))
+rcovmix <- array(dim = c(2,2,time-1))
+
+
+for(i in 1:(time-1)){
+
+	rcovpos[,,i] <- realsemicov(makesimret[[i]], "P")
+	rcovneg[,,i] <- realsemicov(makesimret[[i]], "N")
+	rcovmix[,,i] <- realsemicov(makesimret[[i]], "M")
+
+
+}
+
+simresults <- Estimate_rcDCC(dailysimrets, list(rcovpos,rcovneg,rcovmix), 1:(time-1))
+
+#getting correlations:
+
+mean((simresults$aCor[2,1,] - rho)^2)
+
+#is in variances, now we need to transform it to vol/time
+mean(sqrt(simresults$mSigma[,1])/time - sigma/time)^2 
+mean(sqrt(simresults$mSigma[,2])/time - sigma/time)^2 
+
+#it converges towards the true parameters. 
+
+
+
+
+
+#-----------run a test with two stocks (AAPL, MSFT) and see if you get better and proper results from that. aka beta > 0.9, and alphas near zero. 
+
+library(alphavantager)
+#source("functions.R")
+source("APIKEY.R")
+
+av_api_key(apikey)
+
+AAPL <- as.data.frame(av_get(symbol = "AAPL", av_fun = "TIME_SERIES_INTRADAY", interval = "30min", outputsize = "full"))
+rownames(AAPL) <- AAPL$timestamp
+MSFT <- as.data.frame(av_get(symbol = "MSFT", av_fun = "TIME_SERIES_INTRADAY", interval = "30min", outputsize = "full"))
+rownames(MSFT) <- MSFT$timestamp
+
+returns_AAPL <- as.xts(diff(log(AAPL[,4])) * 100, order.by = as.Date(AAPL[,1], format='%d/%m/%Y')[-1])
+returns_MSFT <- as.xts(diff(log(MSFT[,4])) * 100, order.by = as.Date(MSFT[,1])[-1])
+
+
+
+returns_merged_stock <- cbind(returns_AAPL, returns_MSFT)
+
+#removing nans
+returns_MSFT <- rowSums(returns_merged_stock[,2], na.rm = T)
+
+returns_merged_stock <- cbind(returns_AAPL, returns_MSFT)
+
+
+dd1 <- returns_merged_stock[1:31]
+
+dd2 <- returns_merged_stock[32:63]
+
+dd3 <- returns_merged_stock[64:95]
+
+dd4 <- returns_merged_stock[96:127]
+
+dd5 <- returns_merged_stock[128:159]
+
+dd6 <- returns_merged_stock[160:191]
+
+dd7 <- returns_merged_stock[192:223]
+
+dd8 <- returns_merged_stock[224:255]
+
+dd9 <- returns_merged_stock[256:287]
+
+dd10 <- returns_merged_stock[288:319]
+
+dd11 <- returns_merged_stock[320:351]
+
+dd12 <- returns_merged_stock[352:383]
+
+dd13 <- returns_merged_stock[384:415] 
+
+dd14 <- returns_merged_stock[416:447]   
+
+dd15 <- returns_merged_stock[448:447]   
+
+dd16 <- returns_merged_stock[448:479] 
+
+dd17 <- returns_merged_stock[479:511]
+
+dd18 <- returns_merged_stock[512:543]
+
+returns_merged_stock <- list(dd1, dd2, dd3, dd4, dd5, dd6, dd7, dd8, dd9, dd10, dd11, dd12, dd13, dd14, dd15, dd16, dd17, dd18)
+
+rcovs <- array(dim = c(2,2, length(returns_merged_stock)))
+rpos <- array(dim = c(2,2, length(returns_merged_stock)))
+rneg <- array(dim = c(2,2, length(returns_merged_stock)))
+rmixed <- array(dim = c(2,2, length(returns_merged_stock)))
+
+for(i in length(returns_merged_stock)){
+
+	rcovs[,,i] <- realCov(returns_merged_stock[[i]])
+	rpos[,,i] <- realsemicov(returns_merged_stock[[i]], "P")
+	rneg[,,i] <- realsemicov(returns_merged_stock[[i]], "N")
+	rmixed[,,i] <- realsemicov(returns_merged_stock[[i]], "M")
+
+}
+
+
+#------------------------------------------bootstrapping----------------------------------------------
+
+library(boot)
+
+library(np)
+#uses the row to construct the block length. Therefore you should transpose it. 
+ll <- tsboot(dailyretotc[,1], mean ,R = 1000, l = 97, sim = "fixed", endcorr = TRUE)
+indexation <- boot.array(ll)
+
+#rearranging calculated covariances: correct. 
+
+#Due to the assymetric continuous garch model we omit the realized semicovariances from the estimation
+#procedure of crBG:
+
+
+
+estimates_5min_crBG <- matrix(0L, nrow = 1000, ncol = 4)
+
+
+BS_dailyretotc <- matrix(dailyretotc, nrow=2516, ncol = 2)
+
+BS_dailyretotc_l <- list()
+
+for(i in 1:1000){
+
+BS_dailyretotc_l[[i]] <- BS_dailyretotc[indexation[i, ], ]
+
+}
+
+
+for(j in 1:1000){
+						#5min_covariances
+	BS_P_crBG <- P[,,indexation[j, ]]
+	BS_N_crBG <- N[,,indexation[j, ]]
+	BS_M_crBG <- M[,,indexation[j, ]]
+
+	BS_dailyretotc <- BS_dailyretotc_l[[j]]
+
+	estimates_5min_crBG[j, ] <- EstimateBivarGARCHContAsym(BS_dailyretotc, list(BS_P_crBG, BS_N_crBG, BS_M_crBG))$vPar
+	print(sprintf("Bootstrap %s", j))
+	
+
+}
+
+saveRDS(estimates_5min_crBG, "bootstapestimates_5min_crBG.rds")
+
+
+
+bootstrap_stderror_5min_crBG <- apply(estimates_5min_crBG, MARGIN = c(2), FUN = function(x) sd(x))
+
+
+
+#---------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

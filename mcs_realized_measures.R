@@ -144,10 +144,10 @@ tempTcov <- array(0L, dim = c(2,2,length(dataTLT)))
 for(i in 1:length(mergedfrequencies)){
 	for(j in 1:length(dataTLT)){
 
-		tempRcov[,,j] <- realCov(mergedfrequencies[[i]][[j]])
-		tempRcovpos[,,j] <- realsemicov(mergedfrequencies[[i]][[j]], "P")
-		tempRcovneg[,,j] <- realsemicov(mergedfrequencies[[i]][[j]], "N")
-		tempTcov[,,j] <- preavthrCOV(mergedfrequencies[[i]][[j]])
+		tempRcov[,,j] <- realCov(mergedfrequencies[[i]][[j]]* 100)
+		tempRcovpos[,,j] <- realsemicov(mergedfrequencies[[i]][[j]]* 100, "P")
+		tempRcovneg[,,j] <- realsemicov(mergedfrequencies[[i]][[j]]* 100, "N")
+		tempTcov[,,j] <- preavthrCOV(mergedfrequencies[[i]][[j]]* 100)
 
 		print(sprintf("frequency: %s, day: %s", i,j))
 	}
@@ -178,10 +178,10 @@ tempMRK <- array(0L, dim = c(2,2,length(dataTLT)))
 for(i in 1:(length(mergedfrequencies)-1)){
 	for(j in 1:length(dataTLT)){
 
-		tempBPcov[,,j] <- preavBPCOV(mergedfrequencies[[i]][[j]],F,F,F)
-		tempPBPcov[,,j] <- preavBPCOV(mergedfrequencies[[i]][[j]],T,F,T,1)
-		tempMRC[,,j] <- preavCov(mergedfrequencies[[i]][[j]], T, T, F, 1)
-		tempMRK[,,j] <- rKernelCov(list(mergedfrequencies[[i]][[j]][,1], mergedfrequencies[[i]][[j]][,2]), 
+		tempBPcov[,,j] <- preavBPCOV(mergedfrequencies[[i]][[j]]* 100,F,F,F)
+		tempPBPcov[,,j] <- preavBPCOV(mergedfrequencies[[i]][[j]]* 100,T,F,T,1)
+		tempMRC[,,j] <- preavCov(mergedfrequencies[[i]][[j]]* 100, T, T, F, 1)
+		tempMRK[,,j] <- rKernelCov(list(mergedfrequencies[[i]][[j]][,1]* 100, mergedfrequencies[[i]][[j]][,2]* 100), 
 		makeReturns = FALSE, kernel.type = "Parzen", kernel.param  = H[[i]][j])
 		print(sprintf("frequency: %s, day: %s", i,j))
 
@@ -197,8 +197,8 @@ for(i in 1:(length(mergedfrequencies)-1)){
 
 #estimators that doesn't work on daily data: BPCov (sampling across days works), PBPCov, MRC.
 
-#saveRDS(list(Rcov_frequencies, Rcovpos_frequencies, Rcovneg_frequencies, Tcov_frequencies, BPcov_frequencies, 
-#	PBPcov_frequencies, MRC_frequencies, MRK_frequencies), file = "calculatedcovariances.rds")
+saveRDS(list(Rcov_frequencies, Rcovpos_frequencies, Rcovneg_frequencies, Tcov_frequencies, BPcov_frequencies, 
+	PBPcov_frequencies, MRC_frequencies, MRK_frequencies), file = "calculatedcovariancespercentage.rds")
 
 calccov <- readRDS("calculatedcovariances.rds")
 

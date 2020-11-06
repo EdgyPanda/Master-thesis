@@ -648,13 +648,16 @@ riskparity_2dim <- function(matrix, risktarget, measure){
 #' @param J integer. Specify paths. 
 #' @param N integer. Specify mesh. 
 #' @param sigma integer. Specify volatility.
+#' @param sigma2 integer. Specify volatility for other BM. 
 #' @param alpha integer. specify drift.
-#' @param beta integer.
-#' @param gamma integer.
+#' @param beta integer. specify drift. 
+#' @param gamma integer. 
+#' @param rho integer.
+#' @param time integer.
 #' @return simulations of the bivariate square-root process. 
 #' @import xts stats matlib
 #' @export
-brownian <- function(J, N, sigma, alpha, beta, gamma){ 
+brownian <- function(J, N, sigma, sigma2, alpha, beta, gamma,rho ,time){ 
   dt = time/N
   
   w <- matrix(nrow = N+1, ncol=J)
@@ -665,12 +668,12 @@ for (j in 1:J){
     phi2 <- matrix(rnorm(N, mean = 0, sd = 1),nrow=N, ncol=J)
     noise <- matrix(rnorm(N, mean = 0, sd = 1),nrow=N, ncol=J)
     for (i in 1:N){
-      w[1, j]<- 10
+      w[1, j]<- 100
       w2[1,j] <- 100
       dw <- sqrt(dt)%*%phi[i,j]
       dw2 <- rho%*%dw + sqrt(1-rho^2)*sqrt(dt)%*%phi2[i,j]
       w[i+1,j] <- w[i,j] + (alpha*w[i,j]) * dt + sigma*w[i,j] * dw
-      w2[i+1, j] <- w2[i,j] + (beta*w2[i,j])*dt+sigma*w2[i,j]^(gamma)*dw2 #+ noise[i,j]
+      w2[i+1, j] <- w2[i,j] + (beta*w2[i,j])*dt+sigma2*w2[i,j]^(gamma)*dw2 #+ noise[i,j]
       #w2[i,j]^(gamma)
   }
   print(sprintf("Current number of paths generated: %s, out of %s", j, J))
@@ -710,17 +713,24 @@ owndmtest <- function(e1, e2, h=1){
 #' Calculates the bivariate QLIKE loss.
 #' @param realized type function. Realized estimator function
 #' @param proxy type function. Realized estimator function chosen as proxy.
+#' @param d numeric. Specify dimension. 
 #' @return loss
 #' @import xts stats matlib
 #' @export 
-QLIKE <- function(realized, proxy){
+QLIKE <- function(realized, proxy, d){
+
+	if(d == 1){
+
+		temp <- proxy/realized - log(proxy/realized) - 1
+		return(temp)
+	}
 
 	#k seems to be the asset dimension in the covariance structure
 	#k <- ncol(realized)
-  t <- try(inv(realized))
-  if("try-error" %in% class(t)){return(0)}
+  t <- try(solve(realized))
+  if("try-error" %in% class(t)){return(NaN)}
   
-	temp <- tr(inv(realized) %*% proxy) - log(Det(inv(realized) %*% proxy)) - 2
+	temp <- tr(solve(realized) %*% proxy) - log(Det(solve(realized) %*% proxy)) - d
 
 	return(temp[1])
   
