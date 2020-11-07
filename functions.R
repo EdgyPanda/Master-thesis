@@ -595,7 +595,7 @@ min.RSS <- function(vPar, data){
 }
 
 
-EstimatecorrHAR <- function(variances, correlation = NULL, proxy, trace=1, ineqfun = ineqconstraint, ineqLB = 0.00, ineqUB = 0.9999){
+EstimatecorrHAR <- function(variances, correlation = NULL, proxy, trace=1, Forecasts = F, ineqfun = ineqconstraint, ineqLB = 0.00, ineqUB = 0.9999){
   #mEta is standardized residuals from univariate models!
   #variances should be produced by the univariate models and not come from realized measures!
   #correlation should be found via eg. five min samples but adhere to the same frequency as variances from HAR models. 
@@ -611,7 +611,9 @@ EstimatecorrHAR <- function(variances, correlation = NULL, proxy, trace=1, ineqf
   corrweek <- rowMeans(cbind(correlation, mlag(correlation,4,mean(correlation))))
   corrmonth <- rowMeans(cbind(correlation, mlag(correlation,21,mean(correlation)))) 
 
-  data <- list(proxy[23:2516], corrday[22:2515], corrweek[22:2515], corrmonth[22:2515])
+  end <- length(correlation)
+
+  data <- list(proxy[23:end], corrday[22:(end-1)], corrweek[22:(end-1)], corrmonth[22:(end-1)])
   optimizer = solnp(vPar, fun = min.RSS, data = data, 
                     ineqfun = ineqfun, #the inequality constraint
                     ineqLB  = ineqLB, ## the inequality lower bound
@@ -628,39 +630,11 @@ EstimatecorrHAR <- function(variances, correlation = NULL, proxy, trace=1, ineqf
 
   hessian <- optimizer$hessian
 
-  scores <- matrix(0L, nrow=(nrow(variances)), ncol = 3)
-
-  step <- 1e-5 * vPar
-
-  for(i in 1:length(step)){
-
-	h <- step[i]
-    delta <- rep(0, length(vPar))
-    delta[i] <- h
-																
-	loglikeminus <- minimizingfunc(data, vPar-delta)$minis
-	loglikeplus <- minimizingfunc(data, vPar+delta)$minis
-
-	scores[,i] <- (loglikeplus - loglikeminus)/(2*h)
-
-  }
-
-  J <- (t(scores) %*% scores)/2516
-
-  I <- optimizer$hessian/2516
-
-  I <- solve(I)[-1 ,-1]
-
-  vars <- (I * J * I)/2516
-  
-  rse <- sqrt(diag(vars))
-
-  t.stat <- vPar/rse
-
-
   #calculating covariances: 
-  hhatcorrHAR <- cbind(corrday[22:2515], corrweek[22:2515], corrmonth[22:2515]) %*% matrix(params)
-  
+
+  hhatcorrHAR <- cbind(corrday[22:(end-1)], corrweek[22:(end-1)], corrmonth[22:(end-1)]) %*% matrix(params)
+
+  if(Forecasts){ hhatcorrHAR <- cbind(corrday[end], corrweek[end], corrmonth[end]) %*% matrix(params) }
 
   covs <- hhatcorrHAR * sqrt(variances[,1]) * sqrt(variances[,2])
 
@@ -674,7 +648,7 @@ EstimatecorrHAR <- function(variances, correlation = NULL, proxy, trace=1, ineqf
 
 	  #R-squared
 
-	Rsquared <- 1-var(correlation[23:2516] - hhatcorrHAR)/var(correlation[23:2516])
+	Rsquared <- 1-var(correlation[23:end] - hhatcorrHAR)/var(correlation[23:end])
 
 
 
@@ -684,10 +658,8 @@ EstimatecorrHAR <- function(variances, correlation = NULL, proxy, trace=1, ineqf
   lOut[["vSigma2"]] <- vSigma2
   lOut[["R2"]] <- Rsquared
   lOut[["estcor"]] <- hhatcorrHAR
-  lOut[["MSE"]] <- min/2516 
-  lOut[["rse"]] <- rse
+  lOut[["MSE"]] <- min/end
   lOut[["hessian"]] <- hessian
-  lOut[["Tstats"]] <- t.stat
 
   return(lOut)
 

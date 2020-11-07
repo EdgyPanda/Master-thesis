@@ -705,6 +705,9 @@ EstimatecorrHAR <- function(variances, correlation = NULL, proxy, trace=1, ineqf
 #
 #######################################################################################################################
 
+ones <- rep(1, 2516-22)
+ones <- as.matrix(ones)
+
 fiveminvol_TLT <- matrix((calccov[[1]][[7]][1,1,])) * 10000  #sqrt
 volday_TLT <- fiveminvol_TLT
 volweek_TLT <- rowMeans(cbind(fiveminvol_TLT, mlag(fiveminvol_TLT,4,mean(fiveminvol_TLT))))
