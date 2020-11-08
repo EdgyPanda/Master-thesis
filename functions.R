@@ -255,7 +255,7 @@ return(effvol)
 
 }
 
-ewma.filter.realized <- function(cov, half.life, correlation = F, lambda = NULL){
+ewma.filter.realized <- function(cov, half.life, correlation = F, lambda = NULL, trace){
 
 	iT <- length(cov[1,1,])
 
@@ -279,9 +279,12 @@ ewma.filter.realized <- function(cov, half.life, correlation = F, lambda = NULL)
 
 	}
 
-	print(sprintf("Lambda: %s", lambda))
 	half.life <- log(0.5)/log(lambda)
+
+	if(trace == 1){	
+	print(sprintf("Lambda: %s", lambda))
 	print(sprintf("half life: %s", half.life))
+	}
 
 	for(i in 2:iT){
 
@@ -307,6 +310,21 @@ ewma.filter.realized <- function(cov, half.life, correlation = F, lambda = NULL)
 
 
 return(covar)
+
+}
+
+min.qlike.riskmetrics <- function(cov, half.life, proxy, correlation = F, lambda){
+
+	filter <- ewma.filter.realized(cov, half.life,F, lambda)
+
+	qlikes.riskmetrics <- numeric()
+	for(i in 1:length(filter[1,1,])){
+
+		qlikes.riskmetrics[i] <- QLIKE(filter[,,i], proxy, 2)
+
+	}
+
+ return(mean(qlikes.riskmetrics))
 
 }
 
@@ -762,8 +780,8 @@ EstimateBivarGARCH <- function(dailyret, covariance, bootstrap = FALSE, vPar=NUL
   # the empirical variance by targeting the unconditional variance of the 
   # GARCH model
   
-  dAlpha = 0.39873  
-  dBeta  = 0.57351
+  dAlpha = 0.20
+  dBeta  = 0.50
   
   ## vector of starting parameters
   if(is.null(vPar)){
@@ -867,7 +885,7 @@ BivarGARCHFilterContAsym <- function(dailyret, params, covariance){
 	dAlphaM <- params[3]
 	dBeta  <- params[4]
 
-	days <- 2516
+	days <- length(dailyret[,1])
 
 	dailyret <-  matrix(dailyret, ncol=2, nrow=days)
 
@@ -1006,7 +1024,7 @@ EstimateBivarGARCHContAsym <- function(dailyret, covariance, ineqfun_GARCH = ine
 
   #CALCULATING ROBUST STD. ERRORS WHEN NO COVARIANCE TARGETING:
 
-  scores <- matrix(0L, nrow=2516, ncol = length(vPar))
+  scores <- matrix(0L, nrow=length(dailyret[,1]), ncol = length(vPar))
 
   step <- 1e-5 * vPar
   # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
@@ -1128,7 +1146,7 @@ rDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
 #testing with simple realGARCH(1,1) using rugarch package. 
 #you need getDates for fit function in rugarch to work. 
 #moreover the covariances you use in the DCC model is also used in the univariate models.
-Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = NULL) {
+Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = NULL, tol = 1e7) {
   
   ## estimate the marginal models
   require(Rsolnp)
@@ -1187,7 +1205,8 @@ Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = N
     sum(vPar)
   }, ineqLB = 1e-4, ineqUB = 0.999, 
   LB = c(1e-4, 1e-4), UB = c(0.999, 0.999), 
-  mEta = mEta, mQ = mQ, covariance = covariance)
+  mEta = mEta, mQ = mQ, covariance = covariance, 
+  control = list(tol = tol, outer.iter = 800, inner.iter = 1200, delta = 1e-7))
   
   #Extract the estimated parameters
   vPar = optimizer$pars

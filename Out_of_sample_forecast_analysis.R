@@ -41,14 +41,6 @@ for(i in 1:2516){
 ########################################################################################################################
 
 
-#you need correlations for all 434 models...
-
-window <- 1000
-
-hhat_HAR_SPY_RV_5min <- numeric()
-hhat_HAR_TLT_RV_5min <- numeric()
-Qlikes <- numeric()
-
 
 #[[1]],.. contains sample frequencies from 1sec to 30 min. and each column in [[i]] contains the measure following same 
 #style as calccov. 
@@ -73,8 +65,6 @@ Quarticities <- readRDS("Quarticity_estimators.rds")
 
 window <- 1000
 
-hhat_HAR_SPY_RV_5min <- numeric()
-hhat_HAR_TLT_RV_5min <- numeric()
 Qlikes <- list()
 
 temp <- matrix(0L, ncol = 9, nrow = 2516)
@@ -84,7 +74,6 @@ temp_HARJ <- matrix(0L, ncol = 9, nrow = 2516)
 temp_HARQJ <- matrix(0L, ncol = 9, nrow = 2516)
 temp_CHAR <- matrix(0L, ncol = 9, nrow = 2516)
 temp_CHARQ <- matrix(0L, ncol = 9, nrow = 2516)
-
 
 for(k in 1:3){
 	for(j in 1:9){
@@ -183,16 +172,18 @@ for(k in 1:3){
 
 
 
-			#RQ and TRQ
-			rq_TLT <- Quarticities$rq_TLT[,j]
-			rq_SPY <- Quarticities$rq_SPY[,j]
+			#RQ and TRQ from percentage returns
+			rq_TLT <- Quarticities$rq_TLT[(i-window):(i-1),j]
+			rq_SPY <- Quarticities$rq_SPY[(i-window):(i-1),j]
 
 			rq_TLT <- matrix(rq_TLT)
 			rq_SPY <- matrix(rq_SPY)
 
-			trq_SPY <- Quarticities$trq_SPY[,j]
-			trq_TLT <- Quarticities$trq_TLT[,j]
+			trq_SPY <- Quarticities$trq_SPY[(i-window):(i-1),j]
+			trq_TLT <- Quarticities$trq_TLT[(i-window):(i-1),j]
 
+			trq_TLT <- trq_TLT[22:length(trq_TLT)]
+			trq_SPY <- trq_SPY[22:length(trq_SPY)]
 
 
 			sqrtrq_TLT <- sqrt(rq_TLT) - mean(sqrt(rq_TLT))
@@ -217,14 +208,25 @@ for(k in 1:3){
 			sqrtrq_TLTmonth <- sqrt(rqTLTmonth) - mean(sqrt(rqTLTmonth))
 
 
+			sqrtrq_TLT <- sqrtrq_TLT[22:length(sqrtrq_TLT)]
+			sqrtrq_TLTweek <- sqrtrq_TLTweek[22:length(sqrtrq_TLTweek)]
+			sqrtrq_TLTmonth <- sqrtrq_TLTmonth[22:length(sqrtrq_TLTmonth)]
+
+			sqrtrq_SPY <- sqrtrq_SPY[22:length(sqrtrq_SPY)]
+			sqrtrq_SPYweek <- sqrtrq_SPYweek[22:length(sqrtrq_SPYweek)]
+			sqrtrq_SPYmonth <- sqrtrq_SPYmonth[22:length(sqrtrq_SPYmonth)]
 
 
 			#jumpparams
-			jumpparam_TLT <- ifelse(calccov[[1]][[j]][1,1,] - calccov[[5]][[j]][1,1,]>0, 
-				calccov[[1]][[j]][1,1,] - calccov[[5]][[j]][1,1,], 0)
+			jumpparam_TLT <- ifelse(calccov[[1]][[j]][1,1,(i-window):(i-1)]*10000 - calccov[[5]][[j]][1,1,(i-window):(i-1)]*10000>0, 
+				calccov[[1]][[j]][1,1,(i-window):(i-1)]*10000 - calccov[[5]][[j]][1,1,(i-window):(i-1)]*10000, 0)
 
-			jumpparam_SPY <- ifelse(calccov[[1]][[j]][2,2,] - calccov[[5]][[j]][2,2,]>0, 
-				calccov[[1]][[j]][2,2,] - calccov[[5]][[j]][2,2,], 0)
+			jumpparam_SPY <- ifelse(calccov[[1]][[j]][2,2,(i-window):(i-1)]*10000 - calccov[[5]][[j]][2,2,(i-window):(i-1)]*10000>0, 
+				calccov[[1]][[j]][2,2,(i-window):(i-1)]*10000 - calccov[[5]][[j]][2,2,(i-window):(i-1)]*10000, 0)
+
+
+			jumpparam_TLT <- jumpparam_TLT[22:length(jumpparam_TLT)]
+			jumpparam_SPY <- jumpparam_SPY[22:length(jumpparam_SPY)]
 
 
 			#############################################################################################
@@ -248,13 +250,16 @@ for(k in 1:3){
 			#coef(HAR_...) are estimated until time t-1
 
 			HAR_TLT <- lm(RV5min_TLT[2:end] ~ volday_TLT[1:(end-1)] + volweek_TLT[1:(end-1)] + volmonth_TLT[1:(end-1)])
-			hhat_HAR_TLT[i] <- cbind(1, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end])  %*% matrix(coef(HAR_TLT))
+			hhat_HAR_TLT <- cbind(1, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end])  %*% matrix(coef(HAR_TLT))
 
 			HAR_SPY <- lm(RV5min_SPY[2:end] ~ volday_SPY[1:(end-1)] + volweek_SPY[1:(end-1)] + volmonth_SPY[1:(end-1)])
-			hhat_HAR_SPY[i] <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end])  %*% matrix(coef(HAR_SPY))
+			hhat_HAR_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end])  %*% matrix(coef(HAR_SPY))
+
+			hhat_HAR_TLT <- volatility.insanity.filter(hhat_HAR_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
+			hhat_HAR_SPY <- volatility.insanity.filter(hhat_HAR_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
 
 			#warning is just that R does not like to add one 1 parameter array to a number eg. array(1, c(1,1,1)) + 2.  
-			DRD_HAR <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HAR_TLT[i], hhat_HAR_SPY[i]), 
+			DRD_HAR <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HAR_TLT, hhat_HAR_SPY), 
 				correlation = correlation, proxy = proxycor, 0, T))
 
 			temp[i,j] <- QLIKE(DRD_HAR$vSigma2[,,1], RCov5min, 2)
@@ -272,11 +277,11 @@ for(k in 1:3){
 			HARQ_TLT <- lm(RV5min_TLT[2:end] ~ volday_TLT[1:(end-1)] +  volweek_TLT[1:(end-1)] + volmonth_TLT[1:(end-1)] + I(volday_TLT[1:(end-1)] * sqrtrq_TLT[1:(end-1)]))
 			hhat_HARQ_TLT <- cbind(1, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end],volday_TLT[end] * sqrtrq_TLT[end])  %*% matrix(coef(HARQ_TLT))
 
-			hhat_HARQ_TLT <- volatility.insanity.filter(hhat_HARQ_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
 
 			HARQ_SPY <- lm(RV5min_SPY[2:end] ~ volday_SPY[1:(end-1)] +  volweek_SPY[1:(end-1)] + volmonth_SPY[1:(end-1)] + I(volday_SPY[1:(end-1)] * sqrtrq_SPY[1:(end-1)]))
 			hhat_HARQ_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end],volday_SPY[end] * sqrtrq_SPY[end])  %*% matrix(coef(HARQ_SPY))
 
+			hhat_HARQ_TLT <- volatility.insanity.filter(hhat_HARQ_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
 			hhat_HARQ_SPY <- volatility.insanity.filter(hhat_HARQ_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
 
 			#SAME CORRELATION AS HAR MODELS. ONLY THING THAT CHANGED IS THE UNIVARIATE VOLS. 
@@ -333,6 +338,9 @@ for(k in 1:3){
 			HARJ_SPY <- lm(RV5min_SPY[2:end] ~ volday_SPY[1:(end-1)] + volweek_SPY[1:(end-1)] + volmonth_SPY[1:(end-1)] + jumpparam_SPY[1:(end-1)])
 			hhat_HARJ_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end],jumpparam_SPY[end])  %*% matrix(coef(HARJ_SPY))
 
+			hhat_HARJ_SPY <- volatility.insanity.filter(hhat_HARJ_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
+			hhat_HARJ_TLT <- volatility.insanity.filter(hhat_HARJ_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
+
 			DRD_HARJ <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HARJ_TLT, hhat_HARJ_SPY), correlation = correlation, proxy = proxycor, 0, T))
 			
 			temp_HARJ[i,j] <- QLIKE(DRD_HARJ$vSigma2[,,1], RCov5min, 2)
@@ -372,6 +380,9 @@ for(k in 1:3){
 			CHAR_SPY <- lm(RV5min_SPY[2:end] ~ volday_SPY[1:(end-1)] + volweek_SPY[1:(end-1)] + volmonth_SPY[1:(end-1)])
 			hhat_CHAR_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end])  %*% matrix(coef(CHAR_SPY))
 
+			hhat_CHAR_SPY <- volatility.insanity.filter(hhat_CHAR_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
+			hhat_CHAR_TLT <- volatility.insanity.filter(hhat_CHAR_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
+
 			DRD_CHAR <- suppressWarnings(EstimatecorrHAR(cbind(hhat_CHAR_TLT, hhat_CHAR_SPY), correlation = correlationjumprobust, proxy = proxycor, 0, T))
 
 			temp_CHAR[i,j] <- QLIKE(DRD_CHAR$vSigma2[,,1], RCov5min, 2)
@@ -399,15 +410,6 @@ for(k in 1:3){
 
 			temp_CHARQ[i,j] <- QLIKE(DRD_CHARQ$vSigma2[,,1], RCov5min, 2)
 
-			#############################################################################################
-			#
-			#
-			#											DRD-SHAR MODEL 
-			# 
-			#
-			#############################################################################################
-			
-
 		}
 		print(sprintf("%s", j))
 	}
@@ -418,26 +420,268 @@ for(k in 1:3){
 	Qlikes[[k+12]] <- temp_HARQJ[1001:nrow(temp_HARQJ), ]
 	#putting SHAR model at 16th list item 
 	Qlikes[[k+16]] <- temp_CHAR[1001:nrow(temp_CHAR), ]
-	Qlikes[[k+19]] <- temp_CHARQ[1001:nrow(temp_CHAR), ]
+	Qlikes[[k+19]] <- temp_CHARQ[1001:nrow(temp_CHARQ), ]
 
 
 }
 
 
+
+
+
+temp_SHAR <- matrix(0L, ncol = 9, nrow = 2516)
+
 for(j in 1:9){
-		for(i in (window+1):1050){
+	for(i in (window+1):2516){
+
+		voldayposvar_TLT <- matrix((calccov[[2]][[j]][1,1,(i-window):(i-1)])) * 10000 #sqrt
+		voldaynegvar_TLT <- matrix((calccov[[3]][[j]][1,1,(i-window):(i-1)])) * 10000 #sqrt
+		voldayposvar_SPY <- matrix((calccov[[2]][[j]][2,2,(i-window):(i-1)])) * 10000 #sqrt
+		voldaynegvar_SPY <- matrix((calccov[[3]][[j]][2,2,(i-window):(i-1)])) * 10000 #sqrt
+
+		voldayposvar_TLT <- voldayposvar_TLT[22:length(voldayposvar_TLT)]
+		voldaynegvar_TLT <- voldaynegvar_TLT[22:length(voldaynegvar_TLT)]
+		voldayposvar_SPY <- voldayposvar_SPY[22:length(voldayposvar_SPY)]
+		voldaynegvar_SPY <- voldaynegvar_SPY[22:length(voldaynegvar_SPY)]
+
+		correlation <- Correlations_measures[[j]][(i-window):(i-1), 1]
+
+		proxycor <- proxycorrelation[2,1, (i-window):(i-1)]
+
+		RV5min_TLT <- calccov[[1]][[7]][1,1,(i-window):(i-1)] * 10000
+		RV5min_SPY <- calccov[[1]][[7]][2,2,(i-window):(i-1)] * 10000
+
+		RV5min_TLT <- RV5min_TLT[22:length(RV5min_TLT)]
+		RV5min_SPY <- RV5min_SPY[22:length(RV5min_SPY)]
+
+		#proxy covariance for qlike losses
+		RCov5min <- calccov[[1]][[7]][,,i] * 10000
+
+		#############################################################################################
+		#
+		#
+		#											DRD-SHAR MODEL 
+		# 
+		#
+		#############################################################################################
 
 
+		SHAR_TLT  <- lm(RV5min_TLT[2:end] ~ voldayposvar_TLT[1:(end-1)] + voldaynegvar_TLT[1:(end-1)] + volweek_TLT[1:(end-1)] + volmonth_TLT[1:(end-1)])
+		hhat_SHAR_TLT <- cbind(1, voldayposvar_TLT[end], voldaynegvar_TLT[end], volweek_TLT[end], volmonth_TLT[end])  %*% matrix(coef(SHAR_TLT))
 
-			#############################################################################################
-			#
-			#
-			#											DRD-SHAR MODEL 
-			# 
-			#
-			#############################################################################################
+		SHAR_SPY  <- lm(RV5min_SPY[2:end] ~ voldayposvar_SPY[1:(end-1)] + voldaynegvar_SPY[1:(end-1)] + volweek_SPY[1:(end-1)] + volmonth_SPY[1:(end-1)])
+		hhat_SHAR_SPY <- cbind(1, voldayposvar_SPY[end], voldaynegvar_SPY[end], volweek_SPY[end], volmonth_SPY[end])  %*% matrix(coef(SHAR_SPY))
 
+		hhat_SHAR_SPY <- volatility.insanity.filter(hhat_SHAR_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
+		hhat_SHAR_TLT <- volatility.insanity.filter(hhat_SHAR_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
 
-		}
+		DRD_SHAR <- suppressWarnings(EstimatecorrHAR(cbind(hhat_SHAR_TLT, hhat_SHAR_SPY), correlation = correlation, proxy = proxycor, 0, T))
+
+		temp_SHAR[i,j] <- QLIKE(DRD_SHAR$vSigma2[,,1], RCov5min, 2)
 
 	}
+	print(sprintf("%s", j))
+
+}
+
+Qlikes[[16]] <- temp_SHAR[1001:nrow(temp_SHAR), ]
+
+
+#saveRDS(Qlikes, "Qlikes_Forecast_DRDmodels_intraday.rds")
+
+
+
+
+
+means <- numeric()
+
+for(i in 1:22){
+
+means[i] <- mean(rowMeans(Qlikes[[i]]))
+
+}
+
+
+
+
+
+
+
+#############################################################################################
+#
+#
+#										RISKMETRICS 
+# 
+#
+#############################################################################################
+Qlikes_riskmetrics  <- list()
+temp_riskmetrics <- matrix(0L, ncol = 9, nrow = 2516)
+for(k in 1:6){
+	for(j in 1:9){
+		for(i in (window+1):2516){
+
+			choice <- c(1,4,5,6,7,8)
+
+			Filter <- ewma.filter.realized(calccov[[choice[k]]][[j]][,,(i-window):(i-1)], NULL, F, 0.94, 0)
+
+			end <- length(Filter[1,1, ])
+			temp_riskmetrics[i,j] <- QLIKE(Filter[,,end], calccov[[1]][[7]][,,i], 2)
+		}
+		print(sprintf("%s", j))
+	}
+	Qlikes_riskmetrics[[k]] <- temp_riskmetrics[1001:nrow(temp_riskmetrics), ]
+}
+
+
+
+
+means_riskmetrics <- numeric()
+
+for(i in 1:6){
+
+means_riskmetrics[i] <- mean(rowMeans(Qlikes_riskmetrics[[i]]))
+
+}
+
+#saveRDS(Qlikes_riskmetrics, "Qlikes_riskmetrics.rds")
+
+#1second frequency for Tcov and Bpcov are huge!, thats why you get 7.48 and 1.10  in 2 and 3. 
+
+
+#############################################################################################
+#
+#
+#										rBG and rDCC
+# 
+#
+#############################################################################################
+
+
+#---------------------------------------PRELIMINARIES-----------------------------------------
+dataTLT <- readRDS("dataTLT.rds")
+
+getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
+
+for(i in 1:length(getDates)){
+	getDates[i] <- strsplit(getDates, " ")[[i]][1]
+}
+
+
+dailyretotc <- xts(t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[,2]))), order.by = as.Date(getDates))
+
+colnames(dailyretotc) <- c("TLT", "SPY")
+
+if(FALSE){
+temp_mixed <- array(0L, dim = c(2,2,2516))
+Mixed <- list()
+
+for(j in 1:9){
+	for(i in 1:2516){
+		temp_mixed[,,i] <- realsemicov(mergedfrequencies[[j]][[i]], "M", F)
+	}
+	Mixed[[j]] <- temp_mixed
+}
+#saveRDS(Mixed, "Mixed_semicovariances.rds")
+}
+Mixed <- readRDS("Mixed_semicovariances.rds")
+
+
+#--------------------------------------------------------------------------------------------
+
+
+#instability issues often arises when you have chosen bad starting params, try and choose others. 
+
+
+
+Qlikes_rBG<- list()
+Qlikes_rDCC <- list()
+
+#you need mixed for crBG and crDCC. 
+
+
+
+temp_rBG <- matrix(0L, ncol = 9, nrow = 2516)
+temp_rDCC <- matrix(0L, ncol = 9, nrow = 2516)
+
+for(k in 1:1){
+	for(j in 7:7){
+		for(i in (window+1):1050){
+
+			choice <- c(1,4,5,6,7,8)
+
+			#rBG <- EstimateBivarGARCH(dailyretotc[(i-window):(i-1), ] * 100, calccov[[k]][[j]][,,(i-window):(i-1)]*10000)
+			rDCC <- Estimate_rDCC(dailyretotc[(i-window):(i-1), ] * 100, calccov[[k]][[j]][,,(i-window):(i-1)]*10000, 
+				getDates[(i-window):(i-1)], tol = 1e-5)
+			
+			end <- 1000
+
+			#temp_rBG[i,j] <- QLIKE(rBG$vSigma2[,,end], calccov[[1]][[7]][,,i]*10000, 2)
+			#temp_rDCC[i,j] <- QLIKE(rDCC$vSigma2[,,end], calccov[[1]][[7]][,,i]*10000, 2)
+		}
+	}
+	Qlikes_rBG[[k]] <- temp_rBG
+	Qlikes_rDCC[[k]] <- temp_rDCC
+}
+
+
+
+
+
+#############################################################################################
+#
+#
+#										crBG and crDCC
+# 
+#
+#############################################################################################
+Qlikes_crBG <- matrix(0L, ncol = 9, nrow = 2516)
+Qlikes_crDCC <- matrix(0L, ncol = 9, nrow = 2516)
+
+
+for(j in 1:9){
+	for(i in (window+1):1002){
+
+		#list(P,N,M)
+		decompcov <- list(calccov[[2]][[j]][,,(i-window):(i-1)] * 10000, 
+		calccov[[3]][[j]][,,(i-window):(i-1)] * 10000, Mixed[[j]][,,(i-window):(i-1)]*10000)
+
+		crBG <- EstimateBivarGARCHContAsym(dailyretotc[(i-window):(i-1), ] * 100, decompcov)
+
+		Qlikes_crBG[i,j] <- QLIKE(crBG$vSigma2[,,end], calccov[[1]][[7]][,,i]*10000, 2)
+
+	}
+}
+
+
+
+
+
+
+#############################################################################################
+#
+#
+#										DAILY FREQUENCIES
+# 
+#
+#############################################################################################
+
+
+RV5min_SPY <- calccov[[1]][[7]][2,2,]*10000
+RV5min_TLT <- calccov[[1]][[7]][1,1,]*10000
+
+
+spy_1sec <- rollapply(calccov[[1]][[1]][2,2,]*10000, 25, mean, align = "left", fill = mean(calccov[[1]][[1]][2,2,]*10000))
+tlt_1sec <- rollapply(calccov[[1]][[1]][1,1,]*10000, 25, mean, align = "left", fill = mean(calccov[[1]][[1]][1,1,]*10000))
+cor_1sec <- rollapply(calccov[[1]][[1]][2,1,]*10000, 25, mean, align = "left", fill = mean(calccov[[1]][[1]][2,1,]*10000))
+
+tempcov <- calccov[[1]][[1]]*10000
+
+tempcov[1,1,] <- tlt_1sec
+tempcov[2,2,] <- spy_1sec
+tempcov[2,1,] <- cor_1sec
+
+
+temptlt <- rollapply(dailyretotc[, 1]*100, 7, mean, align = "left", fill = mean(dailyretotc[, 1]*100))
+tempspy <-   rollapply(dailyretotc[, 2]*100, 7, mean, align = "left", fill = mean(dailyretotc[, 2]*100))
+tempretotc <- cbind(temptlt, tempspy)
+

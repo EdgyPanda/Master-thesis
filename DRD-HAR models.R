@@ -18,9 +18,6 @@ library(Matrix)
 
 getDates <- readRDS("getDates.rds")
 
-library(HARModel)
-
-
 calccov <- readRDS("calculatedcovariances.rds")
 
 mergedfrequencies <- readRDS("mergedfrequencies.rds")
