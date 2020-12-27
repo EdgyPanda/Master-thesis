@@ -11,6 +11,38 @@ library(matlib)
 library(MCS)
 library(PerformanceAnalytics)
 
+
+#####################################################################################################
+#
+#
+#                                  GETTING CLOSE-TO-CLOSE RETURNS
+#
+#
+#####################################################################################################
+library(alphavantager)
+library(ggplot2)
+#source("functions.R")
+source("APIKEY.R")
+
+av_api_key(apikey)
+
+TLT <- as.data.frame(av_get(symbol = "TLT", av_fun = "TIME_SERIES_DAILY", outputsize = "full"))
+rownames(TLT) <- TLT$timestamp
+SPY <- as.data.frame(av_get(symbol = "SPY", av_fun = "TIME_SERIES_DAILY", outputsize = "full"))
+rownames(SPY) <- SPY$timestamp
+
+returns_TLT <- as.xts(diff(log(TLT[,4])), order.by = as.Date(TLT[,1], format='%d/%m/%Y')[-1])
+returns_SPY <- as.xts(diff(log(SPY[,4])), order.by = as.Date(SPY[,1])[-1])
+
+#####################################################################################################
+#
+#
+#                     Calculating the risk-free rate from a 3-month T-bill:
+#
+#
+#####################################################################################################
+
+
 #Calculating the risk-free rate from a 3-month T-bill:
 #3month T-bill. Has no coupons 
 dtb3 <- read.csv("DTB3.csv", header =  T)
@@ -26,6 +58,14 @@ logriskfreerate <- log(1 + dtb3[,2]/(100*365))
 
 logriskfreerate <- xts(logriskfreerate, order.by = as.Date(dtb3[,1]))
 
+
+test <- (1+dtb3[,2]/100)^(1/(365))-1
+
+ggplot() + geom_line(aes(1:length(test), test, col = "test")) + geom_line(aes(1:length(test), logriskfreerate, col="RF")) 
+
+ts.plot(logriskfreerate*100, col = "red")
+
+
 intersectMulti <- function(x=list()){
  for(i in 2:length(x)){
     if(i==2) foo <- x[[i-1]]
@@ -37,6 +77,34 @@ intersectMulti <- function(x=list()){
 indexes <- intersectMulti(list(index(logriskfreerate), index(returns_TLT)))
 
 logriskfreerate <- logriskfreerate[indexes]
+
+
+#These are now excess returns.
+returns_TLT <-  returns_TLT[seq(from= as.Date('2010-01-02'), to = as.Date('2019-12-31'), by=1), ] - logriskfreerate
+returns_SPY <- returns_SPY[seq(from= as.Date('2010-01-02'), to = as.Date('2019-12-31'), by=1), ] - logriskfreerate
+
+merged_ret <- cbind(returns_TLT, returns_SPY)
+
+
+
+#####################################################################################################
+#
+#
+#                                     PORTFOLIO ANALYSIS:
+#
+#
+#####################################################################################################
+library(CVXR)
+
+portolioMaxSharpeRatio <- function(mu, Sigma) {
+  w_ <- Variable(nrow(Sigma))
+  prob <- Problem(Minimize(quad_form(w_, Sigma)),
+                  constraints = list(w_ >= 0, t(mu) %*% w_ == 1))
+  result <- solve(prob)
+  return(as.vector(result$getValue(w_)/sum(result$getValue(w_))))
+}
+
+
 
 
 riskparity_2dim <- function(matrix, risktarget, rt = F){
@@ -95,13 +163,15 @@ riskparity_2dim <- function(matrix, risktarget, rt = F){
   
 }
 
+calccov <- readRDS("calculatedcovariances.rds")
+
+mergedfrequencies <- readRDS("mergedfrequencies.rds")
+
 riskparity_2dim(cov(merged_ret))
 
 riskparity_2dim(calccov[[5]][[6]][,,1])$portrisk*sqrt(252)*100
 
-calccov <- readRDS("calculatedcovariances.rds")
 
-mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
 #-------------------------------portfolio volatility's sensitivity to correlation--------------------------
 
@@ -200,31 +270,6 @@ ggplot() + geom_line(aes(stockvol*1e5, weightsfordistribution[,2]))
 ###################################################
 
 
-
-library(alphavantager)
-library(xts)
-
-library(ggplot2)
-#source("functions.R")
-source("APIKEY.R")
-
-av_api_key(apikey)
-
-TLT <- as.data.frame(av_get(symbol = "TLT", av_fun = "TIME_SERIES_DAILY", outputsize = "full"))
-rownames(TLT) <- TLT$timestamp
-SPY <- as.data.frame(av_get(symbol = "SPY", av_fun = "TIME_SERIES_DAILY", outputsize = "full"))
-rownames(SPY) <- SPY$timestamp
-
-returns_TLT <- as.xts(diff(log(TLT[,4])), order.by = as.Date(TLT[,1], format='%d/%m/%Y')[-1])
-returns_SPY <- as.xts(diff(log(SPY[,4])), order.by = as.Date(SPY[,1])[-1])
-
-
-#These are now excess returns.
-returns_TLT <-  returns_TLT[seq(from= as.Date('2010-01-02'), to = as.Date('2019-12-31'), by=1), ] - logriskfreerate
-returns_SPY <- returns_SPY[seq(from= as.Date('2010-01-02'), to = as.Date('2019-12-31'), by=1), ] - logriskfreerate
-
-merged_ret <- cbind(returns_TLT, returns_SPY)
-
 ggplot() + geom_line(aes(index(returns_TLT), 1+cumsum(returns_TLT), col="TLT")) + 
 geom_line(aes(index(returns_TLT), 1+cumsum(returns_SPY), col="SPY")) 
 
@@ -273,7 +318,7 @@ sdrpunlevered <- sd(retrpunlevered) * sqrt(252) * 100
 
 #constructing risk-parity leverage line. For alpha = 0, then it will obviously be in origo. 
 #it is not the capital market line. 
-
+#0.95
 alpha <- seq(0.95,1.7,0.01)
 
 leverageline <- rpunlevered %*% alpha
@@ -315,26 +360,31 @@ sdrplevered <- sd(retrplevered) * sqrt(252) * 100
 
 #CML:
 
-CML <- (expectedreturns - mean(logriskfreerate)*252*100)/portdev
+tangent <- portolioMaxSharpeRatio(colMeans(merged_ret*100)*252,covlol*10000)
+
+tangentret <- merged_ret %*% tangent
+
+tangentexpectedret <- mean(tangentret) * 100 * 252
+
+tangentdeviation <- sd(tangentret) * 100 * sqrt(252)
+
+
+sharpetangent <- (tangentexpectedret - mean(logriskfreerate) * 100 * 252)/tangentdeviation
 
 #leverageline computes the weights of the risky-assets and riskfree. 
 
 library(PerformanceAnalytics)
 
-CML <- CAPM.CML.slope(xts(minvarret, order.by=index(returns_TLT)), Rf = logriskfreerate)
-
-
-CML <- mean(logriskfreerate)*252*100 + leveragelinestds * CML
-
-ggplot() + geom_line(aes(portdev, CML))
-
+CML <-  mean(logriskfreerate) * 100 * 252 + sharpetangent * leveragelinestds
 
 
 p2 <- ggplot() + geom_line(aes(portdev, expectedreturns, col = "Efficient frontier"), lwd=1)  +
 geom_line(aes(leveragelinestds, leveragelinemeans, col ="Leverage line"), lwd=1) +
 geom_point(aes(sd(minvarret)*sqrt(252)*100,colMeans(minvarret)*252*100)) +
+geom_line(aes(leveragelinestds, CML, col ="CML"), lwd=1) +
 geom_point(aes(portdev[166],expectedreturns[166])) +
 geom_point(aes(portdev[366],expectedreturns[366])) +
+geom_point(aes(tangentdeviation,tangentexpectedret)) +
 geom_point(aes(sdrpunlevered,meanrpunlevered)) + 
 geom_text(aes(sd(minvarret)*sqrt(252)*100,colMeans(minvarret)*252*100, 
 	label="Minimum variance portfolio"),hjust=-.05, vjust=0) + 
@@ -498,86 +548,4 @@ theme(legend.justification=c(0,1), legend.position=c(0.67,0.97),
     legend.text = element_text(colour="black", size=8, face="bold")) + xlab("Weight") + ylab("Deviation")
 
 ggsave(p4, file="weightandlev.eps", device = "eps")
-
-
-
-
-
-#----------------------------------------------intraday tryout:
-
-calccov <- readRDS("calculatedcovariances.rds")
-
-mergedfrequencies <- readRDS("mergedfrequencies.rds")
-
-total5minreturns <- do.call.rbind(mergedfrequencies[[7]])
-
-varsmerged2 <- ewma.filter(total5minreturns, 30, F, T)
-
-fivemintlt <- sqrt(varsmerged2[1,1, ]) 
-fiveminspy <- sqrt(varsmerged2[2,2, ]) 
-
-
-scaled5mintlt <- (target/fivemintlt)  *  total5minreturns
-scaled5minspy <- (target/fiveminspy)  *  total5minreturns 
-
-fiveminport <- 1*scaled5minspy + scaled5mintlt * 0
-
-
-rollingdevportret6040fivemin <- ewma.filter(fiveminport, 30, F, T)
-rollingdevportret6040fivemin <- sqrt(rollingdevportret6040fivemin[1,1,])
-
-rollingdevportret6040fivemin <- xts(rollingdevportret6040fivemin, order.by = index(total5minreturns))
-
-indexesdates <-  as.POSIXct(index(rollingdevportret6040fivemin))
-
-
-ggplot() + geom_line(aes(indexesdates, rollingdevportret6040fivemin, col="5 min")) +
-geom_hline(yintercept = target) + 
-geom_line(aes(as.POSIXct(index(rollingdevportret6040)), rollingdevportret6040, col="Daily"))
-
-abs(0.1 - mean(rollingdevportret6040fivemin))
-abs(0.1 - mean(rollingdevportret6040))
-
-#-----------------------------------5min NOT SURE IF ANY OF THIS IS CORRECT THOUGH. 
-
-
-total5minreturns <- do.call.rbind(mergedfrequencies[[7]])
-
-varsmerged5min <- na.omit(rollapply(total5minreturns, 78*60, function(x) (realCov(x)), by.column = T, 
-	align = 'right', by = 75))
-
-
-fivemintlt <- sqrt(varsmerged5min[,1]) 
-fiveminspy <- sqrt(varsmerged5min[,2]) 
-
-start <- length(total5minreturns[,1]) - length(varsmerged5min[,1])
-
-scaled5mintlt <- list()
-
-for(i in 1:length(varsmerged5min[,1])){
-
-	scaled5mintlt[[i]] <- mergedfrequencies[[7]][60+i][[1]][,1] %*% as.numeric(target/fivemintlt[i])
-
-}
-
-scaled5mintlt <- do.call.rbind(scaled5mintlt)
-
-
-#scaled5mintlt <- lapply(mergedfrequencies[[7]][c(61:2516)], function(x) x %*% (target/fivemintlt))
-
-
-
-
-scaled5minspy <- (target/fiveminspy)  *  total5minreturns[-c(1:start), 2] 
-
-fiveminport <-  xts(scaled5mintlt, order.by = as.Date(1:length(scaled5mintlt)))
-
-rollingdevportret6040fivemin <- (na.omit(rollapply(fiveminport, 60*78, function(x) sqrt(realCov(x)), by.column = F, 
-	align = 'right', by = 74)))
-
-ggplot() +  
-geom_hline(yintercept = target) + 
-geom_line(aes(1:length(rollingdevportret6040), rollingdevportret6040, col="Daily"))+
-geom_line(aes(1:length(rollingdevportret6040fivemin), rollingdevportret6040fivemin, col="5 min"))
-geom_line(aes(1:length(rollingdevportret6040thirtymin), rollingdevportret6040thirtymin, col="30 min")) 
 

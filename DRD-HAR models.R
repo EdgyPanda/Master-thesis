@@ -22,6 +22,7 @@ calccov <- readRDS("calculatedcovariances.rds")
 
 mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
+
 #5min correlations
 
 fivemincorr <- array(0L, dim = c(2,2,2516))
@@ -242,6 +243,9 @@ QLIKE_HARQF_TLT <- mean(QLIKE(hhat_HARQF_TLT, fiveminvol_TLT[23:2516], 1))
 
 
 
+ts.plot(residuals(HAR_TLT, standardized = T))
+ts.plot(rstandard(HAR_TLT))
+
 #HARJ TLT
 HARJ_TLT <- lm(fiveminvol_TLT[23:2516] ~ volday_TLT[22:(2516-1)] + volweek_TLT[22:(2516-1)] + volmonth_TLT[22:(2516-1)] + jumpparam_TLT[22:(2516-1)])
 hhat_HARJ_TLT <- cbind(ones, volday_TLT[22:2515], volweek_TLT[22:2515], volmonth_TLT[22:2515],jumpparam_TLT[22:(2516-1)])  %*% matrix(coef(HARJ_TLT))
@@ -273,7 +277,12 @@ library(sandwich)
 #ROBUST STANDARD ERRORS:
 vcv1 <- sqrt(diag(vcovHC(HAR_TLT)))
 vcv2 <- sqrt(diag(vcovHC(HARQ_TLT)))
-vcv3 <- sqrt(diag(vcovHC(HARQF_TLT)))
+vcv3 <- matrix(sqrt(diag(vcovHC(HARQF_TLT))))
+
+harqf_ttest <- coef(HARQF_TLT)/vcv3
+
+2 * pt(abs(harqf_ttest), df = df.residual(HARQF_TLT), lower.tail = FALSE)
+
 vcv4 <- sqrt(diag(vcovHC(HARJ_TLT)))
 vcv5 <- sqrt(diag(vcovHC(HARQJ_TLT)))
 vcv6 <- sqrt(diag(vcovHC(CHAR_TLT)))
@@ -1410,6 +1419,578 @@ p4 <- grid.arrange(p3, p2, p1, ncol=2, layout_matrix = layout)
 
 ggsave(plot = p4, "barplot_signatureplot_autocorrelation.eps", device = "eps")
 
+##############################################################################################################################
+#
+#
+#													STANDARDIZED RESIDUALS ANALYSIS
+#
+#
+##############################################################################################################################
+
+
+
+#Get standardized intraday residuals. Brug ex-post covariance estimate ved dag t, og samme returns for at fange
+#de standardiseret residualer. 
+
+library(pracma)
+library(moments)
+
+#requires pracma
+#takes entire array
+invsquarerootmat <- function(Covar){
+
+	iT <-  length(Covar[1,1,])
+	d <- ncol(Covar[,,1]) 
+
+	isrmat <- array(0L, dim = c(d,d,iT))
+
+	for(i in 1:iT){
+
+		isrmat[,,i] <- solve(sqrtm(t(chol(Covar[,,i])))$B %*% sqrtm(chol(Covar[,,i]))$B)
+
+	}
+
+	return(isrmat)
+
+}
+
+
+#sketch needs proper implementation!
+#NOT FINISHED NEEDS PROPER SAVINGS OF OBJECTS SEE BOTTOM!
+
+for(k in 1:3){
+	for(j in 1:9){ 
+		
+
+		#measures
+		QCchoice <- c(1,7,8)
+		ICchoice <- c(4,5,6)
+
+
+
+		#############################################################################################
+		#
+		#
+		#											PROXIES
+		# 
+		#
+		#############################################################################################
+
+		RV5min_TLT <- calccov[[1]][[7]][1,1, ] * 10000
+		RV5min_SPY <- calccov[[1]][[7]][2,2, ] * 10000
+
+		RV5min_TLT <- RV5min_TLT[22:length(RV5min_TLT)]
+		RV5min_SPY <- RV5min_SPY[22:length(RV5min_SPY)]
+
+		#proxy covariance for qlike losses
+		RCov5min <- calccov[[1]][[7]] * 10000
+
+		proxycor <- proxycorrelation[2,1, ]
+		#---------------------------------------------------------------------------------------------
+
+
+		#############################################################################################
+		#
+		#
+		#							PRELIMINARIES (LAGS AND QUARTICITIES)
+		# 
+		#
+		#############################################################################################
+
+
+
+
+		#Lags
+		vol_TLT <- matrix((calccov[[QCchoice[k]]][[j]][1,1, ])) * 10000  
+		volday_TLT <- vol_TLT
+		volweek_TLT <- rowMeans(cbind(vol_TLT, mlag(vol_TLT,4,mean(vol_TLT))))
+		volmonth_TLT <- rowMeans(cbind(vol_TLT, mlag(vol_TLT,21,mean(vol_TLT))))
+
+		vol_TLT <- vol_TLT[22:length(vol_TLT)]
+		volday_TLT <- volday_TLT[22:length(volday_TLT)]
+		volweek_TLT <- volweek_TLT[22:length(volweek_TLT)]
+		volmonth_TLT <- volmonth_TLT[22:length(volmonth_TLT)]
+
+
+
+
+
+		vol_SPY <- matrix((calccov[[QCchoice[k]]][[j]][2,2, ])) * 10000  
+		volday_SPY <- vol_SPY
+		volweek_SPY <- rowMeans(cbind(vol_SPY, mlag(vol_SPY,4,mean(vol_SPY))))
+		volmonth_SPY <- rowMeans(cbind(vol_SPY, mlag(vol_SPY,21,mean(vol_SPY))))
+
+		vol_SPY <- vol_SPY[22:length(vol_SPY)]
+		volday_SPY <- volday_SPY[22:length(volday_SPY)]
+		volweek_SPY <- volweek_SPY[22:length(volweek_SPY)]
+		volmonth_SPY <- volmonth_SPY[22:length(volmonth_SPY)]
+
+
+
+		#jump robust lags:
+
+		ICvol_TLT <- matrix((calccov[[ICchoice[k]]][[j]][1,1, ])) * 10000  
+		ICvolday_TLT <- ICvol_TLT
+		ICvolweek_TLT <- rowMeans(cbind(ICvol_TLT, mlag(ICvol_TLT,4,mean(ICvol_TLT))))
+		ICvolmonth_TLT <- rowMeans(cbind(ICvol_TLT, mlag(ICvol_TLT,21,mean(ICvol_TLT))))
+
+		ICvol_TLT <- ICvol_TLT[22:length(ICvol_TLT)]
+		ICvolday_TLT <- ICvolday_TLT[22:length(ICvolday_TLT)]
+		ICvolweek_TLT <- ICvolweek_TLT[22:length(ICvolweek_TLT)]
+		ICvolmonth_TLT <- ICvolmonth_TLT[22:length(ICvolmonth_TLT)]
+
+
+
+
+
+		ICvol_SPY <- matrix((calccov[[ICchoice[k]]][[j]][2,2, ])) * 10000  
+		ICvolday_SPY <- ICvol_SPY
+		ICvolweek_SPY <- rowMeans(cbind(ICvol_SPY, mlag(ICvol_SPY,4,mean(ICvol_SPY))))
+		ICvolmonth_SPY <- rowMeans(cbind(ICvol_SPY, mlag(ICvol_SPY,21,mean(ICvol_SPY))))
+
+		ICvol_SPY <- ICvol_SPY[22:length(ICvol_SPY)]
+		ICvolday_SPY <- ICvolday_SPY[22:length(ICvolday_SPY)]
+		ICvolweek_SPY <- ICvolweek_SPY[22:length(ICvolweek_SPY)]
+		ICvolmonth_SPY <- ICvolmonth_SPY[22:length(ICvolmonth_SPY)]
+
+
+
+		#RQ and TRQ from percentage returns
+		rq_TLT <- Quarticities$rq_TLT[ ,j]
+		rq_SPY <- Quarticities$rq_SPY[ ,j]
+
+		rq_TLT <- matrix(rq_TLT)
+		rq_SPY <- matrix(rq_SPY)
+
+		trq_SPY <- Quarticities$trq_SPY[ ,j]
+		trq_TLT <- Quarticities$trq_TLT[ ,j]
+
+		trq_TLT <- trq_TLT[22:length(trq_TLT)]
+		trq_SPY <- trq_SPY[22:length(trq_SPY)]
+
+
+		sqrtrq_TLT <- sqrt(rq_TLT) - mean(sqrt(rq_TLT))
+		sqrttrq_TLT <- sqrt(trq_TLT) - mean(sqrt(trq_TLT))
+
+		sqrtrq_SPY <- sqrt(rq_SPY) - mean(sqrt(rq_SPY))
+		sqrttrq_SPY<- sqrt(trq_SPY) - mean(sqrt(trq_SPY))
+
+
+		#lagged for HARQF
+		rqSPYweek <- rowMeans(cbind(rq_SPY, mlag(rq_SPY,4,mean(rq_SPY))))
+		sqrtrq_SPYweek <- sqrt(rqSPYweek) - mean(sqrt(rqSPYweek))
+
+		rqSPYmonth <- rowMeans(cbind(rq_SPY, mlag(rq_SPY,21,mean(rq_SPY))))
+		sqrtrq_SPYmonth <- sqrt(rqSPYmonth) - mean(sqrt(rqSPYmonth))
+
+
+		rqTLTweek <- rowMeans(cbind(rq_TLT, mlag(rq_TLT,4,mean(rq_TLT))))
+		sqrtrq_TLTweek <- sqrt(rqTLTweek) - mean(sqrt(rqTLTweek))
+
+		rqTLTmonth <- rowMeans(cbind(rq_TLT, mlag(rq_TLT,21,mean(rq_TLT))))
+		sqrtrq_TLTmonth <- sqrt(rqTLTmonth) - mean(sqrt(rqTLTmonth))
+
+
+		sqrtrq_TLT <- sqrtrq_TLT[22:length(sqrtrq_TLT)]
+		sqrtrq_TLTweek <- sqrtrq_TLTweek[22:length(sqrtrq_TLTweek)]
+		sqrtrq_TLTmonth <- sqrtrq_TLTmonth[22:length(sqrtrq_TLTmonth)]
+
+		sqrtrq_SPY <- sqrtrq_SPY[22:length(sqrtrq_SPY)]
+		sqrtrq_SPYweek <- sqrtrq_SPYweek[22:length(sqrtrq_SPYweek)]
+		sqrtrq_SPYmonth <- sqrtrq_SPYmonth[22:length(sqrtrq_SPYmonth)]
+
+
+		#jumpparams
+		jumpparam_TLT <- ifelse(calccov[[1]][[j]][1,1, ]*10000 - calccov[[5]][[j]][1,1, ]*10000>0, 
+			calccov[[1]][[j]][1,1, ]*10000 - calccov[[5]][[j]][1,1, ]*10000, 0)
+
+		jumpparam_SPY <- ifelse(calccov[[1]][[j]][2,2, ]*10000 - calccov[[5]][[j]][2,2, ]*10000>0, 
+			calccov[[1]][[j]][2,2, ]*10000 - calccov[[5]][[j]][2,2, ]*10000, 0)
+
+
+		jumpparam_TLT <- jumpparam_TLT[22:length(jumpparam_TLT)]
+		jumpparam_SPY <- jumpparam_SPY[22:length(jumpparam_SPY)]
+
+
+		#############################################################################################
+		#
+		#
+		#									DRD-HAR MODEL (RCOV, MRC, MRK)
+		# 
+		#
+		#############################################################################################
+
+
+
+		correlation <- Correlations_measures[[j]][, QCchoice[k]]
+		correlationjumprobust <- Correlations_measures[[j]][, ICchoice[k]]
+
+
+		#They should all have the same length:
+		ones <- matrix(rep(1, 2516-22))
+		#hhat is your one period ahead forecast, therefore we use "end" since these are the true "t" values, while
+		#coef(HAR_...) are estimated until time t-1
+
+		HAR_TLT <- lm(RV5min_TLT[2:2495] ~ volday_TLT[1:2494] + volweek_TLT[1:2494] + volmonth_TLT[1:2494])
+		hhat_HAR_TLT <- cbind(ones, volday_TLT[1:2494], volweek_TLT[1:2494], volmonth_TLT[1:2494])  %*% matrix(coef(HAR_TLT))
+
+		HAR_SPY <- lm(RV5min_SPY[2:2495] ~ volday_SPY[1:2494] + volweek_SPY[1:2494] + volmonth_SPY[1:2494])
+		hhat_HAR_SPY <- cbind(ones, volday_SPY[1:2494], volweek_SPY[1:2494], volmonth_SPY[1:2494])  %*% matrix(coef(HAR_SPY))
+
+		hhat_HAR_TLT <- volatility.insanity.filter(hhat_HAR_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
+		hhat_HAR_SPY <- volatility.insanity.filter(hhat_HAR_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
+
+		#warning is just that R does not like to add one 1 parameter array to a number eg. array(1, c(1,1,1)) + 2.  
+		DRD_HAR <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HAR_TLT, hhat_HAR_SPY), 
+			correlation = correlation, proxy = proxycor, 0, T))
+
+		invsquarerootmat_HAR <- invsquarerootmat(DRD_HAR$vSigma2)
+
+		#############################################################################################
+		#
+		#
+		#									DRD-HARQ MODEL (RCOV, MRC, MRK)
+		# 
+		#
+		#############################################################################################
+
+		HARQ_TLT <- lm(RV5min_TLT[2:2495] ~ volday_TLT[1:2494] +  volweek_TLT[1:2494] + volmonth_TLT[1:2494] + I(volday_TLT[1:2494] * sqrtrq_TLT[1:2494]))
+		hhat_HARQ_TLT <- cbind(ones, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end],volday_TLT[end] * sqrtrq_TLT[end])  %*% matrix(coef(HARQ_TLT))
+
+
+		HARQ_SPY <- lm(RV5min_SPY[2:2495] ~ volday_SPY[1:2494] +  volweek_SPY[1:2494] + volmonth_SPY[1:2494] + I(volday_SPY[1:2494] * sqrtrq_SPY[1:2494]))
+		hhat_HARQ_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end],volday_SPY[end] * sqrtrq_SPY[end])  %*% matrix(coef(HARQ_SPY))
+
+		hhat_HARQ_TLT <- volatility.insanity.filter(hhat_HARQ_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
+		hhat_HARQ_SPY <- volatility.insanity.filter(hhat_HARQ_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
+
+		#SAME CORRELATION AS HAR MODELS. ONLY THING THAT CHANGED IS THE UNIVARIATE VOLS. 
+		DRD_HARQ <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HARQ_TLT, hhat_HARQ_SPY), correlation = correlation, proxy = proxycor, 0,T))
+
+			
+		invsquarerootmat_HARQ <- invsquarerootmat(DRD_HARQ$vSigma2)
+
+
+
+		#############################################################################################
+		#
+		#
+		#									DRD-HARQF MODEL (RCOV, MRC, MRK)
+		# 
+		#
+		#############################################################################################
+			
+		HARQF_TLT <- lm(RV5min_TLT[2:2495] ~ volday_TLT[1:2494] +  volweek_TLT[1:2494] + 
+		volmonth_TLT[1:2494] + I(volday_TLT[1:2494] * sqrtrq_TLT[1:2494]) + 
+		I(volweek_TLT[1:2494] * sqrtrq_TLTweek[1:2494]) + I(volmonth_TLT[1:2494] * sqrtrq_TLTmonth[1:2494]))
+
+		hhat_HARQF_TLT <- cbind(1, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end],
+		volday_TLT[end] * sqrtrq_TLT[end], volweek_TLT[end] * sqrtrq_TLTweek[end],
+		volmonth_TLT[end] * sqrtrq_TLTmonth[end])  %*% matrix(coef(HARQF_TLT))
+
+
+		HARQF_SPY <- lm(RV5min_SPY[2:2495] ~ volday_SPY[1:2494] +  volweek_SPY[1:2494] + 
+		volmonth_SPY[1:2494] + I(volday_SPY[1:2494] * sqrtrq_SPY[1:2494]) + 
+		I(volweek_SPY[1:2494] * sqrtrq_SPYweek[1:2494]) + I(volmonth_SPY[1:2494] * sqrtrq_SPYmonth[1:2494]))
+
+		hhat_HARQF_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end],
+		volday_SPY[end] * sqrtrq_SPY[end], volweek_SPY[end] * sqrtrq_SPYweek[end], 
+		volmonth_SPY[end] * sqrtrq_SPYmonth[end])  %*% matrix(coef(HARQF_SPY))
+
+		hhat_HARQF_SPY <- volatility.insanity.filter(hhat_HARQF_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
+		hhat_HARQF_TLT <- volatility.insanity.filter(hhat_HARQF_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
+
+
+		DRD_HARQF <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HARQF_TLT, hhat_HARQF_SPY), correlation = correlation, proxy = proxycor, 0, T))
+
+			
+		invsquarerootmat_HARQF <- invsquarerootmat(DRD_HARQF$vSigma2)
+
+
+		#############################################################################################
+		#
+		#
+		#									DRD-HARJ MODEL (RCOV, MRC, MRK)
+		# 
+		#
+		#############################################################################################
+
+
+		HARJ_TLT <- lm(RV5min_TLT[2:2495] ~ volday_TLT[1:2494] + volweek_TLT[1:2494] + volmonth_TLT[1:2494] + jumpparam_TLT[1:2494])
+		hhat_HARJ_TLT <- cbind(1, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end],jumpparam_TLT[end])  %*% matrix(coef(HARJ_TLT))
+
+		HARJ_SPY <- lm(RV5min_SPY[2:2495] ~ volday_SPY[1:2494] + volweek_SPY[1:2494] + volmonth_SPY[1:2494] + jumpparam_SPY[1:2494])
+		hhat_HARJ_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end],jumpparam_SPY[end])  %*% matrix(coef(HARJ_SPY))
+
+		hhat_HARJ_SPY <- volatility.insanity.filter(hhat_HARJ_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
+		hhat_HARJ_TLT <- volatility.insanity.filter(hhat_HARJ_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
+
+		DRD_HARJ <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HARJ_TLT, hhat_HARJ_SPY), correlation = correlation, proxy = proxycor, 0, T))
+			
+		
+		invsquarerootmat_HARJ <- invsquarerootmat(DRD_HARJ$vSigma2)
+
+
+
+		#############################################################################################
+		#
+		#
+		#									DRD-HARQJ MODEL (RCOV, MRC, MRK)
+		# 
+		#
+		#############################################################################################
+
+		HARQJ_TLT <- lm(RV5min_TLT[2:2495] ~ volday_TLT[1:2494] +  volweek_TLT[1:2494] + volmonth_TLT[1:2494] + I(volday_TLT[1:2494] * sqrtrq_TLT[1:2494]) + jumpparam_TLT[1:2494])
+		hhat_HARQJ_TLT <- cbind(1, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end],volday_TLT[end] * sqrtrq_TLT[end], jumpparam_TLT[end])  %*% matrix(coef(HARQJ_TLT))
+
+		HARQJ_SPY <- lm(RV5min_SPY[2:2495] ~ volday_SPY[1:2494] +  volweek_SPY[1:2494] + volmonth_SPY[1:2494] + I(volday_SPY[1:2494] * sqrtrq_SPY[1:2494]) + jumpparam_SPY[1:2494])
+		hhat_HARQJ_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end],volday_SPY[end] * sqrtrq_SPY[end], jumpparam_SPY[end])  %*% matrix(coef(HARQJ_SPY))
+
+		hhat_HARQJ_SPY <- volatility.insanity.filter(hhat_HARQJ_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
+		hhat_HARQJ_TLT <- volatility.insanity.filter(hhat_HARQJ_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
+
+		DRD_HARQJ <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HARQJ_TLT, hhat_HARQJ_SPY), correlation = correlation, proxy = proxycor, 0, T))
+
+		
+		invsquarerootmat_HARQJ <- invsquarerootmat(DRD_HARQJ$vSigma2)
+
+
+		#############################################################################################
+		#
+		#
+		#									DRD-CHAR MODEL (TCOV, BPCOV, PBPCOV)
+		# 
+		#
+		#############################################################################################
+
+		CHAR_TLT <- lm(RV5min_TLT[2:2495] ~ volday_TLT[1:2494] + volweek_TLT[1:2494] + volmonth_TLT[1:2494])
+		hhat_CHAR_TLT <- cbind(1, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end])  %*% matrix(coef(CHAR_TLT))
+
+		CHAR_SPY <- lm(RV5min_SPY[2:2495] ~ volday_SPY[1:2494] + volweek_SPY[1:2494] + volmonth_SPY[1:2494])
+		hhat_CHAR_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end])  %*% matrix(coef(CHAR_SPY))
+
+		hhat_CHAR_SPY <- volatility.insanity.filter(hhat_CHAR_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
+		hhat_CHAR_TLT <- volatility.insanity.filter(hhat_CHAR_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
+
+		DRD_CHAR <- suppressWarnings(EstimatecorrHAR(cbind(hhat_CHAR_TLT, hhat_CHAR_SPY), correlation = correlationjumprobust, proxy = proxycor, 0, T))
+
+			
+		invsquarerootmat_CHAR <- invsquarerootmat(DRD_CHAR$vSigma2)
+
+
+		#############################################################################################
+		#
+		#
+		#									DRD-CHARQ MODEL (TCOV, BPCOV, PBPCOV)
+		# 
+		#
+		#############################################################################################
+
+		CHARQ_TLT <- lm(RV5min_TLT[2:2495] ~ volday_TLT[1:2494] +  volweek_TLT[1:2494] + volmonth_TLT[1:2494] + I(volday_TLT[1:2494] * sqrttrq_TLT[1:2494]))
+		hhat_CHARQ_TLT <- cbind(1, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end], volday_TLT[end] * sqrttrq_TLT[end])  %*% matrix(coef(CHARQ_TLT))
+
+		CHARQ_SPY <- lm(RV5min_SPY[2:2495] ~ volday_SPY[1:2494] +  volweek_SPY[1:2494] + volmonth_SPY[1:2494] + I(volday_SPY[1:2494] * sqrttrq_SPY[1:2494]))
+		hhat_CHARQ_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end], volday_SPY[end] * sqrttrq_SPY[end])  %*% matrix(coef(CHARQ_SPY))
+
+		hhat_CHARQ_SPY <- volatility.insanity.filter(hhat_CHARQ_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
+		hhat_CHARQ_TLT <- volatility.insanity.filter(hhat_CHARQ_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
+
+
+		DRD_CHARQ <- suppressWarnings(EstimatecorrHAR(cbind(hhat_CHARQ_TLT, hhat_CHARQ_SPY), correlation = correlationjumprobust, proxy = proxycor, 0, T))
+
+
+		invsquarerootmat_CHARQ <- invsquarerootmat(DRD_CHARQ$vSigma2)
+
+			
+		#############################################################################################
+		#
+		#
+		#							          MOMENT CALCULATIONS 
+		# 
+		#
+		#############################################################################################
+
+
+
+		means_stdres_HAR <- matrix(0L, ncol = 2, nrow = 2494)
+
+		std_stdres_HAR <- matrix(0L, ncol = 2, nrow = 2494)
+
+		skew_stdres_HAR <- matrix(0L, ncol = 2, nrow = 2494)
+
+		kurt_stdres_HAR <- matrix(0L, ncol = 2, nrow = 2494)
+
+		ACF_stdres_HAR_TLT <- matrix(0L, ncol = 2494, nrow = 20)
+		ACF_stdres_HAR_SPY <- matrix(0L, ncol = 2494, nrow = 20)
+
+
+		means_stdres_HARQ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		std_stdres_HARQ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		skew_stdres_HARQ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		kurt_stdres_HARQ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		ACF_stdres_HARQ_TLT <- matrix(0L, ncol = 2494, nrow = 20)
+		ACF_stdres_HARQ_SPY <- matrix(0L, ncol = 2494, nrow = 20)
+
+
+		means_stdres_HARQF <- matrix(0L, ncol = 2, nrow = 2494)
+
+		std_stdres_HARQF <- matrix(0L, ncol = 2, nrow = 2494)
+
+		skew_stdres_HARQF <- matrix(0L, ncol = 2, nrow = 2494)
+
+		kurt_stdres_HARQF <- matrix(0L, ncol = 2, nrow = 2494)
+
+		ACF_stdres_HARQF_TLT <- matrix(0L, ncol = 2494, nrow = 20)
+		ACF_stdres_HARQF_SPY <- matrix(0L, ncol = 2494, nrow = 20)
+
+		means_stdres_HARJ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		std_stdres_HARJ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		skew_stdres_HARJ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		kurt_stdres_HARJ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		ACF_stdres_HARJ_TLT <- matrix(0L, ncol = 2494, nrow = 20)
+		ACF_stdres_HARJ_SPY <- matrix(0L, ncol = 2494, nrow = 20)
+
+		means_stdres_HARQJ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		std_stdres_HARQJ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		skew_stdres_HARQJ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		kurt_stdres_HARQJ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		ACF_stdres_HARQJ_TLT <- matrix(0L, ncol = 2494, nrow = 20)
+		ACF_stdres_HARQJ_SPY <- matrix(0L, ncol = 2494, nrow = 20)
+
+		means_stdres_CHAR <- matrix(0L, ncol = 2, nrow = 2494)
+
+		std_stdres_CHAR <- matrix(0L, ncol = 2, nrow = 2494)
+
+		skew_stdres_CHAR <- matrix(0L, ncol = 2, nrow = 2494)
+
+		kurt_stdres_CHAR <- matrix(0L, ncol = 2, nrow = 2494)
+
+		ACF_stdres_CHAR_TLT <- matrix(0L, ncol = 2494, nrow = 20)
+		ACF_stdres_CHAR_SPY <- matrix(0L, ncol = 2494, nrow = 20)
+
+		means_stdres_CHARQ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		std_stdres_CHARQ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		skew_stdres_CHARQ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		kurt_stdres_CHARQ <- matrix(0L, ncol = 2, nrow = 2494)
+
+		ACF_stdres_CHARQ_TLT <- matrix(0L, ncol = 2494, nrow = 20)
+		ACF_stdres_CHARQ_SPY <- matrix(0L, ncol = 2494, nrow = 20)
+
+		for(i in 1:2494){
+
+			stdres_HAR <- mergedfrequencies[[j]][[i]] %*% invsquarerootmat_HAR[,,i]
+			stdres_HARQ <- mergedfrequencies[[j]][[i]] %*% invsquarerootmat_HARQ[,,i]
+			stdres_HARQF <- mergedfrequencies[[j]][[i]] %*% invsquarerootmat_HARQF[,,i]
+			stdres_HARJ <- mergedfrequencies[[j]][[i]] %*% invsquarerootmat_HARJ[,,i]
+			stdres_HARQJ <- mergedfrequencies[[j]][[i]] %*% invsquarerootmat_HARQJ[,,i]
+			stdres_CHAR <- mergedfrequencies[[j]][[i]] %*% invsquarerootmat_CHAR[,,i]
+			stdres_CHARQ <- mergedfrequencies[[j]][[i]] %*% invsquarerootmat_CHARQ[,,i]
+
+
+
+			means_stdres_HAR[i, ] <- colMeans(stdres_HAR)
+			std_stdres_HAR[i, ] <- apply(stdres_HAR, MARGIN = c(2), FUN = function(x) sd(x))
+			skew_stdres_HAR[i, ] <- apply(stdres_HAR, MARGIN = c(2), FUN = function(x) skewness(x))
+			kurt_stdres_HAR[i, ] <- apply(stdres_HAR, MARGIN = c(2), FUN = function(x) kurtosis(x))
+			ACF_stdres_HAR_TLT[, i] <- acf(stdres_HAR[,1], plot = F)$acf[1:20]
+			ACF_stdres_HAR_SPY[, i] <- acf(stdres_HAR[,2], plot = F)$acf[1:20]
+
+			means_stdres_HARQ[i, ] <- colMeans(stdres_HARQ)
+			std_stdres_HARQ[i, ] <- apply(stdres_HARQ, MARGIN = c(2), FUN = function(x) sd(x))
+			skew_stdres_HARQ[i, ] <- apply(stdres_HARQ, MARGIN = c(2), FUN = function(x) skewness(x))
+			kurt_stdres_HARQ[i, ] <- apply(stdres_HARQ, MARGIN = c(2), FUN = function(x) kurtosis(x))
+			ACF_stdres_HARQ_TLT[, i] <- acf(stdres_HARQ[,1], plot = F)$acf[1:20]
+			ACF_stdres_HARQ_SPY[, i] <- acf(stdres_HARQ[,2], plot = F)$acf[1:20]
+
+			means_stdres_HARQF[i, ] <- colMeans(stdres_HARQF)
+			std_stdres_HARQF[i, ] <- apply(stdres_HARQF, MARGIN = c(2), FUN = function(x) sd(x))
+			skew_stdres_HARQF[i, ] <- apply(stdres_HARQF, MARGIN = c(2), FUN = function(x) skewness(x))
+			kurt_stdres_HARQF[i, ] <- apply(stdres_HARQF, MARGIN = c(2), FUN = function(x) kurtosis(x))
+			ACF_stdres_HARQF_TLT[, i] <- acf(stdres_HARQF[,1], plot = F)$acf[1:20]
+			ACF_stdres_HARQF_SPY[, i] <- acf(stdres_HARQF[,2], plot = F)$acf[1:20]
+
+			means_stdres_HARJ[i, ] <- colMeans(stdres_HARJ)
+			std_stdres_HARJ[i, ] <- apply(stdres_HARJ, MARGIN = c(2), FUN = function(x) sd(x))
+			skew_stdres_HARJ[i, ] <- apply(stdres_HARJ, MARGIN = c(2), FUN = function(x) skewness(x))
+			kurt_stdres_HARJ[i, ] <- apply(stdres_HARJ, MARGIN = c(2), FUN = function(x) kurtosis(x))
+			ACF_stdres_HARJ_TLT[, i] <- acf(stdres_HARJ[,1], plot = F)$acf[1:20]
+			ACF_stdres_HARJ_SPY[, i] <- acf(stdres_HARJ[,2], plot = F)$acf[1:20]
+
+			means_stdres_HARQJ[i, ] <- colMeans(stdres_HARQJ)
+			std_stdres_HARQJ[i, ] <- apply(stdres_HARQJ, MARGIN = c(2), FUN = function(x) sd(x))
+			skew_stdres_HARQJ[i, ] <- apply(stdres_HARQJ, MARGIN = c(2), FUN = function(x) skewness(x))
+			kurt_stdres_HARQJ[i, ] <- apply(stdres_HARQJ, MARGIN = c(2), FUN = function(x) kurtosis(x))
+			ACF_stdres_HARQJ_TLT[, i] <- acf(stdres_HARQJ[,1], plot = F)$acf[1:20]
+			ACF_stdres_HARQJ_SPY[, i] <- acf(stdres_HARQJ[,2], plot = F)$acf[1:20]
+
+			means_stdres_CHAR[i, ] <- colMeans(stdres_HAR)
+			std_stdres_CHAR[i, ] <- apply(stdres_HAR, MARGIN = c(2), FUN = function(x) sd(x))
+			skew_stdres_CHAR[i, ] <- apply(stdres_HAR, MARGIN = c(2), FUN = function(x) skewness(x))
+			kurt_stdres_CHAR[i, ] <- apply(stdres_HAR, MARGIN = c(2), FUN = function(x) kurtosis(x))
+			ACF_stdres_CHAR_TLT[, i] <- acf(stdres_HAR[,1], plot = F)$acf[1:20]
+			ACF_stdres_CHAR_SPY[, i] <- acf(stdres_HAR[,2], plot = F)$acf[1:20]
+
+			means_stdres_CHARQ[i, ] <- colMeans(stdres_HAR)
+			std_stdres_CHARQ[i, ] <- apply(stdres_HAR, MARGIN = c(2), FUN = function(x) sd(x))
+			skew_stdres_CHARQ[i, ] <- apply(stdres_HAR, MARGIN = c(2), FUN = function(x) skewness(x))
+			kurt_stdres_CHARQ[i, ] <- apply(stdres_HAR, MARGIN = c(2), FUN = function(x) kurtosis(x))
+			ACF_stdres_CHARQ_TLT[, i] <- acf(stdres_HAR[,1], plot = F)$acf[1:20]
+			ACF_stdres_CHARQ_SPY[, i] <- acf(stdres_HAR[,2], plot = F)$acf[1:20]
+
+		}
+
+		HAR_res_means <- matrix(0L, ncol = 2, nrow = 9) #rows are frequencies. 
+
+		HAR_res_means[j, ] <- colMeans(means_stdres_HAR)
+
+
+
+
+
+
+		print(sprintf("Forecast: %s, Frequency: %s, Measure: %s", i,j,k))
+
+		}
+	
+	#Qlikes[[k]] <- temp[1001:nrow(temp), ]
+	#Qlikes[[k+3]] <- temp_HARQ[1001:nrow(temp_HARQ), ]
+	#Qlikes[[k+6]] <- temp_HARQF[1001:nrow(temp_HARQF), ]
+	#Qlikes[[k+9]] <- temp_HARJ[1001:nrow(temp_HARJ), ]
+	#Qlikes[[k+12]] <- temp_HARQJ[1001:nrow(temp_HARQJ), ]
+	#putting SHAR model at 16th list item 
+	#Qlikes[[k+16]] <- temp_CHAR[1001:nrow(temp_CHAR), ]
+	#Qlikes[[k+19]] <- temp_CHARQ[1001:nrow(temp_CHARQ), ]
+
+	#mvpvariance_DRD[[k]] <- temp_mvp[1001:nrow(temp_mvp), ]
+	#mvpvariance_DRD[[k+3]] <- temp_HARQ_mvp[1001:nrow(temp_HARQ_mvp), ]
+	#mvpvariance_DRD[[k+6]] <- temp_HARQF_mvp[1001:nrow(temp_HARQF_mvp), ]
+	#mvpvariance_DRD[[k+9]] <- temp_HARJ_mvp[1001:nrow(temp_HARJ_mvp), ]
+	#mvpvariance_DRD[[k+12]] <- temp_HARQJ_mvp[1001:nrow(temp_HARQJ_mvp), ]
+	#mvpvariance_DRD[[k+16]] <- temp_CHAR_mvp[1001:nrow(temp_CHAR_mvp), ]
+	#mvpvariance_DRD[[k+19]] <- temp_CHARQ_mvp[1001:nrow(temp_CHARQ_mvp), ]
+
+
+}
+
+
+
+
+
 
 ##############################################################################################################################
 #
@@ -1542,7 +2123,7 @@ EstimatecorrHAR2 <- function(returns, variances, proxy, trace=1, ineqfun = ineqc
   corrweek <- rowMeans(cbind(mEta, mlag(mEta,4,mean(mEta))))
   corrmonth <- rowMeans(cbind(mEta, mlag(mEta,21,mean(mEta)))) 
 
-  data <- list(proxy[23:2516], corrday, corrweek, corrmonth)
+  data <- list(proxy, corrday, corrweek, corrmonth)
 
 
   optimizer = solnp(vPar, fun = min.RSS, data = data, 
@@ -1560,36 +2141,6 @@ EstimatecorrHAR2 <- function(returns, variances, proxy, trace=1, ineqfun = ineqc
   min <- tail(optimizer$values, 1)
 
   hessian <- optimizer$hessian
-
-  scores <- matrix(0L, nrow=(nrow(variances)), ncol = 3)
-
-  step <- 1e-5 * vPar
-
-  for(i in 1:length(step)){
-
-	h <- step[i]
-    delta <- rep(0, length(vPar))
-    delta[i] <- h
-																
-	loglikeminus <- minimizingfunc(mEta, vPar-delta)$minis
-	loglikeplus <- minimizingfunc(mEta, vPar+delta)$minis
-
-	scores[,i] <- (loglikeplus - loglikeminus)/(2*h)
-
-  }
-
-  J <- (t(scores) %*% scores)/length(mEta[[1]])
-
-  I <- optimizer$hessian/length(mEta[[1]])
-
-  I <- solve(I)[-1 ,-1]
-
-  vars <- (I * J * I)/length(mEta[[1]])
-  
-  rse <- sqrt(diag(vars))
-
-  t.stat <- vPar/rse
-
 
   #calculating covariances: 
   
@@ -1619,10 +2170,8 @@ EstimatecorrHAR2 <- function(returns, variances, proxy, trace=1, ineqfun = ineqc
   lOut[["R2"]] <- Rsquared
   lOut[["estcor"]] <- hhatcorrHAR
   lOut[["MSE"]] <- min/2516 
-  lOut[["rse"]] <- rse
   lOut[["hessian"]] <- hessian
   lOut[["mEta"]] <- mEta
-  lOut[["Tstats"]] <- t.stat
 
   return(lOut)
 

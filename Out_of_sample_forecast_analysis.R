@@ -75,8 +75,22 @@ temp_HARQJ <- matrix(0L, ncol = 9, nrow = 2516)
 temp_CHAR <- matrix(0L, ncol = 9, nrow = 2516)
 temp_CHARQ <- matrix(0L, ncol = 9, nrow = 2516)
 
+#minvar 
+
+mvpvariance_DRD <- list()
+
+temp_mvp <- matrix(0L, ncol = 9, nrow = 2516)
+temp_HARQ_mvp <- matrix(0L, ncol = 9, nrow = 2516)
+temp_HARQF_mvp <- matrix(0L, ncol = 9, nrow = 2516)
+temp_HARJ_mvp <- matrix(0L, ncol = 9, nrow = 2516)
+temp_HARQJ_mvp <- matrix(0L, ncol = 9, nrow = 2516)
+temp_CHAR_mvp <- matrix(0L, ncol = 9, nrow = 2516)
+temp_CHARQ_mvp <- matrix(0L, ncol = 9, nrow = 2516)
+
+
+
 for(k in 1:3){
-	for(j in 1:9){
+	for(j in 1:9){ 
 		for(i in (window+1):2516){
 
 			#measures
@@ -262,9 +276,11 @@ for(k in 1:3){
 			DRD_HAR <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HAR_TLT, hhat_HAR_SPY), 
 				correlation = correlation, proxy = proxycor, 0, T))
 
-			temp[i,j] <- QLIKE(DRD_HAR$vSigma2[,,1], RCov5min, 2)
+			#temp[i,j] <- QLIKE(DRD_HAR$vSigma2[,,1], RCov5min, 2)
 
+			weight <- minvar(DRD_HAR$vSigma2[,,1])
 
+			temp_mvp[i,j] <- t(weight) %*% RCov5min %*% weight
 
 			#############################################################################################
 			#
@@ -287,7 +303,10 @@ for(k in 1:3){
 			#SAME CORRELATION AS HAR MODELS. ONLY THING THAT CHANGED IS THE UNIVARIATE VOLS. 
 			DRD_HARQ <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HARQ_TLT, hhat_HARQ_SPY), correlation = correlation, proxy = proxycor, 0,T))
 
-			temp_HARQ[i,j] <- QLIKE(DRD_HARQ$vSigma2[,,1], RCov5min, 2)
+			#temp_HARQ[i,j] <- QLIKE(DRD_HARQ$vSigma2[,,1], RCov5min, 2)
+			weight <- minvar(DRD_HARQ$vSigma2[,,1])
+
+			temp_HARQ_mvp[i,j] <- t(weight) %*% RCov5min %*% weight
 
 
 			#############################################################################################
@@ -321,7 +340,10 @@ for(k in 1:3){
 
 			DRD_HARQF <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HARQF_TLT, hhat_HARQF_SPY), correlation = correlation, proxy = proxycor, 0, T))
 
-			temp_HARQF[i,j] <- QLIKE(DRD_HARQF$vSigma2[,,1], RCov5min, 2)
+			#temp_HARQF[i,j] <- QLIKE(DRD_HARQF$vSigma2[,,1], RCov5min, 2)
+			weight <- minvar(DRD_HARQF$vSigma2[,,1])
+
+			temp_HARQF_mvp[i,j] <- t(weight) %*% RCov5min %*% weight
 
 			#############################################################################################
 			#
@@ -343,7 +365,11 @@ for(k in 1:3){
 
 			DRD_HARJ <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HARJ_TLT, hhat_HARJ_SPY), correlation = correlation, proxy = proxycor, 0, T))
 			
-			temp_HARJ[i,j] <- QLIKE(DRD_HARJ$vSigma2[,,1], RCov5min, 2)
+			#temp_HARJ[i,j] <- QLIKE(DRD_HARJ$vSigma2[,,1], RCov5min, 2)
+
+			weight <- minvar(DRD_HARJ$vSigma2[,,1])
+
+			temp_HARJ_mvp[i,j] <- t(weight) %*% RCov5min %*% weight
 
 			#############################################################################################
 			#
@@ -364,7 +390,11 @@ for(k in 1:3){
 
 			DRD_HARQJ <- suppressWarnings(EstimatecorrHAR(cbind(hhat_HARQJ_TLT, hhat_HARQJ_SPY), correlation = correlation, proxy = proxycor, 0, T))
 
-			temp_HARQJ[i,j] <- QLIKE(DRD_HARQJ$vSigma2[,,1], RCov5min, 2)
+			#temp_HARQJ[i,j] <- QLIKE(DRD_HARQJ$vSigma2[,,1], RCov5min, 2)
+
+			weight <- minvar(DRD_HARQJ$vSigma2[,,1])
+
+			temp_HARQJ_mvp[i,j] <- t(weight) %*% RCov5min %*% weight
 
 			#############################################################################################
 			#
@@ -374,11 +404,11 @@ for(k in 1:3){
 			#
 			#############################################################################################
 
-			CHAR_TLT <- lm(RV5min_TLT[2:end] ~ volday_TLT[1:(end-1)] + volweek_TLT[1:(end-1)] + volmonth_TLT[1:(end-1)])
-			hhat_CHAR_TLT <- cbind(1, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end])  %*% matrix(coef(CHAR_TLT))
+			CHAR_TLT <- lm(RV5min_TLT[2:end] ~ ICvolday_TLT[1:(end-1)] + ICvolweek_TLT[1:(end-1)] + ICvolmonth_TLT[1:(end-1)])
+			hhat_CHAR_TLT <- cbind(1, volday_TLT[end], ICvolweek_TLT[end], ICvolmonth_TLT[end])  %*% matrix(coef(CHAR_TLT))
 
-			CHAR_SPY <- lm(RV5min_SPY[2:end] ~ volday_SPY[1:(end-1)] + volweek_SPY[1:(end-1)] + volmonth_SPY[1:(end-1)])
-			hhat_CHAR_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end])  %*% matrix(coef(CHAR_SPY))
+			CHAR_SPY <- lm(RV5min_SPY[2:end] ~ ICvolday_SPY[1:(end-1)] + ICvolweek_SPY[1:(end-1)] + ICvolmonth_SPY[1:(end-1)])
+			hhat_CHAR_SPY <- cbind(1, ICvolday_SPY[end], ICvolweek_SPY[end], ICvolmonth_SPY[end])  %*% matrix(coef(CHAR_SPY))
 
 			hhat_CHAR_SPY <- volatility.insanity.filter(hhat_CHAR_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
 			hhat_CHAR_TLT <- volatility.insanity.filter(hhat_CHAR_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
@@ -387,6 +417,9 @@ for(k in 1:3){
 
 			temp_CHAR[i,j] <- QLIKE(DRD_CHAR$vSigma2[,,1], RCov5min, 2)
 
+			weight <- minvar(DRD_CHAR$vSigma2[,,1])
+
+			temp_CHAR_mvp[i,j] <- t(weight) %*% RCov5min %*% weight
 
 			#############################################################################################
 			#
@@ -396,11 +429,11 @@ for(k in 1:3){
 			#
 			#############################################################################################
 
-			CHARQ_TLT <- lm(RV5min_TLT[2:end] ~ volday_TLT[1:(end-1)] +  volweek_TLT[1:(end-1)] + volmonth_TLT[1:(end-1)] + I(volday_TLT[1:(end-1)] * sqrttrq_TLT[1:(end-1)]))
-			hhat_CHARQ_TLT <- cbind(1, volday_TLT[end], volweek_TLT[end], volmonth_TLT[end], volday_TLT[end] * sqrttrq_TLT[end])  %*% matrix(coef(CHARQ_TLT))
+			CHARQ_TLT <- lm(RV5min_TLT[2:end] ~ ICvolday_TLT[1:(end-1)] +  ICvolweek_TLT[1:(end-1)] + ICvolmonth_TLT[1:(end-1)] + I(ICvolday_TLT[1:(end-1)] * sqrttrq_TLT[1:(end-1)]))
+			hhat_CHARQ_TLT <- cbind(1, ICvolday_TLT[end], ICvolweek_TLT[end], ICvolmonth_TLT[end], ICvolday_TLT[end] * sqrttrq_TLT[end])  %*% matrix(coef(CHARQ_TLT))
 
-			CHARQ_SPY <- lm(RV5min_SPY[2:end] ~ volday_SPY[1:(end-1)] +  volweek_SPY[1:(end-1)] + volmonth_SPY[1:(end-1)] + I(volday_SPY[1:(end-1)] * sqrttrq_SPY[1:(end-1)]))
-			hhat_CHARQ_SPY <- cbind(1, volday_SPY[end], volweek_SPY[end], volmonth_SPY[end], volday_SPY[end] * sqrttrq_SPY[end])  %*% matrix(coef(CHARQ_SPY))
+			CHARQ_SPY <- lm(RV5min_SPY[2:end] ~ ICvolday_SPY[1:(end-1)] +  ICvolweek_SPY[1:(end-1)] + ICvolmonth_SPY[1:(end-1)] + I(ICvolday_SPY[1:(end-1)] * sqrttrq_SPY[1:(end-1)]))
+			hhat_CHARQ_SPY <- cbind(1, ICvolday_SPY[end], ICvolweek_SPY[end], ICvolmonth_SPY[end], ICvolday_SPY[end] * sqrttrq_SPY[end])  %*% matrix(coef(CHARQ_SPY))
 
 			hhat_CHARQ_SPY <- volatility.insanity.filter(hhat_CHARQ_SPY, min(RV5min_SPY), max(RV5min_SPY), mean(RV5min_SPY))$vol
 			hhat_CHARQ_TLT <- volatility.insanity.filter(hhat_CHARQ_TLT, min(RV5min_TLT), max(RV5min_TLT), mean(RV5min_TLT))$vol
@@ -409,27 +442,37 @@ for(k in 1:3){
 			DRD_CHARQ <- suppressWarnings(EstimatecorrHAR(cbind(hhat_CHARQ_TLT, hhat_CHARQ_SPY), correlation = correlationjumprobust, proxy = proxycor, 0, T))
 
 			temp_CHARQ[i,j] <- QLIKE(DRD_CHARQ$vSigma2[,,1], RCov5min, 2)
+			weight <- minvar(DRD_CHARQ$vSigma2[,,1])
+
+			temp_CHARQ_mvp[i,j] <- t(weight) %*% RCov5min %*% weight
+
+			print(sprintf("Forecast: %s, Frequency: %s, Measure: %s", i,j,k))
 
 		}
-		print(sprintf("%s", j))
 	}
-	Qlikes[[k]] <- temp[1001:nrow(temp), ]
-	Qlikes[[k+3]] <- temp_HARQ[1001:nrow(temp_HARQ), ]
-	Qlikes[[k+6]] <- temp_HARQF[1001:nrow(temp_HARQF), ]
-	Qlikes[[k+9]] <- temp_HARJ[1001:nrow(temp_HARJ), ]
-	Qlikes[[k+12]] <- temp_HARQJ[1001:nrow(temp_HARQJ), ]
+	#Qlikes[[k]] <- temp[1001:nrow(temp), ]
+	#Qlikes[[k+3]] <- temp_HARQ[1001:nrow(temp_HARQ), ]
+	#Qlikes[[k+6]] <- temp_HARQF[1001:nrow(temp_HARQF), ]
+	#Qlikes[[k+9]] <- temp_HARJ[1001:nrow(temp_HARJ), ]
+	#Qlikes[[k+12]] <- temp_HARQJ[1001:nrow(temp_HARQJ), ]
 	#putting SHAR model at 16th list item 
-	Qlikes[[k+16]] <- temp_CHAR[1001:nrow(temp_CHAR), ]
-	Qlikes[[k+19]] <- temp_CHARQ[1001:nrow(temp_CHARQ), ]
+	#Qlikes[[k+16]] <- temp_CHAR[1001:nrow(temp_CHAR), ]
+	#Qlikes[[k+19]] <- temp_CHARQ[1001:nrow(temp_CHARQ), ]
+
+	mvpvariance_DRD[[k]] <- temp_mvp[1001:nrow(temp_mvp), ]
+	mvpvariance_DRD[[k+3]] <- temp_HARQ_mvp[1001:nrow(temp_HARQ_mvp), ]
+	mvpvariance_DRD[[k+6]] <- temp_HARQF_mvp[1001:nrow(temp_HARQF_mvp), ]
+	mvpvariance_DRD[[k+9]] <- temp_HARJ_mvp[1001:nrow(temp_HARJ_mvp), ]
+	mvpvariance_DRD[[k+12]] <- temp_HARQJ_mvp[1001:nrow(temp_HARQJ_mvp), ]
+	mvpvariance_DRD[[k+16]] <- temp_CHAR_mvp[1001:nrow(temp_CHAR_mvp), ]
+	mvpvariance_DRD[[k+19]] <- temp_CHARQ_mvp[1001:nrow(temp_CHARQ_mvp), ]
 
 
 }
 
 
-
-
-
 temp_SHAR <- matrix(0L, ncol = 9, nrow = 2516)
+temp_SHAR_mvp <- matrix(0L, ncol = 9, nrow = 2516)
 
 for(j in 1:9){
 	for(i in (window+1):2516){
@@ -477,14 +520,22 @@ for(j in 1:9){
 
 		DRD_SHAR <- suppressWarnings(EstimatecorrHAR(cbind(hhat_SHAR_TLT, hhat_SHAR_SPY), correlation = correlation, proxy = proxycor, 0, T))
 
-		temp_SHAR[i,j] <- QLIKE(DRD_SHAR$vSigma2[,,1], RCov5min, 2)
+		#temp_SHAR[i,j] <- QLIKE(DRD_SHAR$vSigma2[,,1], RCov5min, 2)
+		weights <- minvar(DRD_SHAR$vSigma2[,,1])
+
+		temp_SHAR_mvp[i,j] <- t(weights) %*% RCov5min %*% weights
 
 	}
 	print(sprintf("%s", j))
 
 }
 
-Qlikes[[16]] <- temp_SHAR[1001:nrow(temp_SHAR), ]
+mvpvariance_DRD[[16]] <- temp_SHAR_mvp[1001:nrow(temp_SHAR_mvp), ]
+#Qlikes[[16]] <- temp_SHAR[1001:nrow(temp_SHAR), ]
+
+#saveRDS(mvpvariance_DRD, "mvpvariance_DRD.rds")
+
+
 
 
 #saveRDS(Qlikes, "Qlikes_Forecast_DRDmodels_intraday.rds")
@@ -497,7 +548,7 @@ means <- numeric()
 
 for(i in 1:22){
 
-means[i] <- mean(rowMeans(Qlikes[[i]]))
+means[i] <- mean(rowMeans(mvpvariance_DRD[[i]]))
 
 }
 
@@ -515,6 +566,9 @@ means[i] <- mean(rowMeans(Qlikes[[i]]))
 #
 #############################################################################################
 Qlikes_riskmetrics  <- list()
+mvpvariance_RM <- list()
+temp_variance_RM <- matrix(0L, ncol = 9, nrow = 2516)
+
 temp_riskmetrics <- matrix(0L, ncol = 9, nrow = 2516)
 for(k in 1:6){
 	for(j in 1:9){
@@ -525,15 +579,21 @@ for(k in 1:6){
 			Filter <- ewma.filter.realized(calccov[[choice[k]]][[j]][,,(i-window):(i-1)], NULL, F, 0.94, 0)
 
 			end <- length(Filter[1,1, ])
-			temp_riskmetrics[i,j] <- QLIKE(Filter[,,end], calccov[[1]][[7]][,,i], 2)
+			#temp_riskmetrics[i,j] <- QLIKE(Filter[,,end], calccov[[1]][[7]][,,i], 2)
+
+			weight <- minvar(Filter[,,end])
+
+			temp_variance_RM[i,j] <- t(weight) %*% (calccov[[1]][[7]][,,i]*10000) %*% weight
 		}
 		print(sprintf("%s", j))
 	}
-	Qlikes_riskmetrics[[k]] <- temp_riskmetrics[1001:nrow(temp_riskmetrics), ]
+	#Qlikes_riskmetrics[[k]] <- temp_riskmetrics[1001:nrow(temp_riskmetrics), ]
+	mvpvariance_RM[[k]] <- temp_variance_RM[1001:nrow(temp_variance_RM), ]
 }
 
+#saveRDS(mvpvariance, "mvpvariance_RM.rds")
 
-
+ttt <- readRDS("mvpvariance_RM.rds")
 
 means_riskmetrics <- numeric()
 
@@ -583,7 +643,6 @@ for(j in 1:9){
 }
 #saveRDS(Mixed, "Mixed_semicovariances.rds")
 }
-Mixed <- readRDS("Mixed_semicovariances.rds")
 
 
 #--------------------------------------------------------------------------------------------
@@ -594,36 +653,71 @@ Mixed <- readRDS("Mixed_semicovariances.rds")
 
 
 Qlikes_rBG<- list()
-Qlikes_rDCC <- list()
 
 #you need mixed for crBG and crDCC. 
 
 
 
 temp_rBG <- matrix(0L, ncol = 9, nrow = 2516)
+
+window <- 1000
+#rBG
+rBG <- list(vPar = c(0.308691, 0.573546))
+for(k in 1:6){
+	for(j in 1:9){
+		for(i in (window+1):2516){
+
+			choice <- c(1,4,5,6,7,8)
+			
+			pars <- rBG$vPar 
+
+			rBG <- EstimateBivarGARCH(dailyretotc[(i-window):(i-1), ] * 100, 
+				calccov[[choice[k]]][[j]][,,(i-window):(i-1)]*10000, vPar = pars, tol = 1e-5)
+	
+			end <- 1000
+
+			temp_rBG[i,j] <- QLIKE(rBG$vSigma2[,,end], calccov[[1]][[7]][,,i]*10000, 2)
+
+			print(sprintf("Forecast %s, in frequency %s with measure %s",i,j,k))
+		}
+	}
+	Qlikes_rBG[[k]] <- temp_rBG[1001:nrow(temp_rBG), ]
+}
+
+
+#saveRDS(Qlikes_rBG, "Qlikes_rBG.rds")
+
+
+Qlikes_rDCC <- list()
 temp_rDCC <- matrix(0L, ncol = 9, nrow = 2516)
 
-for(k in 1:1){
-	for(j in 7:7){
-		for(i in (window+1):1050){
+
+#rDCC
+#Tcov and pbpcov has numerically instable covariances under 1 second, so we exclude 1 sec and calculate it later
+for(k in 1:6){
+	for(j in 2:9){
+		for(i in (window+1):2516){
+
+			end <- 1000
 
 			choice <- c(1,4,5,6,7,8)
 
-			#rBG <- EstimateBivarGARCH(dailyretotc[(i-window):(i-1), ] * 100, calccov[[k]][[j]][,,(i-window):(i-1)]*10000)
-			rDCC <- Estimate_rDCC(dailyretotc[(i-window):(i-1), ] * 100, calccov[[k]][[j]][,,(i-window):(i-1)]*10000, 
+			rDCC <- Estimate_rDCC(dailyretotc[(i-window):(i-1), ] * 100, calccov[[choice[k]]][[j]][,,(i-window):(i-1)]*10000, 
 				getDates[(i-window):(i-1)], tol = 1e-5)
-			
-			end <- 1000
 
-			#temp_rBG[i,j] <- QLIKE(rBG$vSigma2[,,end], calccov[[1]][[7]][,,i]*10000, 2)
-			#temp_rDCC[i,j] <- QLIKE(rDCC$vSigma2[,,end], calccov[[1]][[7]][,,i]*10000, 2)
+			temp_rDCC[i,j] <- QLIKE(rDCC$vSigma2[,,end], calccov[[1]][[7]][,,i]*10000, 2)
+			
+			print(sprintf("Forecast %s, in frequency %s with measure %s",i,j,k))
 		}
 	}
-	Qlikes_rBG[[k]] <- temp_rBG
 	Qlikes_rDCC[[k]] <- temp_rDCC
 }
 
 
+#one-second calculations are done in a separate setup together with daily frequencies
+
+
+#saveRDS(Qlikes_rDCC, "Qlikes_rDCC.rds")
 
 
 
@@ -637,23 +731,47 @@ for(k in 1:1){
 Qlikes_crBG <- matrix(0L, ncol = 9, nrow = 2516)
 Qlikes_crDCC <- matrix(0L, ncol = 9, nrow = 2516)
 
+#initiating
+crBGpars <- c(0.09, 0.34, 0.04, 0.52)
+crDCCpars <- c(0.0001, 0.0001, 0.08, 0.91)
+#Mixed <- readRDS("Mixed_semicovariances.rds")
 
+semicovs <- readRDS("semicov_acrossfreq.rds")
+
+Pfreq <- semicovs[[1]]
+Nfreq <- semicovs[[2]]
+Mfreq <- semicovs[[3]]
+
+window <- 1000
 for(j in 1:9){
-	for(i in (window+1):1002){
+	for(i in (window+1):2516){
 
-		#list(P,N,M)
-		decompcov <- list(calccov[[2]][[j]][,,(i-window):(i-1)] * 10000, 
-		calccov[[3]][[j]][,,(i-window):(i-1)] * 10000, Mixed[[j]][,,(i-window):(i-1)]*10000)
+		decompcov <- list(Pfreq[[j]][,,(i-window):(i-1)] * 10000, 
+		                  Nfreq[[j]][,,(i-window):(i-1)] * 10000, Mfreq[[j]][,,(i-window):(i-1)] * 10000)
 
-		crBG <- EstimateBivarGARCHContAsym(dailyretotc[(i-window):(i-1), ] * 100, decompcov)
+		crBG <- EstimateBivarGARCHContAsym(dailyretotc[(i-window):(i-1), ] * 100, decompcov, vPar = crBGpars)
 
+		crBGpars <-  crBG$vPar 
+		
+		end <- 1000
+		
 		Qlikes_crBG[i,j] <- QLIKE(crBG$vSigma2[,,end], calccov[[1]][[7]][,,i]*10000, 2)
+		
+		#cov2 <- calccov[[1]][[j]][,,(i-window):(i-1)] * 10000
 
+		crDCC <- Estimate_rcDCC(dailyretotc[(i-window):(i-1), ] * 100, decompcov, NULL, getDates = getDates[(i-window):(i-1)], tol = 1e-7, vPar = crDCCpars)
+		
+		crDCCpars <- crDCC$vPar
+		
+		Qlikes_crDCC[i,j] <- QLIKE(crDCC$vSigma2[,,end], calccov[[1]][[7]][,,i]*10000, 2)
+		print(sprintf("Forecast %s, in frequency %s",i,j))
+		
 	}
 }
 
 
-
+#saveRDS(Qlikes_crBG, "Qlikes_crBGcorrect.rds")
+#saveRDS(Qlikes_crDCC, "Qlikes_crDCCcorrect.rds")
 
 
 

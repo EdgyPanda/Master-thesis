@@ -221,6 +221,38 @@ for(i in 1:length(returns_collected[,1])){
 }
 
 
+ewmasmoothing <- ewma.filter.realized(asset_cov[1:2,1:2, ] * 10000, NULL, F, 0.94, 0)
+
+
+
+minvars <- matrix(0L, ncol = 2, nrow = length(returns_collected[,1]))
+
+for(i in 1:length(returns_collected[,1])){
+
+	minvars[i, ] <- t(minvar(ewmasmoothing[,,i]))
+
+}
+
+portretsminvar <- numeric()
+
+for(i in 1:length(returns_collected[,1])){
+
+	portretsminvar[i] <-   minvars[i, ] %*%  t(returns_collected[i, 1:2])
+
+}
+
+
+turnoversminvar <- turnover(minvars, matrix(portretsminvar * 100), returns_collected[,1:2] * 100)
+
+lel <- turnover.simple(minvars)
+
+
+mean(turnoversminvar)
+
+
+
+
+
 realcor_quarterly <- na.omit(rollapply(returns_collected, 60, function(x) cor(x), by.column = F, align = 'left'))
 
 #they will always be different, since 2006 uses the average of 14 different ewmas. 

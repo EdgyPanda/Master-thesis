@@ -9,7 +9,6 @@
 #############################################################################
 
 
-
 ########################################################################################################################
 #
 #												RISKMETRICS FILTERS
@@ -403,6 +402,67 @@ bandwidthH <- function(list, sparsedata){
 #
 ########################################################################################################################
 
+riskparity_2dim <- function(matrix, risktarget, rt = F){
+  #
+  #
+  #
+  #NOTE TO YOURSELF: Palomar uses non-sqrt portrisk, which gives 
+  #reasonable risk for the unlevered risk-parity portfolio. Using sqrt
+  #
+  #REMEMBER TO USE COV(),SD()  etc. FOR CLOSE-TO-CLOSE RETURNS, SINCE REALCOV OVERESTIMATES
+  #THE COVARIANCE FOR CLOSE-TO-CLOSE RETURNS
+  
+  bonds <- matrix[1,1]
+  stocks <- matrix[2,2]
+  
+  w_1 <- sqrt(bonds)^-1 / (sqrt(stocks)^-1 + sqrt(bonds)^-1)
+  w_2 <- sqrt(stocks)^-1 / (sqrt(stocks)^-1 + sqrt(bonds)^-1)
+  
+  w <- matrix(c(w_1, w_2), ncol=1, nrow=2) #dimnames = list(c(), c("Bond", "Stock"))
+  
+  #Palomar uses portfolio variance as portfolio risk, thus no sqrt. 
+  portrisk <- as.numeric(sqrt(t(w) %*% (matrix) %*% w))
+  
+  riskcont <-  w * (matrix %*% w)/portrisk
+  
+  relativeriskcont <- (w * (matrix %*% w)) / portrisk^2
+  
+  if(rt){
+    
+    alpha <- risktarget / portrisk
+    
+    w_new <- w %*% alpha
+    
+    w_new <- matrix(c(w_new[1], w_new[2]), ncol=1, nrow=2)
+    #here is sqrt, while palomar uses variance, no sqrt.
+    portrisk <-  as.numeric(sqrt((t(w_new) %*% matrix %*% w_new)))  #gives marginal risk for each asset. 
+    
+    riskcont <- (w_new * (matrix %*% w_new)) / portrisk
+    
+    w_riskfree <- uniroot(function(x) colSums(w_new)+x-1, interval = c(-100,100), extendInt="yes")$root
+    
+    w_new <- matrix(c(w_new, w_riskfree), ncol=1, nrow=3)
+    rownames(w_new) <- c("TLT", "SPY", "riskfree")
+    
+    lout <- list(w_new, portrisk, riskcont, alpha)
+    
+    names(lout) <- c("w", "portrisk", "riskcont", "alpha")
+    
+    return(lout)
+  }
+  w_riskfree <- uniroot(function(x) colSums(w)+x-1, interval = c(-100,100), extendInt="yes")$root
+
+  w <- matrix(c(w_1, w_2, w_riskfree), ncol = 1, nrow = 3)
+
+  lout <- list(w, portrisk, riskcont, relativeriskcont)
+  names(lout) <- c("w", "portrisk", "riskcont", "relativeriskcont")
+  
+  return(lout)
+  
+}
+
+
+
 minvar <- function(Covar){
 
 	ones <- matrix(rep(1, ncol(Covar)), ncol=1, nrow=ncol(Covar))
@@ -559,6 +619,54 @@ mlag <- function(x,n=1,init=0){
 	return(xlag)
 }
 
+#requires pracma
+#takes entire array
+invsquarerootmat <- function(Covar){
+
+	iT <-  length(Covar[1,1,])
+	d <- ncol(Covar[,,1]) 
+
+	isrmat <- array(0L, dim = c(d,d,iT))
+
+	for(i in 1:iT){
+
+		isrmat[,,i] <- solve(sqrtm(t(chol(Covar[,,i])))$B %*% sqrtm(chol(Covar[,,i]))$B)
+
+	}
+
+	return(isrmat)
+
+}
+
+turnover <- function(weights, portret, assetret){
+
+	assets <- ncol(weights)
+
+	init.weight <- rep(0, assets)
+
+	turnover <- numeric()
+	turnover[1] <- abs(sum(weights[1, ])) #only when initial weights are zero. 
+
+	for(i in 2:(nrow(portret)-1)){
+
+		turnover[i] <- sum(abs( weights[i, ] -  weights[i-1, ] * (1 + assetret[i-1, ]) * (1+portret[i-1, ])^-1 ))
+
+
+	}
+	return(turnover)
+}
+
+portconcentration <- function(weights){
+
+	concentration <- numeric()
+
+	for(i in 1:(nrow(weights)-1)){
+
+		concentration[i] <- sqrt(sum(weights[i, ]^2))
+
+	}
+	return(concentration)
+}
 
 ########################################################################################################################
 #
@@ -614,20 +722,21 @@ min.RSS <- function(vPar, data){
 
 
 EstimatecorrHAR <- function(variances, correlation = NULL, proxy, trace=1, Forecasts = F, ineqfun = ineqconstraint, ineqLB = 0.00, ineqUB = 0.9999){
-  #mEta is standardized residuals from univariate models!
   #variances should be produced by the univariate models and not come from realized measures!
   #correlation should be found via eg. five min samples but adhere to the same frequency as variances from HAR models. 
 
   dA = 0.01
-  dB  = 0.001185
-  dC = 0.2
+  dB  = 0.2185
+  dC = 0.4
   ## vector of starting parameters
   vPar = c(dA, dB, dC)
 
   correlation <- as.matrix(correlation)
   corrday <- correlation
-  corrweek <- rowMeans(cbind(correlation, mlag(correlation,4,mean(correlation))))
-  corrmonth <- rowMeans(cbind(correlation, mlag(correlation,21,mean(correlation)))) 
+  corrweek <- rowMeans(cbind(correlation, mlag(correlation,4,mean(correlation))), na.rm = T)
+  corrweek[is.na(corrweek)] <- mean(corrweek, na.rm = T)
+  corrmonth <- rowMeans(cbind(correlation, mlag(correlation,21,mean(correlation))), na.rm = T) 
+  corrmonth[is.na(corrmonth)] <- mean(corrmonth, na.rm = T)
 
   end <- length(correlation)
 
@@ -683,6 +792,77 @@ EstimatecorrHAR <- function(variances, correlation = NULL, proxy, trace=1, Forec
 
  }
 
+
+EstimatecorrHAR2 <- function(returns, variances, proxy, trace=1, ineqfun = ineqconstraint, ineqLB = 0.00, ineqUB = 0.9999){
+  #mEta is standardized residuals from univariate models!
+  #variances should be produced by the univariate models and not come from realized measures!
+  #correlation should be found via eg. five min samples but adhere to the same frequency as variances from HAR models. 
+  mEta <- numeric()
+  for(i in 1:nrow(variances)){
+  										#returns should start at 22. 
+  	mEta2 <- standardized.res.intraday(returns[[i]], variances[i, ])
+  	mEta[i] <- realCov(mEta2, T)[2,1]
+
+  }
+  dA = 0.45 
+  dB  = 0.09185
+  dC = 0.26
+  ## vector of starting parameters
+  vPar = c(dA, dB, dC)
+
+  mEta <- as.matrix(mEta)
+  corrday <- mEta
+  corrweek <- rowMeans(cbind(mEta, mlag(mEta,4,mean(mEta))))
+  corrmonth <- rowMeans(cbind(mEta, mlag(mEta,21,mean(mEta)))) 
+
+  data <- list(proxy, corrday, corrweek, corrmonth)
+
+  optimizer = solnp(vPar, fun = min.RSS, data = data, 
+                    ineqfun = ineqfun, #the inequality constraint
+                    ineqLB  = ineqLB, ## the inequality lower bound
+                    ineqUB = ineqUB, ## the inequality lower bound, i.e. 0.0 <= a + b + c < 0.9999
+                    ## lower and upper bounds for all parameters
+                    LB = c(0, 0, 0), UB = c(0.9999, 0.9999, 0.9999),
+                    control = list(tol = 1e-18, outer.iter = 800, inner.iter = 1200, delta = 1e-7,
+                    trace = trace))
+                    
+
+  params <- optimizer$pars
+
+  min <- tail(optimizer$values, 1)
+
+  hessian <- optimizer$hessian
+
+  #calculating covariances: 
+  
+  hhatcorrHAR <- cbind(corrday, corrweek, corrmonth) %*% matrix(params)
+
+  covs <- hhatcorrHAR * sqrt(variances[,1]) * sqrt(variances[,2])
+
+  vSigma2 <- array(0L, dim = c(2,2, (nrow(variances))))
+
+  for(i in 1:(nrow(variances))){
+
+    vSigma2[,,i] <- matrix(c(variances[i,1], covs[i], covs[i], variances[i,2]), ncol=2, nrow=2) 
+
+  }
+  
+
+  lOut <- list()
+
+  lOut[["vPar"]] <- params
+  lOut[["vSigma2"]] <- vSigma2
+  lOut[["estcor"]] <- hhatcorrHAR
+  lOut[["MSE"]] <- min/2516 
+  lOut[["hessian"]] <- hessian
+  lOut[["mEta"]] <- mEta
+
+  return(lOut)
+
+ }
+
+
+
 ########################################################################################################################
 #
 #										REALIZED SCALAR-BASED BIVARIATE GARCH MODEL (rBG)
@@ -722,33 +902,34 @@ BivarGARCHFilter <- function(dailyret, params, covariance, inference = F){
 	mSigma <- array(0L, dim = c(2, 2, days))
 
 	#initializing  with unconditional mean. 
+	id <- matrix(c(1,0,0,1), ncol = 2, nrow = 2)
 
-	astar <- samplecov^(-1) *  (dAlpha * samplercov)  #  samplecov^(-1)
+	omega <-   samplecov - dAlpha * samplercov %*% id - dBeta * samplecov #  samplecov^(-1)
 
 	mSigma[,,1] <- samplecov 
 
 	#compute first observation of log-likelihood (we are minizing neg-log-likelihood):
-	dLLK <-  d* log(2*pi) + log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
+	dLLK <-  log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
 
 
 	dLLKs <- numeric()
 	dLLKs[1] <-   dLLK
 	for(i in 2:days){
 
-		mSigma[,,i] <- samplecov * (1 - astar - dBeta)  + dBeta * mSigma[,,i-1] + dAlpha * rcov[,,i-1]
+		mSigma[,,i] <- omega + dBeta * mSigma[,,i-1] + dAlpha * rcov[,,i-1]
 
 		#neglog collection for score calculation
-		dLLKs[i] <-   d* log(2*pi) +   (log(det(mSigma[,,i])) +  
+		dLLKs[i] <-   (log(det(mSigma[,,i])) +  
 		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]))
 		}
 
-	fulldLLK <-  - 0.5 * sum(dLLKs) #loglikelihood
+	fulldLLK <-  - 0.5 *(d* log(2*pi) * days +  sum(dLLKs)) #loglikelihood
 
 	lOut <- list()
 
 	lOut[["fulldLLK"]] <- fulldLLK
 	lOut[["mSigma"]] <- mSigma
-	lOut[["cov"]] <- astar
+	lOut[["cov"]] <- omega
 	lOut[["dLLKs"]] <- dLLKs
 	lOut[["sampleH"]] <- samplecov
 
@@ -774,7 +955,7 @@ ineqfun_GARCH_BIVAR <- function(vPar, ...) {
   return(dAlpha + dBeta)
 }
 
-EstimateBivarGARCH <- function(dailyret, covariance, bootstrap = FALSE, vPar=NULL, ineqfun_GARCH = ineqfun_GARCH_BIVAR, ineqLB = 0.00, ineqUB = 0.9999){
+EstimateBivarGARCH <- function(dailyret, covariance, bootstrap = FALSE, vPar=NULL, ineqfun_GARCH = ineqfun_GARCH_BIVAR, ineqLB = 0.00, ineqUB = 0.9999, tol = 1e-7){
   
   # We set starting value for alpha equal to 0.05, dBeta = 0.94, and chose omega to target
   # the empirical variance by targeting the unconditional variance of the 
@@ -795,7 +976,7 @@ EstimateBivarGARCH <- function(dailyret, covariance, bootstrap = FALSE, vPar=NUL
                     ineqUB = ineqUB, ## the inequality lower bound, i.e. 0.0 < alpha + beta < 0.9999
                     ## lower and upper bounds for all parameters
                     LB = c(0.0001, 0.0001), UB = c(0.999, 0.999),
-                    control = list(tol = 1e-7, outer.iter = 800, inner.iter = 1200, delta = 1e-7)
+                    control = list(tol = tol, outer.iter = 800, inner.iter = 1200, delta = 1e-7)
                     ) 
   
   ## extract estimated parameters
@@ -806,34 +987,42 @@ EstimateBivarGARCH <- function(dailyret, covariance, bootstrap = FALSE, vPar=NUL
 
   if(!bootstrap){
   #CALCULATING ROBUST STD. ERRORS WHEN NO COVARIANCE TARGETING:
+  	  rse <- NULL
+  	  se <- NULL
+  	  scores <- NULL
+	  if(is.null(vPar)){
+		  scores <- matrix(0L, nrow=length(dailyret[,1]), ncol = length(vPar))
 
-  scores <- matrix(0L, nrow=length(dailyret[,1]), ncol = length(vPar))
+		  step <- 1e-5 * vPar
+		  # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
+		  for(i in 1:length(step)){
 
-  step <- 1e-5 * vPar
-  # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
-  for(i in 1:length(step)){
+			h <- step[i]
+		    delta <- rep(0, length(vPar))
+		    delta[i] <- h
+																		
+			loglikeminus <- BivarGARCHFilter(dailyret, vPar-delta, covariance)$dLLKs
+			loglikeplus <- BivarGARCHFilter(dailyret, vPar+delta, covariance,)$dLLKs
 
-	h <- step[i]
-    delta <- rep(0, length(vPar))
-    delta[i] <- h
-																
-	loglikeminus <- BivarGARCHFilter(dailyret, vPar-delta, covariance)$dLLKs
-	loglikeplus <- BivarGARCHFilter(dailyret, vPar+delta, covariance,)$dLLKs
+			scores[,i] <- (loglikeplus - loglikeminus)/(2*h)
 
-	scores[,i] <- (loglikeplus - loglikeminus)/(2*h)
+		  }
 
-  }
+		  J <- (t(scores) %*% scores)/length(dailyret[,1])
 
-  J <- (t(scores) %*% scores)/length(dailyret[,1])
+		  I <- optimizer$hessian/length(dailyret[,1])
 
-  I <- optimizer$hessian/length(dailyret[,1])
+		  I <- solve(I)[-1 ,-1]
 
-  I <- solve(I)[-1 ,-1]
+		  vars <- (I * J * I)/length(dailyret[,1])
+		  
+		  rse <- sqrt(diag(vars))
 
-  vars <- (I * J * I)/length(dailyret[,1])
-  
-  rse <- sqrt(diag(vars))
-
+		  ##Standard errors:
+  		  se <- solve(optimizer$hessian)
+  		  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)/iT
+  		  colnames(se) <- c("Alpha", "Beta")
+	  }
   ## compute filtered volatility
   Filter <- BivarGARCHFilter(dailyret, c(vPar[1], vPar[2]), covariance)
 
@@ -844,11 +1033,6 @@ EstimateBivarGARCH <- function(dailyret, covariance, bootstrap = FALSE, vPar=NUL
   ## Compute the daily Average BIC
   iT = length(dailyret[,1])
   BIC = (-2 * dLLK + log(iT) * length(vPar))/iT
-  
-  ##Standard errors:
-  se <- solve(optimizer$hessian)
-  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)/iT
-  colnames(se) <- c("Alpha", "Beta")
 
   ## return a list with estimated parameters, likelihood value and BIC
   lOut = list()
@@ -925,9 +1109,13 @@ BivarGARCHFilterContAsym <- function(dailyret, params, covariance){
 	mSigma[,,1] <- samplecov
 
 	#compute first observation of log-likelihood (we are minizing neg-log-likelihood):
-	dLLK <-   log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
+	dLLK <-  log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
 
-	astar <- (dAlphaP * sampleP + dAlphaN * sampleN + dAlphaM * sampleM) * samplecov^(-1)
+	id <- matrix(c(1,0,0,1), ncol = 2, nrow = 2)
+
+	#astar <- (dAlphaP * sampleP + dAlphaN * sampleN + dAlphaM * sampleM) * samplecov^(-1)
+
+	omega <- samplecov - (dAlphaP * sampleP) %*% id +  (dAlphaN * sampleN) %*% id + (dAlphaM * sampleM) %*% id - dBeta * samplecov
 
 	dLLKs <- numeric()
 
@@ -935,7 +1123,7 @@ BivarGARCHFilterContAsym <- function(dailyret, params, covariance){
 
 	for(i in 2:days){
 
-		mSigma[,,i] <- samplecov * (1 - astar - dBeta)  + dBeta * mSigma[,,i-1] + 
+		mSigma[,,i] <- omega  + dBeta * mSigma[,,i-1] + 
 		dAlphaP * P[,,i-1] + dAlphaN * N[,,i-1] + dAlphaM * M[,,i-1]
 
 
@@ -949,20 +1137,20 @@ BivarGARCHFilterContAsym <- function(dailyret, params, covariance){
 		#dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]) 
 		#full neg loglike
 		
-		dLLKs[i] <- 0.5 * d * log(2*pi) + 0.5 * as.numeric(log(det(mSigma[,,i])) + 
+		dLLKs[i] <-  as.numeric(log(det(mSigma[,,i])) + 
 		dailyret[i, , drop = F] %*% solve(mSigma[,,i]) %*% t(dailyret[i, , drop = F]))
 
 		}
 
 	#+ days * d * log(2*pi)
-	fulldLLK <- - sum(dLLKs, na.rm=T)  
+	fulldLLK <- - 0.5 * (d * log(2*pi) * days +  sum(dLLKs, na.rm=T))  
 
 	lOut <- list()
 
 	lOut[["fulldLLK"]] <- fulldLLK
 	lOut[["mSigma"]] <- mSigma
 	lOut[["dLLKs"]] <- dLLKs
-	lOut[["cov"]] <- astar
+	lOut[["cov"]] <- omega
 
 	return(lOut)
 	
@@ -995,9 +1183,9 @@ ineqfun_GARCH_BIVARContAsym <- function(vPar, ...) {
 
 
 
-EstimateBivarGARCHContAsym <- function(dailyret, covariance, ineqfun_GARCH = ineqfun_GARCH_BIVARContAsym, ineqLB = 0.00, ineqUB = 0.9999){
+EstimateBivarGARCHContAsym <- function(dailyret, covariance, ineqfun_GARCH = ineqfun_GARCH_BIVARContAsym, ineqLB = 0.00, ineqUB = 0.9999, vPar = NULL){
   
-  
+  if(is.null(vPar)){
   dAlphaP = 0.09324267
   dAlphaN = 0.34553257
   dAlphaM = 0.04110211
@@ -1005,7 +1193,7 @@ EstimateBivarGARCHContAsym <- function(dailyret, covariance, ineqfun_GARCH = ine
   
   ## vector of starting parameters
   vPar = c(dAlphaP, dAlphaN, dAlphaM, dBeta)
-  
+  }
   # have a look at help(solnp)
   ##optimization step
   optimizer = solnp(vPar, fun = ObjFBivarGARCHContAsym, dailyret = dailyret, covariance = covariance, 
@@ -1023,34 +1211,41 @@ EstimateBivarGARCHContAsym <- function(dailyret, covariance, ineqfun_GARCH = ine
   dLLK = -tail(optimizer$values, 1)
 
   #CALCULATING ROBUST STD. ERRORS WHEN NO COVARIANCE TARGETING:
+  se <- NULL
+  rse <- NULL
+  if(is.null(vPar)){
+	  scores <- matrix(0L, nrow=length(dailyret[,1]), ncol = length(vPar))
 
-  scores <- matrix(0L, nrow=length(dailyret[,1]), ncol = length(vPar))
+	  step <- 1e-5 * vPar
+	  # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
+	  for(i in 1:length(step)){
 
-  step <- 1e-5 * vPar
-  # This follows directly from Kevin Sheppard who uses percentage returns, Moreover scale open-to-close with 24/6.5.
-  for(i in 1:length(step)){
+		h <- step[i]
+	    delta <- rep(0, length(vPar))
+	    delta[i] <- h
+																	
+		loglikeminus <- BivarGARCHFilterContAsym(dailyret, vPar-delta, covariance)$dLLKs
+		loglikeplus <- BivarGARCHFilterContAsym(dailyret, vPar+delta, covariance)$dLLKs
 
-	h <- step[i]
-    delta <- rep(0, length(vPar))
-    delta[i] <- h
-																
-	loglikeminus <- BivarGARCHFilterContAsym(dailyret, vPar-delta, covariance)$dLLKs
-	loglikeplus <- BivarGARCHFilterContAsym(dailyret, vPar+delta, covariance)$dLLKs
+		scores[,i] <- (loglikeplus - loglikeminus)/(2*h)
 
-	scores[,i] <- (loglikeplus - loglikeminus)/(2*h)
+	  }
 
+	  J <- (t(scores) %*% scores)/2516
+
+	  I <- optimizer$hessian/2516
+
+	  I <- solve(I)[-1 ,-1]
+
+	  vars <- (I * J * I)/2516
+	  
+	  rse <- sqrt(diag(vars))
+
+	  ##Standard errors:
+  	  se <- solve(optimizer$hessian)
+  	  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
+  	  colnames(se) <- c("AlphaP", "AlphaN", "AlphaM", "Beta")
   }
-
-  J <- (t(scores) %*% scores)/2516
-
-  I <- optimizer$hessian/2516
-
-  I <- solve(I)[-1 ,-1]
-
-  vars <- (I * J * I)/2516
-  
-  rse <- sqrt(diag(vars))
-
   
   ## compute filtered volatility
   vSigma2 = BivarGARCHFilterContAsym(dailyret, c(vPar[1], vPar[2], vPar[3], vPar[4]), covariance)$mSigma
@@ -1058,11 +1253,6 @@ EstimateBivarGARCHContAsym <- function(dailyret, covariance, ineqfun_GARCH = ine
   ## Compute the daily Average BIC
   iT = 2516
   BIC = (-2 * dLLK + log(iT) * length(vPar))/iT
-  
-  ##Standard errors:
-  se <- solve(optimizer$hessian)
-  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
-  colnames(se) <- c("AlphaP", "AlphaN", "AlphaM", "Beta")
 
   ## return a list with estimated parameters, likelihood value and BIC
   lOut = list()
@@ -1146,7 +1336,7 @@ rDCCFilter <- function(mEta, dA, dB, mQ, covariance) {
 #testing with simple realGARCH(1,1) using rugarch package. 
 #you need getDates for fit function in rugarch to work. 
 #moreover the covariances you use in the DCC model is also used in the univariate models.
-Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = NULL, tol = 1e7) {
+Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = NULL, tol = 1e-7, vPar = NULL) {
   
   ## estimate the marginal models
   require(Rsolnp)
@@ -1189,8 +1379,9 @@ Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = N
   ## maximization of the DCC likelihood
   
   #initial parameters
-  vPar = c(0.1974634, 0.8015366)
-  
+  if(is.null(vPar)){
+  	vPar =  c(0.1974634, 0.8015366)
+  }
   #unconditional correlation
   mQ = cor(mEta)
   
@@ -1222,9 +1413,6 @@ Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = N
     return(vPar)
   
   }
-  #standard errors 
-  se <- solve(optimizer$hessian)
-  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
 
   #extract univariate variances
   mSigma = cbind(sigma(spec1)^2, sigma(spec2)^2)
@@ -1250,13 +1438,21 @@ Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = N
   
 
   iT = nrow(mY)
-  
+  mZ <- NULL
+  se <- NULL
+  if(is.null(vPar)){
   mZ = matrix(0, iT, ncol(mY))
   
   for (t in 1:iT) {
     mZ[t, ] = solve(chol(aCor[,,t])) %*% as.numeric(mEta[t, ])
   }
     
+  #standard errors 
+  se <- solve(optimizer$hessian)
+  se <- matrix(sqrt(diag(se))[-1], ncol=length(vPar), nrow=1)
+  }
+
+
   #compute estimated covariances:
   vSigma2 <- array(0L, dim = c(2,2, 2516))
 
@@ -1302,6 +1498,8 @@ Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = N
 
 rcDCCFilter <- function(mEta, dAP, dAN, dAM , dB, mQ, covariance) {
   
+  mEta <- as.matrix(mEta)
+
   iN <- ncol(mEta)
   iT <- nrow(mEta)
   
@@ -1367,11 +1565,16 @@ rcDCCFilter <- function(mEta, dAP, dAN, dAM , dB, mQ, covariance) {
     mEta[1, , drop = FALSE]%*% t(mEta[1, , drop = FALSE]) + log(det(aCor[,, 1]))
   
 
-  astar <- (dAP * sampleP + dAN * sampleN  + dAM * sampleM) * mQ^(-1)
+  id <- matrix(c(1,0,0,1), ncol = 2, nrow = 2)
+
+
+  omega <- mQ - ((dAP * sampleP)  + (dAN * sampleN)  + (dAM * sampleM)) %*% mQ %*% solve(mQ)  - dB * mQ
+
+  #astar <- (dAP * sampleP + dAN * sampleN  + dAM * sampleM) %*% solve(mQ)
   #main loop
   for (t in 2:iT) {
     #update the Q matrix
-    aQ[,, t] <- mQ * (1 - astar - dB) + dAP * Pcor[,,t - 1] + dAN * Ncor[,,t - 1]  + dAM * Mcor[,,t - 1]  + dB * aQ[,,t - 1]
+    aQ[,, t] <- omega + dAP * Pcor[,,t - 1] + dAN * Ncor[,,t - 1]  + dAM * Mcor[,,t - 1]  + dB * aQ[,,t - 1]
     
     ## Compute the correlation as Q_tilde^{-1/2} Q Q_tilde^{-1/2} 
     aCor[,, t] <- diag(sqrt(1/diag(aQ[,, t]))) %*% aQ[,, t] %*% diag(sqrt(1/diag(aQ[,, t]))) 
@@ -1387,13 +1590,14 @@ rcDCCFilter <- function(mEta, dAP, dAN, dAM , dB, mQ, covariance) {
   lOut[["dLLK"]] <- -0.5 * dLLK
   lOut[["aCor"]] <- aCor
   lOut[["astar"]] <- Pcor
+  lOut[["omega"]] <- omega
   
   return(lOut)
 }
 
 
 
-Estimate_rcDCC <- function(mY, covariance, cov2 = NULL, getDates, bootstrap = F, residuals = NULL){
+Estimate_rcDCC <- function(mY, covariance, cov2 = NULL, getDates, bootstrap = F, residuals = NULL, vPar = NULL, tol = 1e-7){
   
   ## estimate the marginal models
   require(Rsolnp)
@@ -1438,8 +1642,9 @@ Estimate_rcDCC <- function(mY, covariance, cov2 = NULL, getDates, bootstrap = F,
   ## maximization of the DCC likelihood
   
   #initial parameters
-  vPar = c(0.00000001384, 0.00000013727, 0.08197776333, 0.91702207742)
-  
+  if(is.null(vPar)){
+  	vPar = c(0.00000001384, 0.00000013727, 0.08197776333, 0.91702207742)
+  }
   #unconditional correlation
   mQ = cor(mEta)
   
@@ -1454,7 +1659,8 @@ Estimate_rcDCC <- function(mY, covariance, cov2 = NULL, getDates, bootstrap = F,
     sum(vPar)
   }, ineqLB = 1e-6, ineqUB = 0.999, 
   LB = c(0, 0, 0, 0), UB = c(0.999, 0.999, 0.999, 0.999), 
-  mEta = mEta, mQ = mQ, covariance = covariance)
+  mEta = mEta, mQ = mQ, covariance = covariance,
+  control = list(tol = tol, outer.iter = 800, inner.iter = 1200, delta = 1e-7))
   
   #Extract the estimated parameters
   vPar = optimizer$pars
@@ -1489,13 +1695,16 @@ Estimate_rcDCC <- function(mY, covariance, cov2 = NULL, getDates, bootstrap = F,
   
 
   iT = nrow(mY)
-  
-  mZ = matrix(0, iT, ncol(mY))
-  
-  for (t in 1:iT) {
-    mZ[t, ] = solve(chol(aCor[,,t])) %*% as.numeric(mEta[t, ])
-  }
+  mZ <- NULL
+  if(is.null(vPar)){
+
+	  mZ = matrix(0, iT, ncol(mY))
+	  
+	  for (t in 1:iT) {
+	    mZ[t, ] = solve(chol(aCor[,,t])) %*% as.numeric(mEta[t, ])
+	  }
     
+  }
   #compute estimated covariances:
   vSigma2 <- array(0L, dim = c(2,2, 2516))
 
@@ -1523,6 +1732,7 @@ Estimate_rcDCC <- function(mY, covariance, cov2 = NULL, getDates, bootstrap = F,
   lOut[["seeall"]] = list(specforrobust1, specforrobust2) 
   lOut[["vSigma2"]] = vSigma2
   lOut[["BIC"]] = BIC
+  lOut[["omega"]] = Filter[["omega"]]
   return(lOut)
   
 }

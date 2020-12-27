@@ -14,13 +14,19 @@ library(MASS)
 library(Matrix)
 
 
+
 calccov <- readRDS("calculatedcovariances.rds")
 
 mergedfrequencies <- readRDS("mergedfrequencies.rds")
 
 
 
+acf(mergedfrequencies[[7]][[1]][,1], type = c("covariance"))$acf
+
+
+
 dataTLT <- readRDS("dataTLT.rds")
+dataSPY <- readRDS("dataSPY.rds")
 
 getDates <- unlist(lapply(dataTLT, function(x) as.character(index(x[1]))))
 
@@ -30,6 +36,9 @@ for(i in 1:length(getDates)){
 
 
 dailyretotc <- xts(t(sapply(mergedfrequencies[[10]], function(x) cbind(x[,1], x[,2]))), order.by = as.Date(getDates))
+
+
+acf(dailyretotc[,1]^2)
 
 colnames(dailyretotc) <- c("TLT", "SPY")
 
@@ -46,47 +55,6 @@ for(i in 1:2516){
 
 
 }
-
-#----------check if dailyretotc can be better by taking 5 minute price scheme instead--------:
-#it is not
-#it's almost the same. 
-#library(highfrequency)
-#dataTLT <- readRDS("dataTLT.rds")
-#dataSPY <- readRDS("dataSPY.rds")
-
-#opentocloseTLT <- list()
-#opentocloseSPY <- list()
-
-#for(i in 1:length(dataTLT)){
-
-#  opentocloseTLT[[i]] <- aggregatets(dataTLT[[i]], on = "seconds", k = 1)
-#  opentocloseSPY[[i]] <- aggregatets(dataSPY[[i]], on = "seconds", k = 1)
-#}
-
-#for(i in 1:length(opentocloseTLT)){
-
-#  opentocloseTLT[[i]] <- opentocloseTLT[[i]][c(1,length(opentocloseTLT[[i]]))]
-#  opentocloseSPY[[i]] <- opentocloseSPY[[i]][c(1,length(opentocloseSPY[[i]]))]
-#}
-
-#for(i in 1:length(dataTLT)){
-
-#  opentocloseTLT[[i]] <- diff(log(opentocloseTLT[[i]]))[-1] 
-#  opentocloseSPY[[i]] <- diff(log(opentocloseSPY[[i]]))[-1] 
-
-#}
-
-#mergedopentoclose <- list()
-
-#for(i in 1:length(dataTLT)){
-                            #removing nans using colsums
- # mergedopentoclose[[i]] <- matrix(colSums(cbind(opentocloseTLT[[i]], opentocloseSPY[[i]]), na.rm=T),ncol=2)
-
-#}
-
-#dailyretotc2 <- xts(t(sapply(mergedopentoclose, function(x) cbind(x[,1], x[,2]))), order.by = as.Date(getDates))
-
-
 
 
 #---------------------------------------------------------------------------------------
@@ -157,7 +125,10 @@ BivarGARCHFilter <- function(dailyret, params, covariance, inference = F){
 
 	#initializing  with unconditional mean. 
 
-	astar <- samplecov^(-1) *  (dAlpha * samplercov)  #  samplecov^(-1)
+	id <- matrix(c(1,0,0,1), ncol = 2, nrow = 2)
+
+	#omega under cov targeting
+	omega <-   samplecov - dAlpha * samplercov %*% id - dBeta * samplecov #  samplecov^(-1)
 
 	mSigma[,,1] <- samplecov 
 
@@ -169,7 +140,7 @@ BivarGARCHFilter <- function(dailyret, params, covariance, inference = F){
 	dLLKs[1] <-   dLLK
 	for(i in 2:days){
 
-		mSigma[,,i] <- samplecov * (1 - astar - dBeta)  + dBeta * mSigma[,,i-1] + dAlpha * rcov[,,i-1]
+		mSigma[,,i] <- omega + dBeta * mSigma[,,i-1] + dAlpha * rcov[,,i-1]
 
 		#neglog collection for score calculation
 		dLLKs[i] <-   d* log(2*pi) +   (log(det(mSigma[,,i])) +  
@@ -182,7 +153,7 @@ BivarGARCHFilter <- function(dailyret, params, covariance, inference = F){
 
 	lOut[["fulldLLK"]] <- fulldLLK
 	lOut[["mSigma"]] <- mSigma
-	lOut[["cov"]] <- astar
+	lOut[["cov"]] <- omega
 	lOut[["dLLKs"]] <- dLLKs
 	lOut[["sampleH"]] <- samplecov
 
@@ -190,6 +161,9 @@ BivarGARCHFilter <- function(dailyret, params, covariance, inference = F){
 	
 	
 }
+
+
+tt <- BivarGARCHFilter(dailyretotc * 100, c(0.12,0.85), calccov[[1]][[7]] * 10000)
 
 #objective function specific for scalar Bivariate GARCH
 ObjFBivarGARCH <- function(vPar, dailyret, covariance) {
@@ -305,8 +279,7 @@ EstimateBivarGARCH <- function(dailyret, covariance, bootstrap = FALSE, vPar=NUL
 #it does not matter whether you use percentage returns with realcov calculated on percentage returns or 
 #standard returns. but if you want the loglike you should not use percentage returns. 
 
-tester <- EstimateBivarGARCH(dailyretotc * 100, calccov[[1]][[7]]*10000)
-
+tester <- EstimateBivarGARCH(dailyretotc * 100, calccov[[1]][[10]]*10000)
 
 qlikes_rBG <- numeric()
 
@@ -353,6 +326,10 @@ mean(colMeans(Qlikes, na.rm = T)[6:10])
 library(ggplot2)
 
 ggplot() + geom_line(aes(as.Date(getDates), sigmas_rBG[[10]][2,2,])) + geom_line(aes(as.Date(getDates), calccov[[1]][[10]][2,2,]*10000))
+
+
+
+
 #------------------------------------------bootstrapping----------------------------------------------
 #
 #
@@ -411,11 +388,7 @@ leltest <- BivarGARCHFilter(mergedfrequencies[[8]],dailyretotc, c(0.2, 0.8), cal
 
 leltest$mSigma[,,1]
 
-
 sum(leltest$dLLKs)
-
-
-
 
 set.seed(1234)
 retsim <- matrix(0L, nrow=2516, ncol=2)
@@ -493,7 +466,11 @@ BivarGARCHFilterContAsym <- function(dailyret, params, covariance){
 	#compute first observation of log-likelihood (we are minizing neg-log-likelihood):
 	dLLK <-   log(det(mSigma[,,1])) + (dailyret[1, , drop = F]) %*% solve(mSigma[,,1]) %*% t(dailyret[1, , drop = F])
 
-	astar <- (dAlphaP * sampleP + dAlphaN * sampleN + dAlphaM * sampleM) * samplecov^(-1)
+	id <- matrix(c(1,0,0,1), ncol = 2, nrow = 2)
+
+	#astar <- (dAlphaP * sampleP + dAlphaN * sampleN + dAlphaM * sampleM) * samplecov^(-1)
+	#this is wrong see functions.R
+	omega <- (dAlphaP * sampleP) %*% id +  (dAlphaN * sampleN) %*% id + (dAlphaM * sampleM) %*% id
 
 	dLLKs <- numeric()
 
@@ -501,7 +478,7 @@ BivarGARCHFilterContAsym <- function(dailyret, params, covariance){
 
 	for(i in 2:days){
 
-		mSigma[,,i] <- samplecov * (1 - astar - dBeta)  + dBeta * mSigma[,,i-1] + 
+		mSigma[,,i] <- omega  + dBeta * mSigma[,,i-1] + 
 		dAlphaP * P[,,i-1] + dAlphaN * N[,,i-1] + dAlphaM * M[,,i-1]
 
 
@@ -528,7 +505,7 @@ BivarGARCHFilterContAsym <- function(dailyret, params, covariance){
 	lOut[["fulldLLK"]] <- fulldLLK
 	lOut[["mSigma"]] <- mSigma
 	lOut[["dLLKs"]] <- dLLKs
-	lOut[["cov"]] <- astar
+	lOut[["cov"]] <- omega
 
 	return(lOut)
 	
@@ -650,9 +627,8 @@ EstimateBivarGARCHContAsym <- function(dailyret, covariance, ineqfun_GARCH = ine
 
 
 #5min frequency stemming from P, N, M.  I havent scaled in the estimator
+
 leltest4 <- EstimateBivarGARCHContAsym(dailyretotc*100, list(P*10000,N*10000,M*10000))
-
-
 
 qlikes_crBG <- numeric()
 
@@ -687,6 +663,7 @@ for(j in 1:10){
   print(sprintf("%s", j))
 }
 }
+
 #--------------------
 
 semicov_acrossfreq <- list(Pfreq, Nfreq, Mfreq)
@@ -701,7 +678,7 @@ Mfreq <- semicovs[[3]]
 
 estacrossfreq_crBG <- list()
 
-for(i in 6:10){
+for(i in 10:10){
 
   estacrossfreq_crBG[[i]] <- EstimateBivarGARCHContAsym(dailyretotc * 100, 
     list(Pfreq[[i]]*10000,Nfreq[[i]]*10000,Mfreq[[i]]*10000))
@@ -1077,7 +1054,7 @@ uspec <- multispec(replicate(2, xspec))
 spec1 = dccspec(uspec = uspec, dccOrder = c(1, 1), distribution = 'mvnorm')
 
 fit <- dccfit(spec1, data = dailyretotc*100) #realizedVol = tt143)
-
+cc
 tt143 <- xts(cbind(sqrt(calccov[[1]][[7]][1,1,]*10000), sqrt(calccov[[1]][[7]][2,2,]*10000)), 
 order.by = as.Date(1:2516))
 
@@ -1116,6 +1093,10 @@ fit.control = list(stationarity = 1, fixed.se = 1))
 
 
 mEta <- matrix(c(residuals(spec1, standardize = T), residuals(spec2, standardize = T)), ncol=2, byrow = T)
+
+ts.plot(mEta[,1])
+
+hist(mEta[,2], breaks = 60)
 
 head(mEta)
 #optimal blockk length:
@@ -1314,8 +1295,7 @@ rugarch.LL = c('logL' = sum(-lfit@fit$log.likelihoods), 'pLogL' = sum(-lfit@fit$
 
 
 lfit <- ugarchfit(spec, spyreal[,1] , solver = 'hybrid', realizedVol = 
-	spyreal[,2] , 
-	fit.control = list(stationarity = 1, fixed.se = 1))
+	spyreal[,2], fit.control = list(stationarity = 1, fixed.se = 1))
 
 
 spec = ugarchspec(mean.model = list(armaOrder = c(0, 0), include.mean = FALSE), variance.model = list(model = 'realGARCH', garchOrder = c(2, 1)))
@@ -1565,8 +1545,21 @@ Estimate_rcDCC <- function(mY, covariance, cov2 = NULL, getDates, bootstrap = F,
 }
 
 #I have not scaled inside the estimator. 
-crDCCests <- Estimate_rcDCC(dailyretotc * 100, list(P * 10000, N * 10000, M * 10000), calccov[[1]][[7]]*10000, getDates, F)
+crDCCests <- Estimate_rcDCC(dailyretotc * 100, list(P * 10000, N * 10000, 
+	M * 10000), NULL , getDates, F)
 
+
+tt <- apply(crDCCests$vSigma, MARGIN = c(3), FUN = function(x) diag(sqrt(1/diag(x))))
+
+tt[1,] <-  dailyretotc[,1]/tt[1, ] 
+tt[4,] <-  dailyretotc[,2]/tt[4, ] 
+
+
+ts.plot(tt[4,])
+acf(tt[1,])
+
+estacrossfreq_crDCC <- Estimate_rcDCC(dailyretotc[1:1000, ] * 100, 
+    list(Pfreq[[1]][,,1:1000]*10000,Nfreq[[1]][,,1:1000]*10000, Mfreq[[1]][,,1:1000]*10000), NULL, getDates[1:1000])
 
 qlikes_crDCC <- numeric()
 
@@ -1585,7 +1578,7 @@ Mfreq <- semicovs[[3]]
 estacrossfreq_crDCC <- list()
 
 #cannot do daily returns. 
-for(i in 6:9){
+for(i in 2:9){
 
   estacrossfreq_crDCC[[i]] <- Estimate_rcDCC(dailyretotc * 100, 
     list(Pfreq[[i]]*10000,Nfreq[[i]]*10000,Mfreq[[i]]*10000), NULL, getDates)
@@ -1769,26 +1762,26 @@ pobs #forkaster hypotesen og b er statistisk significant
 #SIMULATION IS BIVARIATE WITH NO NOISE:
 
 
-J <- 1
-#sampling every 10 seconds within 6.5 trading hours for 20 days. 
 
-time <- 2515
+J <- 1
+
+time <- 1000
 
 #5min sampling
-intradayticks <- (12 * 6.5)
+intradayticks <- (60 * 6.5)
 
 N <- intradayticks * time
 
 #vol
-sigma <- 0.01 / time 
-sigma2 <- 0.98 / time 
+sigma <- 0.01 /252
+sigma2 <- 0.98 /252
 #drift
-alpha <- 0
-beta <- 0
+alpha <- 0 / 252
+beta <- 0 / 252
 
 #squareroot process
 gamma <- 1
-rho <- -0.8
+rho <- -0.4
 
 simulation_prices <- brownian(J, N, sigma, sigma2, alpha, beta, gamma,rho, time)
 
@@ -1830,173 +1823,49 @@ for(i in 1:(time-1)){
 rcovpos <- array(dim = c(2,2,time-1))
 rcovneg <- array(dim = c(2,2,time-1))
 rcovmix <- array(dim = c(2,2,time-1))
+rcov <- array(dim = c(2,2,time-1))
+prercov <- array(dim = c(2,2,time-1))
 
 
-for(i in 1:(time-1)){
+for(i in 2:(time-1)){
 
 	rcovpos[,,i] <- realsemicov(makesimret[[i]], "P")
 	rcovneg[,,i] <- realsemicov(makesimret[[i]], "N")
 	rcovmix[,,i] <- realsemicov(makesimret[[i]], "M")
+	rcov[,,i] <- realCov(makesimret[[i]])
+	prercov[,,i] <- preavCov(matrix =xts(makesimret[[i]], order.by = as.Date(1:77)), T, T, F, 1)
 
 
 }
 
-simresults <- Estimate_rcDCC(dailysimrets, list(rcovpos,rcovneg,rcovmix), 1:(time-1))
+
+
+simresults <- Estimate_rcDCC(mY = dailysimrets, covariance =list(rcovpos,rcovneg,rcovmix), getDates = 1:(time-1))
 
 #getting correlations:
 
 mean((simresults$aCor[2,1,] - rho)^2)
 
+#cor
+mean(simresults$aCor[2,1,])
+
+#sigma
+mean(sqrt(simresults$mSigma[,1])/252)
+sigma
+mean(sqrt(simresults$mSigma[,2])/252)
+sigma2
+
 #is in variances, now we need to transform it to vol/time
-mean(sqrt(simresults$mSigma[,1])/time - sigma/time)^2 
-mean(sqrt(simresults$mSigma[,2])/time - sigma/time)^2 
+mean(sqrt(simresults$mSigma[,1])/time - sigma)^2 
+mean(sqrt(simresults$mSigma[,2])/time - sigma2)^2 
 
 #it converges towards the true parameters. 
 
 
 
-
-
-#-----------run a test with two stocks (AAPL, MSFT) and see if you get better and proper results from that. aka beta > 0.9, and alphas near zero. 
-
-library(alphavantager)
-#source("functions.R")
-source("APIKEY.R")
-
-av_api_key(apikey)
-
-AAPL <- as.data.frame(av_get(symbol = "AAPL", av_fun = "TIME_SERIES_INTRADAY", interval = "30min", outputsize = "full"))
-rownames(AAPL) <- AAPL$timestamp
-MSFT <- as.data.frame(av_get(symbol = "MSFT", av_fun = "TIME_SERIES_INTRADAY", interval = "30min", outputsize = "full"))
-rownames(MSFT) <- MSFT$timestamp
-
-returns_AAPL <- as.xts(diff(log(AAPL[,4])) * 100, order.by = as.Date(AAPL[,1], format='%d/%m/%Y')[-1])
-returns_MSFT <- as.xts(diff(log(MSFT[,4])) * 100, order.by = as.Date(MSFT[,1])[-1])
-
-
-
-returns_merged_stock <- cbind(returns_AAPL, returns_MSFT)
-
-#removing nans
-returns_MSFT <- rowSums(returns_merged_stock[,2], na.rm = T)
-
-returns_merged_stock <- cbind(returns_AAPL, returns_MSFT)
-
-
-dd1 <- returns_merged_stock[1:31]
-
-dd2 <- returns_merged_stock[32:63]
-
-dd3 <- returns_merged_stock[64:95]
-
-dd4 <- returns_merged_stock[96:127]
-
-dd5 <- returns_merged_stock[128:159]
-
-dd6 <- returns_merged_stock[160:191]
-
-dd7 <- returns_merged_stock[192:223]
-
-dd8 <- returns_merged_stock[224:255]
-
-dd9 <- returns_merged_stock[256:287]
-
-dd10 <- returns_merged_stock[288:319]
-
-dd11 <- returns_merged_stock[320:351]
-
-dd12 <- returns_merged_stock[352:383]
-
-dd13 <- returns_merged_stock[384:415] 
-
-dd14 <- returns_merged_stock[416:447]   
-
-dd15 <- returns_merged_stock[448:447]   
-
-dd16 <- returns_merged_stock[448:479] 
-
-dd17 <- returns_merged_stock[479:511]
-
-dd18 <- returns_merged_stock[512:543]
-
-returns_merged_stock <- list(dd1, dd2, dd3, dd4, dd5, dd6, dd7, dd8, dd9, dd10, dd11, dd12, dd13, dd14, dd15, dd16, dd17, dd18)
-
-rcovs <- array(dim = c(2,2, length(returns_merged_stock)))
-rpos <- array(dim = c(2,2, length(returns_merged_stock)))
-rneg <- array(dim = c(2,2, length(returns_merged_stock)))
-rmixed <- array(dim = c(2,2, length(returns_merged_stock)))
-
-for(i in length(returns_merged_stock)){
-
-	rcovs[,,i] <- realCov(returns_merged_stock[[i]])
-	rpos[,,i] <- realsemicov(returns_merged_stock[[i]], "P")
-	rneg[,,i] <- realsemicov(returns_merged_stock[[i]], "N")
-	rmixed[,,i] <- realsemicov(returns_merged_stock[[i]], "M")
-
-}
-
-
-#------------------------------------------bootstrapping----------------------------------------------
-
-library(boot)
-
-library(np)
-#uses the row to construct the block length. Therefore you should transpose it. 
-ll <- tsboot(dailyretotc[,1], mean ,R = 1000, l = 97, sim = "fixed", endcorr = TRUE)
-indexation <- boot.array(ll)
-
-#rearranging calculated covariances: correct. 
-
-#Due to the assymetric continuous garch model we omit the realized semicovariances from the estimation
-#procedure of crBG:
-
-
-
-estimates_5min_crBG <- matrix(0L, nrow = 1000, ncol = 4)
-
-
-BS_dailyretotc <- matrix(dailyretotc, nrow=2516, ncol = 2)
-
-BS_dailyretotc_l <- list()
-
-for(i in 1:1000){
-
-BS_dailyretotc_l[[i]] <- BS_dailyretotc[indexation[i, ], ]
-
-}
-
-
-for(j in 1:1000){
-						#5min_covariances
-	BS_P_crBG <- P[,,indexation[j, ]]
-	BS_N_crBG <- N[,,indexation[j, ]]
-	BS_M_crBG <- M[,,indexation[j, ]]
-
-	BS_dailyretotc <- BS_dailyretotc_l[[j]]
-
-	estimates_5min_crBG[j, ] <- EstimateBivarGARCHContAsym(BS_dailyretotc, list(BS_P_crBG, BS_N_crBG, BS_M_crBG))$vPar
-	print(sprintf("Bootstrap %s", j))
-	
-
-}
-
-saveRDS(estimates_5min_crBG, "bootstapestimates_5min_crBG.rds")
-
-
-
-bootstrap_stderror_5min_crBG <- apply(estimates_5min_crBG, MARGIN = c(2), FUN = function(x) sd(x))
-
-
-
-#---------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
+mean(sqrt(prercov[1,1,-1]) / 252)
+abs(mean(sqrt(prercov[2,2,-1]) / 252) - 0.98 /252)
+abs(mean(sqrt(rcov[2,2,-1]) / 252) - 0.98 /252)
 
 
 

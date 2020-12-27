@@ -401,13 +401,16 @@ library(parallel)
 
 #write.table(loss_matrix,file="losses_transformed.csv")
 
+loss_matrix <- read.table("losses_transformed.csv")
 #Telling me something completely different than MCS procedure of Leopoldo. 
 #I will further compare with sheppards in matlab. 
 
 library(rugarch)
 
 #90% and 95% gives the same superior set. 
-mcs_realized <- mcsTest(loss_matrix, 0.10, nboot = 5000, nblock = 10, boot = c("block"))
+mcs_realized2 <- mcsTest(loss_matrix, 0.05, nboot = 1000, nblock = 10, boot = c("block"))
+
+head(loss_matrix[,mcs_realized2$includedR])
 
 #excluding jump-robust estimators with bpcov as proxy leaves us with the same superior set, just without the 
 #jump robust estimators with bpcov as proxy
