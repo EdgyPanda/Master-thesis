@@ -56,7 +56,7 @@ from the reduced turnover rates.
 The code for my master thesis was fractioned into small sniplets corresponding to different subsections of my thesis. You **cannot** download the repository and expect all of the code to be runable due to lacking the original cleaned stock data. The code has been provided for illustrational purposes. 
 
 
-**functions.R** contains all of my self-written ad-hoc functions used throughout the entire thesis. 
+```**functions.R**``` contains all of my self-written ad-hoc functions used throughout the entire thesis. 
 
 **Summarystats.R**, **Summary stats for cleaning Podolskij method.R** and **jumpproportion.R** contains the code for the summary statistics and analysis of the assets, provided in the empirical analysis.
 
