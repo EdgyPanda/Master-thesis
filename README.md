@@ -3,6 +3,7 @@
 ## Estimation and forecasting of multivariate high frequency volatility models: application to a leveraged risk-parity portfolio 
 
 ### Quick summary
+---
 
 The purpose of the thesis was to study a selection of bivariate high frequency volatility models and compare them using Hansens model confidence set (MCS) ([link](https://onlinelibrary.wiley.com/doi/pdf/10.3982/ECTA5771?casa_token=Zy0wE0wmFTQAAAAA:_OPaHsOkFadekMMWs7F6nmTxUmX7_ej5r6oBKDVzV8nWK849XUdTsb6gLeCaeTD9l-l3AC9x3yi6d1o)). A subset of the best models found within the superior set of the MCS procedure was then used in a risk-targeted risk-parity portfolio. 
 
@@ -11,6 +12,8 @@ From 10 years of data on the ETFs, SPY and TLT, I had more than 250 GB of raw da
 *It needs to be noted that the portfolios was heavily affect by the stock-bond correlation, since I chose a time horizon with negative correlation, thus imposing better diversification in terms of how a bond position can hedge against an equity marrket sell-off.*  
 
 ### Results
+---
+
 The results from my thesis are described below.
 
 **From the analysis of the realized measures:**
