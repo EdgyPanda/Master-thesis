@@ -62,7 +62,7 @@ The code for my master thesis was fractioned into small sniplets corresponding t
 
 **```DRD-HAR models.R```** and **```Volatility models.R```** contains the code for the in-sample estimation and analysis of the volatility models. 
 
-**```mcs_realized_measures.R```** and **```out_of_sample_MCS_and_prelim_volmodels.R```** contains the forecast comparison analysis for the realized measures and the volatility models. Morevover, the results was compared with the MCS function in [Kevin sheppards toolbox](https://www.kevinsheppard.com/code/matlab/mfe-toolbox/) and the code sniplet can be seen in **```mainMCS.m```**. 
+**```mcs_realized_measures.R```** and **```out_of_sample_MCS_and_prelim_volmodels.R```** contains the forecast comparison analysis for the realized measures and the volatility models. Morevover, the results was compared with the MCS function in [Kevin Sheppards toolbox](https://www.kevinsheppard.com/code/matlab/mfe-toolbox/) and the code sniplet can be seen in **```mainMCS.m```**. 
 
 **```Out_of_sample_forecast_analysis.R```** contains the code for the out-of-sample forecast analysis. 
 
