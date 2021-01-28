@@ -4,7 +4,7 @@
 
 ### Quick summary
 
-The purpose of the thesis was to study a selection of bivariate high frequency volatility models and compare them using Hansens model confidence set (MCS) ([link](https://onlinelibrary.wiley.com/doi/pdf/10.3982/ECTA5771?casa_token=Zy0wE0wmFTQAAAAA:_OPaHsOkFadekMMWs7F6nmTxUmX7_ej5r6oBKDVzV8nWK849XUdTsb6gLeCaeTD9l-l3AC9x3yi6d1o)). A subset of the best models found via the MCS procedure, was then used in a risk-targeted risk-parity portfolio. The general results for the thesis are described below.  
+The purpose of the thesis was to study a selection of bivariate high frequency volatility models and compare them using Hansens model confidence set (MCS) ([link](https://onlinelibrary.wiley.com/doi/pdf/10.3982/ECTA5771?casa_token=Zy0wE0wmFTQAAAAA:_OPaHsOkFadekMMWs7F6nmTxUmX7_ej5r6oBKDVzV8nWK849XUdTsb6gLeCaeTD9l-l3AC9x3yi6d1o)). A subset of the best models found via the MCS procedure, was then used in a risk-targeted risk-parity portfolio. The idea was to construct a simplified portfolio following the same strategy of [Man AHL TargetRisk](https://www.man.com/ahl-targetrisk). The general results for the thesis are described below.  
 
 From 10 years of data on the ETFs, SPY and TLT, I had more than 250 GB of raw data which was cleaned following from the procedure described in [Barndorff‐Nielsen et al. (2009)](https://academic.oup.com/ectj/article/12/3/C1/5061260?casa_token=JHbSnyQ9xa4AAAAA:oZ6WLWvC91FcyD9WKwB_JYrB4HEPpHQFj2sTSFDvBqmmoxowoHVD-ASOuo5nu_AnCXairSkzLb8K). This gave us enough usable data to construct sample schemes down to second frequencies. Therefore, we ended up with more than 350 volatility models across frequencies, realized measures and volatility models, to be tested using forecast comparison methods.  
 
