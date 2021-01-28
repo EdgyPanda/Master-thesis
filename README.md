@@ -8,7 +8,7 @@ The purpose of the thesis was to study a selection of bivariate high frequency v
 
 From 10 years of data on the ETFs, SPY and TLT, I had more than 250 GB of raw data which was cleaned following from the procedure described in [Barndorff‐Nielsen et al. (2009)](https://academic.oup.com/ectj/article/12/3/C1/5061260?casa_token=JHbSnyQ9xa4AAAAA:oZ6WLWvC91FcyD9WKwB_JYrB4HEPpHQFj2sTSFDvBqmmoxowoHVD-ASOuo5nu_AnCXairSkzLb8K). This gave us enough usable data to construct sample schemes down to second frequencies. Therefore, we ended up with more than 350 volatility models across frequencies, realized measures and volatility models, to be tested using forecast comparison methods.  
 
-
+*It needs to be noted that the portfolios was heavily affect by the stock-bond correlation, since I chose a time horizon with negative correlation, thus imposing better diversification in terms of how a bond position can hedge against an equity marrket sell-off.*  
 
 ### Results
 The results from my thesis are described below.
@@ -23,14 +23,33 @@ The results from my thesis are described below.
 
 4. Conclusively, we found evidence that many of the realized measures on minute-frequencies seems to provide much of the benefits of high frequency data without exposing the estimators to microstructure noise, and the empirical accuracy only slightly increases (on average) when considering noise-robust estimators on second frequencies. 
 
-*In general, the analysis was done to investigate how the superior performance in the realized measures translated over to the volatility models.*
+*In general, the analysis was done to investigate how the superior performance of the realized measures translated over to the volatility models.*
 
-**From the analysis of the realized volatility models**
+**From the analysis of the realized volatility models:**
 
-1. 
+1. I found evidence that continuous assymetrical models (accounting for leverage effect) could not 
+capture the leverage effect for both models, due to a "inverse"-type leverage effect relationship 
+for the assets. 
+
+2. In general, the DRD-HAR(Q) type models performed the best and procurred the lowest statistical losses, while being very parsimonious. 
+
+3. All of the high frequency volatility models (even the poorest ones) beat their open-to-close volatility model counterparts as noted by the forecast comparison analysis. 
+
+4. I further observed that the superior performance of the realized measures was carried over to the volatility models. With alternating frequencies, it tells us that the choice of realized measure matters more than the frequency.
+
+**From the portfolio analysis:**
+
+1. Transitioning from volatility models on daily returns to any DRD-HAR type model under consideration, decreased the vol of vol substantially while retaining (approximately) the same annualized expected returns. This lead to a reduction in the expected shortfall under a time-horizon with no apparent crises, that would net the risk-averse investor a 2.8 million notional difference, if they invest 1 billion in the DRD-CHAR portfolio.
+
+2. Contrary to [Bollerslev et al. (2018)](https://www.sciencedirect.com/science/article/pii/S0304407618301180?casa_token=gJ0dxNPfv2IAAAAA:LKASCIaIPZdJAR1CraKd3yu-8ljjr2fufoFVCrmlnOW9mJ9pNzZcTR2RfpI4QgvTwlre9KUAfA), we found evidence that the turnover rates of the ARQ type models increased substantially adverse of the HAR-type dynamics, which contributed to a reduction in performance (as seen by Sharpe ratios) under transaction costs. 
+
+3. The most surprising result, was the universal performance of the CHAR model. Upon further investigation, we found that the DRD-CHAR model was in the top three across all cost-schemes in terms of Sharpe ratio, resulting 
+from the reduced turnover rates.
+
+4. In general, it lead me to believe, that good out-of-sample portfolio performance is not only dictated by models within the superior set of the MCS procedure, but in some cases, rejected parsimonious models might perform consistently well across realized measures with adequately chosen frequencies. 
 
 
+## Code
 
-*It needs to be noted that the portfolios was heavily affect by the stock-bond correlation, since I chose a time horizon with negative correlation, thus imposing better diversification in terms of how a bond position can hedge against an equity marrket sell-off.*  
 
 The code for my master thesis. The code will be fractioned into small sniplets corresponding to different subsections of my thesis. This will provide a better overview and make things easier. The data cleaning code was only used once for time efficiency, and thus I stored the cleaned data as .Rdata of the assets that I'm working with.  
