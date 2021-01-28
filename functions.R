@@ -329,7 +329,7 @@ min.qlike.riskmetrics <- function(cov, half.life, proxy, correlation = F, lambda
 
 ########################################################################################################################
 #
-#						REALIZED AND INTERNAL FUNCTIONS FOR REALIZED MEASURES
+#				REALIZED AND INTERNAL FUNCTIONS FOR REALIZED MEASURES
 #
 ########################################################################################################################
 
@@ -865,7 +865,7 @@ EstimatecorrHAR2 <- function(returns, variances, proxy, trace=1, ineqfun = ineqc
 
 ########################################################################################################################
 #
-#					REALIZED SCALAR-BASED BIVARIATE GARCH MODEL (rBG)
+#				REALIZED SCALAR-BASED BIVARIATE GARCH MODEL (rBG)
 #
 ########################################################################################################################
 
@@ -1058,7 +1058,7 @@ EstimateBivarGARCH <- function(dailyret, covariance, bootstrap = FALSE, vPar=NUL
 
 ########################################################################################################################
 #
-#					CONTINUOUS ASSYMMETRICAL REALIZED SCALAR-BASED GARCH MODEL (crBG)
+#				CONTINUOUS ASSYMMETRICAL REALIZED SCALAR-BASED GARCH MODEL (crBG)
 #
 ########################################################################################################################
 
@@ -1492,7 +1492,7 @@ Estimate_rDCC <- function(mY, covariance, getDates, bootstrap = F, residuals = N
 
 ########################################################################################################################
 #
-#					CONTINUOUS ASSYMMETRICAL REALIZED DCC MODEL (crDCC)
+#				CONTINUOUS ASSYMMETRICAL REALIZED DCC MODEL (crDCC)
 #
 ########################################################################################################################
 
