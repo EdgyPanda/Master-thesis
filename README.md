@@ -55,7 +55,19 @@ from the reduced turnover rates.
 ## Code
 The code for my master thesis was fractioned into small sniplets corresponding to different subsections of my thesis. You **cannot** download the repository and expect all of the code to be runable due to lacking the original cleaned stock data. The code has been provided for illustrational purposes. 
 
-```R
-Summarystats.R and Summary_stats_for_cleaning_Podolskij_method.R
-```
-contains the code for the summary statistics provided in the empirical analysis.
+
+**functions.R** contains all of my self-written ad-hoc functions used throughout the entire thesis. 
+
+**Summarystats.R**, **Summary stats for cleaning Podolskij method.R** and **jumpproportion.R** contains the code for the summary statistics and analysis of the assets, provided in the empirical analysis.
+
+**DRD-HAR models.R** and **Volatility models.R** contains the code for the in-sample estimation and analysis of the volatility models. 
+
+**mcs_realized_measures.R** and **out_of_sample_MCS_and_prelim_volmodels.R** contains the forecast comparison analysis for the realized measures and the volatility models. Morevover, the results was compared with the MCS function in [Kevin sheppards toolbox](https://www.kevinsheppard.com/code/matlab/mfe-toolbox/) and the code sniplet can be seen in **mainMCS.m**. 
+
+**Out_of_sample_forecast_analysis.R** contains the code for the out-of-sample forecast analysis. 
+
+**Out_of_sample_portfolio_analysis.R** contains the code for the out-of-sample portfolio analysis.
+
+**riskparity.R** contains the code that produces the graphs provided in the theoretical section of the risk-parity portfolio. 
+
+**Correlation check.R**, **IntradayACF.R**, **semicovplot.R**, **pre-averaging stability.R** and **realized semicovariance graph.R** contains the code that produces preliminary graphs before the empirical analysis analysis. 
